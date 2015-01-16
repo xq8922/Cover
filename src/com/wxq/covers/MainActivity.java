@@ -71,11 +71,10 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		
 		if(!CoverUtils.isNetworkAvailable(MainActivity.this)){
-			Toast.makeText(getApplicationContext(), "未连接网络", Toast.LENGTH_SHORT).show();
+			Toast.makeText(getApplicationContext(), "鏈繛鎺ョ綉缁�", Toast.LENGTH_SHORT).show();
 			return ;
 		}
-		bindService(new Intent(MainActivity.this,InternetService.class),internetServiceConnection,Context.BIND_AUTO_CREATE);		
-//		new Thread(internetService).start();
+		bindService(new Intent(MainActivity.this,InternetService.class),internetServiceConnection,Context.BIND_AUTO_CREATE);
 //		hostIp = CoverUtils.getLocalIpAdress();
 		et_usr = (EditText) findViewById(R.id.et_login_user_name);
 		et_pwd = (EditText) findViewById(R.id.et_login_password);
@@ -99,10 +98,10 @@ public class MainActivity extends Activity {
 								while (flag_long) {
 									if (socket.isConnected()) {
 										Toast.makeText(getApplicationContext(),
-												"连接成功", Toast.LENGTH_SHORT).show();
+												"杩炴帴鎴愬姛", Toast.LENGTH_SHORT).show();
 									} else {
 										Toast.makeText(getApplicationContext(),
-												"连接超时，请重试", Toast.LENGTH_SHORT).show();
+												"杩炴帴瓒呮椂锛岃閲嶈瘯", Toast.LENGTH_SHORT).show();
 										flag = false;
 									}
 									String message = "Message from Android phone";
@@ -110,7 +109,7 @@ public class MainActivity extends Activity {
 										System.out.println("Client Sending: '"
 												+ message + "'");
 
-										// 第二个参数为True则为自动flush
+										// 绗簩涓弬鏁颁负True鍒欎负鑷姩flush
 										PrintWriter out = new PrintWriter(
 												new BufferedWriter(
 														new OutputStreamWriter(
@@ -121,7 +120,7 @@ public class MainActivity extends Activity {
 									} catch (Exception e) {
 										e.printStackTrace();
 									} finally {
-										// 关闭Socket
+										// 鍏抽棴Socket
 										socket.close();
 										System.out
 												.println("Client:Socket closed");
