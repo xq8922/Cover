@@ -76,10 +76,11 @@ public class MainActivity extends Activity {
 		}
 		bindService(new Intent(MainActivity.this,InternetService.class),internetServiceConnection,Context.BIND_AUTO_CREATE);		
 //		new Thread(internetService).start();
-//		hostIp = CoverUtils.getLocalIpAdress();
+		hostIp = CoverUtils.getLocalIpAdress();
 		et_usr = (EditText) findViewById(R.id.et_login_user_name);
 		et_pwd = (EditText) findViewById(R.id.et_login_password);
 		btn_test = (Button) findViewById(R.id.btn_login);
+		et_usr.setText(hostIp);
 		btn_test.setOnClickListener(new OnClickListener() {
 
 			@Override

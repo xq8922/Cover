@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <LinearLayout
+        android:id="@+id/ll_top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal" >
+
+        <ImageButton
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="@dimen/space_20"
+            android:src="@drawable/back" />
+
+        <TextView
+            android:name="@+id/tv_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textSize="@dimen/text_size_20"
+            android:text="软件设置" >            
+        </TextView>
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/gray"
+        android:padding="@dimen/space_2" />
+	<LinearLayout 
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:layout_below="@id/ll_top"
+	    android:orientation="vertical" >
+	    <LinearLayout
+	        android:layout_width="48dp"
+	        android:layout_height="wrap_content"
+	        android:gravity="center_vertical"
+	        android:orientation="horizontal" >	
+	        <TextView
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:gravity="center_vertical"
+	            android:text="维修提醒"
+	            android:textSize="@dimen/text_size_20" />
+	        <Spinner
+	            android:layout_width="fill_parent"
+	            android:layout_height="match_parent"
+	            android:id="@+id/spin_softwaresettings_remind"
+	            >
+	            
+	        </Spinner>
+	    </LinearLayout>
+	    
+	    <View
+	        android:layout_width="match_parent"
+	        android:layout_height="0.5dp"
+	        android:background="@color/gray"
+	        android:padding="@dimen/space_2" />
+	    
+	    <LinearLayout
+	        android:layout_width="48dp"
+	        android:layout_height="wrap_content"
+	        android:gravity="center_vertical"
+	        android:orientation="horizontal" >
+	        <TextView
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:gravity="center_vertical"
+	            android:text="IP地址"
+	            android:textSize="@dimen/text_size_20" />
+	        <EditText 
+	            android:layout_width="fill_parent"
+	            android:layout_height="wrap_content"
+	            android:id="@+id/et_settings_angle"
+	            android:hint="ip"
+	            
+	            />
+	    </LinearLayout>
+	        
+	    <View
+	        android:layout_width="match_parent"
+	        android:layout_height="0.5dp"
+	        android:background="@color/gray"
+	        android:padding="@dimen/space_2" />
+	    
+	    <LinearLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:gravity="center"
+	        android:orientation="horizontal" >
+	        <ImageButton 
+	            android:layout_width="48dp"
+	            android:layout_height="48dp"
+	            android:layout_gravity="center"
+	            />
+	    </LinearLayout>
+	    
+	    <View
+	        android:layout_width="match_parent"
+	        android:layout_height="0.5dp"
+	        android:background="@color/gray"
+	        android:padding="@dimen/space_2" />	   
+	    <LinearLayout 
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:gravity="center"
+	        android:orientation="horizontal" >
+	        
+	        <Button
+	        android:id="@+id/btn_softwaresettings_cancel"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="退出" />
+	    </LinearLayout>
+	    
+	</LinearLayout>
+</RelativeLayout>
