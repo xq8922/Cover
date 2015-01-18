@@ -1,4 +1,4 @@
-package com.wxq.covers;
+package com.cover.main;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;

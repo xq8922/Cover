@@ -1,4 +1,6 @@
-package com.wxq.covers;
+package com.cover.main;
+
+import com.wxq.covers.R;
 
 import android.app.Activity;
 import android.os.Bundle;
