@@ -16,8 +16,7 @@ public class CoverUtils {
 	 * @param activity
 	 * @return
 	 */
-	public static boolean isNetworkAvailable(Activity activity){
-		Context context = activity.getApplicationContext();
+	public static boolean isNetworkAvailable(Context context){
 		ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		if(connectivityManager == null){
 			return false;

@@ -43,8 +43,8 @@ import android.os.StrictMode;
 @SuppressLint("NewApi")
 public class MainActivity extends Activity {
 	final String TAG = "testTCPClient";
-	String IP = "219.244.118.30";
-	int PORT = 10001;
+//	String IP = "219.244.118.30";
+//	int PORT = 10001;
 	TextView et_ip;
 	EditText et_usr;
 	EditText et_pwd;

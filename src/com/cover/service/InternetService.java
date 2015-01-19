@@ -28,7 +28,8 @@ import android.util.Log;
 public class InternetService extends Service implements Runnable {
 //	public String ip = "192.168.0.1";
 //	public String ip = "219.244.118.30";
-	public String ip = "192.168.42.145";
+//	public String ip = "192.168.42.145";
+	public String ip = "192.168.100.104";
 	public int port = 10001;
 	private Socket socket;
 	private BufferedReader reader;
@@ -60,11 +61,11 @@ public class InternetService extends Service implements Runnable {
 //	public void 
 
 	private void sendMessage(String action) {
-		// if(!CoverUtils.isNetworkAvailable(MainActivity.t)){
-		// Log.v("QLQ","workStatus is not connectted");
-		// workStatus = "connect failed";
-		// return ;
-		// }
+		 if(!CoverUtils.isNetworkAvailable(this)){
+		 Log.v("QLQ","workStatus is not connectted");
+		 workStatus = "connect failed";
+		 return ;
+		 }
 		if (socket == null) {
 			connectService();
 		} else {
@@ -169,8 +170,7 @@ public class InternetService extends Service implements Runnable {
 		 */
 		@Override
 		protected boolean onTransact(int code, Parcel data, Parcel reply,
-				int flags) throws RemoteException {
-			// TODO Auto-generated method stub
+				int flags) throws RemoteException {			
 			return super.onTransact(code, data, reply, flags);
 		}
 		
@@ -186,9 +186,10 @@ public class InternetService extends Service implements Runnable {
 					if (!socket.isInputShutdown()) {
 						sendMessage("hello");
 						String content;
-//						if ((content = reader.readLine()) != null) {
+						//readLine()方法一直等待直到socket关闭为止
+						if ((content = reader.readLine()) != null) {
 							getMessage(workStatus);
-//						}
+						}
 					}
 				} else {
 					connectService();
