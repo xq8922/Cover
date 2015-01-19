@@ -43,67 +43,58 @@ import android.os.StrictMode;
 @SuppressLint("NewApi")
 public class MainActivity extends Activity {
 	final String TAG = "testTCPClient";
-//	String IP = "219.244.118.30";
-//	int PORT = 10001;
 	TextView et_ip;
 	EditText et_usr;
 	EditText et_pwd;
 	static String hostIp;
 	Button btn_test;
 	Button btn_ping;
-	boolean flag = true;
-	String recv;
-	MyBroadcast myBroadcast;
-	
+	static String recv;
+
 	InternetService internetService;
-	public ServiceConnection internetServiceConnection = new ServiceConnection(){
+	public ServiceConnection internetServiceConnection = new ServiceConnection() {
 
 		@Override
 		public void onServiceConnected(ComponentName arg0, IBinder service) {
-			internetService = ((InternetService.InterBinder)service).getService();			
+			internetService = ((InternetService.InterBinder) service)
+					.getService();
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName arg0) {
 			internetService = null;
 		}
-		
+
 	};
-	IBinder binder = null;
-	public Parcel getResult(){
-		Parcel result = Parcel.obtain();
-//		binder.transact(arg0, arg1, arg2, arg3)
-		return null;
-	}
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
-		if(!CoverUtils.isNetworkAvailable(MainActivity.this)){
-			Toast.makeText(getApplicationContext(), "鏈繛鎺ョ綉缁�", Toast.LENGTH_SHORT).show();
-			return ;
+
+		if (!CoverUtils.isNetworkAvailable(MainActivity.this)) {
+			Toast.makeText(getApplicationContext(), "鏈繛鎺ョ綉缁�",
+					Toast.LENGTH_SHORT).show();
+			return;
 		}
-		bindService(new Intent(MainActivity.this,InternetService.class),internetServiceConnection,Context.BIND_AUTO_CREATE);
-		
-		myBroadcast = new MyBroadcast();
-		IntentFilter filter = new IntentFilter();
-		filter.addAction("com.cover.service.InternetService");
-		registerReceiver(myBroadcast,filter);
-		
+		bindService(new Intent(MainActivity.this, InternetService.class),
+				internetServiceConnection, Context.BIND_AUTO_CREATE);
+		// myBroadcast = new MyBroadcast();
+		// IntentFilter filter = new IntentFilter();
+		// filter.addAction("com.cover.service.InternetService");
+		// registerReceiver(myBroadcast,filter);
+
 		hostIp = CoverUtils.getLocalIpAdress();
 		et_usr = (EditText) findViewById(R.id.et_login_user_name);
 		et_pwd = (EditText) findViewById(R.id.et_login_password);
 		btn_test = (Button) findViewById(R.id.btn_login);
 		et_usr.setText(hostIp);
 		btn_test.setOnClickListener(new OnClickListener() {
-
 			@Override
 			public void onClick(View arg0) {
 				// IP = et_usr.getText().toString();
 				// PORT = Integer.parseInt(et_pwd.getText().toString());
-				Intent intent = new Intent();
+				// Intent intent = new Intent();
 				System.out.println("test");
 			}
 		});
@@ -112,18 +103,19 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		unbindService(internetServiceConnection);
-		unregisterReceiver(myBroadcast);
+		// unregisterReceiver(myBroadcast);
 		super.onDestroy();
 	}
 
-	public class MyBroadcast extends BroadcastReceiver{
+	public static class MyBroadcastReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			recv = intent.getStringExtra("msg");
+			Log.i("test", recv);
 			Toast.makeText(context, recv, Toast.LENGTH_SHORT).show();
 		}
-		
+
 	}
 
 }

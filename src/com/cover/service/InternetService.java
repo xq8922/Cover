@@ -26,9 +26,9 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class InternetService extends Service implements Runnable {
-//	public String ip = "192.168.0.1";
-//	public String ip = "219.244.118.30";
-//	public String ip = "192.168.42.145";
+	// public String ip = "192.168.0.1";
+	// public String ip = "219.244.118.30";
+	// public String ip = "192.168.42.145";
 	public String ip = "192.168.100.104";
 	public int port = 10001;
 	private Socket socket;
@@ -40,14 +40,15 @@ public class InternetService extends Service implements Runnable {
 	private String currAction;
 	MyReceiver myReceiver;
 
-	private class MyReceiver extends BroadcastReceiver{
+	private class MyReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-			
+
 		}
-		
+
 	}
+
 	public void sendRequest(String action) {
 		try {
 			workStatus = null;
@@ -57,22 +58,23 @@ public class InternetService extends Service implements Runnable {
 			workStatus = "sendmessage fail";
 		}
 	}
-	
-//	public void 
+
+	// public void
 
 	private void sendMessage(String action) {
-		 if(!CoverUtils.isNetworkAvailable(this)){
-		 Log.v("QLQ","workStatus is not connectted");
-		 workStatus = "connect failed";
-		 return ;
-		 }
+		if (!CoverUtils.isNetworkAvailable(this)) {
+			Log.v("QLQ", "workStatus is not connectted");
+			workStatus = "connect failed";
+			return;
+		}
 		if (socket == null) {
 			connectService();
 		} else {
 			if (action != null) {
 				try {
-					writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-							socket.getOutputStream())), true);
+					writer = new PrintWriter(new BufferedWriter(
+							new OutputStreamWriter(socket.getOutputStream())),
+							true);
 					reader = new BufferedReader(new InputStreamReader(
 							socket.getInputStream()));
 				} catch (IOException e) {
@@ -82,7 +84,6 @@ public class InternetService extends Service implements Runnable {
 		}
 		if (!InternetService.this.thread.isAlive()) {
 			(thread = new Thread(InternetService.this)).start();
-
 		}
 		if (!socket.isConnected() || socket.isClosed()) {
 			workStatus = "socket not connect";
@@ -92,9 +93,8 @@ public class InternetService extends Service implements Runnable {
 		if (!socket.isOutputShutdown()) {
 			try {
 				writer.println(action);
-//				String temp = reader.readLine().toString();
-//				Log.i("reader",);
-//				writer.flush();
+				// String temp = reader.readLine().toString();
+				// Log.i("reader",);
 			} catch (Exception e) {
 				Log.v("QLQ", "is not connect");
 				e.printStackTrace();
@@ -126,10 +126,11 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
-//			reader = new BufferedReader(new InputStreamReader(
-//					socket.getInputStream()));
-//			writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-//					socket.getOutputStream())), true);
+			// reader = new BufferedReader(new InputStreamReader(
+			// socket.getInputStream()));
+			// writer = new PrintWriter(new BufferedWriter(new
+			// OutputStreamWriter(
+			// socket.getOutputStream())), true);
 		} catch (SocketException e) {
 			Log.v("QLQ", "socketException");
 			e.printStackTrace();
@@ -144,13 +145,12 @@ public class InternetService extends Service implements Runnable {
 
 	public void getMessage(String str) {
 		try {
-			IntentFilter filter = new IntentFilter();
-			filter.addAction("com.cover.service.InternetService");
-			registerReceiver(myReceiver,filter);
-			String msg = "hello";
+			// IntentFilter filter = new IntentFilter();
+			// filter.addAction("com.cover.service.InternetService");
+			// registerReceiver(myReceiver,filter);
 			Intent serviceIntent = new Intent();
-			serviceIntent.setAction("com.wxq.covers.MainActivity");
-			serviceIntent.putExtra("msg", msg);
+			serviceIntent.setAction("com.wxq.test");
+			serviceIntent.putExtra("msg", str);
 			sendBroadcast(serviceIntent);
 			Log.i("QLQ", str);
 			// get message
@@ -162,18 +162,19 @@ public class InternetService extends Service implements Runnable {
 		public InternetService getService() {
 			return InternetService.this;
 		}
+
 		/**
-		 * this is for Activity send messages to service 
+		 * this is for Activity send messages to service
 		 * 
 		 * @data object when send to service
 		 * @reply object that service returns
 		 */
 		@Override
 		protected boolean onTransact(int code, Parcel data, Parcel reply,
-				int flags) throws RemoteException {			
+				int flags) throws RemoteException {
 			return super.onTransact(code, data, reply, flags);
 		}
-		
+
 	}
 
 	@Override
@@ -181,15 +182,15 @@ public class InternetService extends Service implements Runnable {
 		try {
 			connectService();
 			while (true) {
-				Thread.sleep(1000);
+				Thread.sleep(5000);
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						sendMessage("hello");
 						String content;
-						//readLine()方法一直等待直到socket关闭为止
-						if ((content = reader.readLine()) != null) {
-							getMessage(workStatus);
-						}
+						// readLine()方法一直等待直到socket关闭为止
+						// if ((content = reader.readLine()) != null) {
+						getMessage("testBroadcast");
+						// }
 					}
 				} else {
 					connectService();
@@ -209,7 +210,6 @@ public class InternetService extends Service implements Runnable {
 	@Override
 	public IBinder onBind(Intent arg0) {
 		binder = new InterBinder();
-		// sendRequest("hello");
 		thread = new Thread(InternetService.this);
 		thread.start();
 		return binder;
@@ -217,7 +217,7 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
-		myReceiver  = new MyReceiver();
+		myReceiver = new MyReceiver();
 		super.onCreate();
 	}
 
@@ -230,14 +230,14 @@ public class InternetService extends Service implements Runnable {
 	@Override
 	@Deprecated
 	public void onStart(Intent intent, int startId) {
-		IntentFilter filter = new IntentFilter();
-		filter.addAction("com.cover.service.InternetService");
-		registerReceiver(myReceiver,filter);
-		String msg = "hello";
-		Intent serviceIntent = new Intent();
-		serviceIntent.setAction("com.cover.main.MainActivity");
-		serviceIntent.putExtra("msg", msg);
-		sendBroadcast(serviceIntent);
+		// IntentFilter filter = new IntentFilter();
+		// filter.addAction("com.cover.service.InternetService");
+		// registerReceiver(myReceiver, filter);
+		// String msg = "hello";
+		// Intent serviceIntent = new Intent();
+		// serviceIntent.setAction("com.cover.main.MainActivity");
+		// serviceIntent.putExtra("msg", msg);
+		// sendBroadcast(serviceIntent);
 		super.onStart(intent, startId);
 	}
 

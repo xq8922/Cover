@@ -36,7 +36,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.cover.main.Success" ></activity>
+
+        <receiver android:name="com.cover.main.MainActivity$MyBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="com.wxq.test" />
+            </intent-filter>
+        </receiver>
+
         <service android:name="com.cover.service.InternetService" />
     </application>
 
