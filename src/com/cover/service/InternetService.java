@@ -2,6 +2,7 @@ package com.cover.service;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,7 +30,7 @@ public class InternetService extends Service implements Runnable {
 	// public String ip = "192.168.0.1";
 	// public String ip = "219.244.118.30";
 	// public String ip = "192.168.42.145";
-	public String ip = "192.168.100.104";
+	public String ip = "192.168.100.102";
 	public int port = 10001;
 	private Socket socket;
 	private BufferedReader reader;
@@ -182,13 +183,28 @@ public class InternetService extends Service implements Runnable {
 		try {
 			connectService();
 			while (true) {
-				Thread.sleep(5000);
+				Thread.sleep(1000);
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						sendMessage("hello");
-						String content;
+						new Thread(new Reader()).start();
 						// readLine()方法一直等待直到socket关闭为止
 						// if ((content = reader.readLine()) != null) {
+						/*
+						{
+							DataInputStream bufferedReader = new DataInputStream(
+									socket.getInputStream());
+							byte[] cbuff = new byte[5];
+							char[] charBuff = new char[5];
+							int size = 0;
+							size = bufferedReader.read(cbuff);
+							// while ((size = bufferedReader.read(cbuff)) > 0) {
+							convertByteToChar(cbuff, charBuff, size);
+							System.out.println(charBuff);
+							// }
+							// bufferedReader.close();
+						}
+						*/
 						getMessage("testBroadcast");
 						// }
 					}
@@ -205,6 +221,41 @@ public class InternetService extends Service implements Runnable {
 			workStatus = e.toString();
 			e.printStackTrace();
 		}
+	}
+
+	private class Reader implements Runnable {
+
+		@Override
+		public void run() {
+			DataInputStream bufferedReader = null;
+			try {
+				bufferedReader = new DataInputStream(socket.getInputStream());
+				byte[] cbuff = new byte[5];
+				char[] charBuff = new char[5];
+				int size = 0;
+				size = bufferedReader.read(cbuff);
+				// while ((size = bufferedReader.read(cbuff)) > 0) {
+				convertByteToChar(cbuff, charBuff, size);
+				System.out.println(charBuff);
+				System.out.println(charBuff[2]+charBuff[3]);
+				// }
+				// bufferedReader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	private void convertByteToChar(byte[] cbuff, char[] charBuff, int size) {
+		for (int i = 0; i < charBuff.length; i++) {
+			if (i < size) {
+				charBuff[i] = (char) cbuff[i];
+			} else {
+				charBuff[i] = ' ';
+			}
+		}
+
 	}
 
 	@Override
