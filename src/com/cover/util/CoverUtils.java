@@ -6,8 +6,10 @@ import java.util.Enumeration;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 
 public class CoverUtils {
 	
@@ -90,4 +92,15 @@ public class CoverUtils {
 		*/
 		return true;
 	}
+	
+	/**
+	 * sendMessage throw broadcast
+	 */
+//	public static void sendMessage(String msg,String action){
+//		Intent serviceIntent = new Intent();
+//		serviceIntent.setAction(action);
+//		serviceIntent.putExtra("msg", msg);
+//		sendBroadcast(serviceIntent);
+//		Log.i(TAG, action + "sned broadcast "+ action);
+//	}
 }

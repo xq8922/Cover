@@ -1,48 +1,33 @@
 package com.cover.main;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Enumeration;
-
 import com.cover.service.InternetService;
 import com.cover.util.CoverUtils;
-import com.test.covers.SocketCallback;
-import com.test.covers.SocketConnect;
 import com.wxq.covers.R;
 
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Parcel;
-import android.os.StrictMode;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.StrictMode;
 
 @SuppressLint("NewApi")
 public class MainActivity extends Activity {
-	final String TAG = "testTCPClient";
+	final String TAG = "MainActivity";
+	private final String ACTION = "com.cover.service.IntenetService";
+	String msg = null;
+	String userName;
+	String password;
 	TextView et_ip;
 	EditText et_usr;
 	EditText et_pwd;
@@ -73,7 +58,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		if (!CoverUtils.isNetworkAvailable(MainActivity.this)) {
-			Toast.makeText(getApplicationContext(), "鏈繛鎺ョ綉缁�",
+			Toast.makeText(getApplicationContext(), "Network is offline",
 					Toast.LENGTH_SHORT).show();
 			return;
 		}
@@ -92,12 +77,22 @@ public class MainActivity extends Activity {
 		btn_test.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				// IP = et_usr.getText().toString();
-				// PORT = Integer.parseInt(et_pwd.getText().toString());
-				// Intent intent = new Intent();
+				userName = et_usr.getText().toString();
+				password = et_pwd.getText().toString();
+				String msg = userName + password;
+				byte[] msgBuff = msg.getBytes();
+				sendMessage("msg", ACTION);
 				System.out.println("test");
 			}
 		});
+	}
+
+	public void sendMessage(String msg, String action) {
+		Intent serviceIntent = new Intent();
+		serviceIntent.setAction(action);
+		serviceIntent.putExtra("msg", msg);
+		sendBroadcast(serviceIntent);
+		Log.i(TAG, action + "sned broadcast " + action);
 	}
 
 	@Override

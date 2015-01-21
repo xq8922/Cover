@@ -33,7 +33,7 @@ enum functionStatus {
 
 public class InternetService extends Service implements Runnable {
 	private final String TAG = "COVER";
-	
+
 	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
 	private static final String ACTION_CoverList = "com.cover.coverlist";
 	private static final String ACTION_CoverMapList = "com.cover.covermaplist";
@@ -43,7 +43,8 @@ public class InternetService extends Service implements Runnable {
 	// public String ip = "192.168.0.1";
 	// public String ip = "219.244.118.30";
 	// public String ip = "192.168.42.145";
-	public String ip = "192.168.100.101";
+	// public String ip = "192.168.100.101";
+	public String ip = "219.245.66.226";
 	public int port = 10001;
 	private Socket socket;
 	private BufferedReader reader;
@@ -167,7 +168,9 @@ public class InternetService extends Service implements Runnable {
 			serviceIntent.setAction(action);
 			serviceIntent.putExtra("msg", str);
 			sendBroadcast(serviceIntent);
-			Log.i(TAG, action + "¹ã²¥·¢ËÍ³É¹¦");
+			Log.i(TAG, action
+					+ "send Broadcast in InternetService && action is "
+					+ action);
 		} catch (Exception e) {
 			Log.e(TAG, e.toString());
 		}
@@ -202,7 +205,7 @@ public class InternetService extends Service implements Runnable {
 					if (!socket.isInputShutdown()) {
 						sendMessage("hello");
 						new Thread(new Reader()).start();
-						// readLine()·½·¨Ò»Ö±µÈ´ýÖ±µ½socket¹Ø±ÕÎªÖ¹
+						// readLine()ï¿½ï¿½ï¿½ï¿½Ò»Ö±ï¿½È´ï¿½Ö±ï¿½ï¿½socketï¿½Ø±ï¿½ÎªÖ¹
 						// if ((content = reader.readLine()) != null) {
 						/*
 						 * { DataInputStream bufferedReader = new
@@ -224,6 +227,7 @@ public class InternetService extends Service implements Runnable {
 		} catch (Exception e) {
 			try {
 				socket.close();
+				Log.w(TAG, e.toString());
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -243,11 +247,9 @@ public class InternetService extends Service implements Runnable {
 				char[] charBuff = new char[4];
 				int size = 0;
 				size = bufferedReader.read(cbuff);
-				// while ((size = bufferedReader.read(cbuff)) > 0) {
 				convertByteToChar(cbuff, charBuff, size);
 				System.out.println(cbuff);
 				System.out.println(charBuff);
-
 				// String temp = charBuff[2]+charBuff[3];
 				// int msgLength_test = Integer.parseInt(temp);
 				// msgLength is the length got from the msg header.
@@ -314,14 +316,17 @@ public class InternetService extends Service implements Runnable {
 									ACTION_CoverMapList);
 							break;
 						}
-						case 0x08: {// Î¬ÐÞ×´Ì¬½áÊøÉèÖÃ½ÓÊÕ³É¹¦µÄACKÐÅÏ¢
+						case 0x08: {// Î¬ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã½ï¿½ï¿½Õ³É¹ï¿½ï¿½ï¿½ACKï¿½ï¿½Ï¢
 							getMessage(String.valueOf(messageBuff),
 									ACTION_CoverList);
 							getMessage(String.valueOf(messageBuff),
 									ACTION_CoverMapList);
 							break;
 						}
-						default:Toast.makeText(getApplicationContext(), "·þÎñÆ÷·¢ËÍÁËÎ´ÖªÃüÁî", Toast.LENGTH_LONG).show();
+						default:
+							Toast.makeText(getApplicationContext(),
+									"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´Öªï¿½ï¿½ï¿½ï¿½", Toast.LENGTH_LONG)
+									.show();
 						}
 					}
 				}
