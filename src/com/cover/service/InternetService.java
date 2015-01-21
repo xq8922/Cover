@@ -237,7 +237,14 @@ public class InternetService extends Service implements Runnable {
 				// while ((size = bufferedReader.read(cbuff)) > 0) {
 				convertByteToChar(cbuff, charBuff, size);
 				System.out.println(charBuff);
-				System.out.println(charBuff[2]+charBuff[3]);
+				//msgLength is the length got from the msg header.
+				int msgLength = 10; 
+				byte[] msgBuff = new byte[msgLength];
+				char[] messageBuff = new char[msgLength];
+				size = 0;
+				size = bufferedReader.read(msgBuff);
+				convertByteToChar(msgBuff,messageBuff,size);
+				System.out.println(charBuff[1]+charBuff[2]);
 				// }
 				// bufferedReader.close();
 			} catch (IOException e) {
