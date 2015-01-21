@@ -25,12 +25,25 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.Toast;
+
+enum functionStatus {
+	WARNING, TERMINAL_CHANGED, LOGIN_VALIDATE, DEVICE_REPLAY, TERMINAL_ARGS_REPLAY, ACK_REMOVE_WARNING, ACK_SET_REPAIR_BRGIN, ACK_SET_REPAIR_END
+}
 
 public class InternetService extends Service implements Runnable {
+	private final String TAG = "COVER";
+	
+	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
+	private static final String ACTION_CoverList = "com.cover.coverlist";
+	private static final String ACTION_CoverMapList = "com.cover.covermaplist";
+	private static final String ACTION_Detail = "com.cover.detail";
+	private static final String ACTION_Settings = "com.cover.settings";
+	private static final String ACTION_SoftwareSettings = "com.cover.softwaresettings";
 	// public String ip = "192.168.0.1";
 	// public String ip = "219.244.118.30";
 	// public String ip = "192.168.42.145";
-	public String ip = "192.168.100.102";
+	public String ip = "192.168.100.101";
 	public int port = 10001;
 	private Socket socket;
 	private BufferedReader reader;
@@ -39,9 +52,9 @@ public class InternetService extends Service implements Runnable {
 	private Thread thread;
 	private String workStatus = "test";
 	private String currAction;
-	MyReceiver myReceiver;
+	ServiceReceiver myReceiver;
 
-	private class MyReceiver extends BroadcastReceiver {
+	private class ServiceReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
@@ -64,7 +77,7 @@ public class InternetService extends Service implements Runnable {
 
 	private void sendMessage(String action) {
 		if (!CoverUtils.isNetworkAvailable(this)) {
-			Log.v("QLQ", "workStatus is not connectted");
+			Log.v(TAG, "workStatus is not connectted");
 			workStatus = "connect failed";
 			return;
 		}
@@ -88,7 +101,7 @@ public class InternetService extends Service implements Runnable {
 		}
 		if (!socket.isConnected() || socket.isClosed()) {
 			workStatus = "socket not connect";
-			Log.v("QLQ", "not connect");
+			Log.v(TAG, "not connect");
 			return;
 		}
 		if (!socket.isOutputShutdown()) {
@@ -97,7 +110,7 @@ public class InternetService extends Service implements Runnable {
 				// String temp = reader.readLine().toString();
 				// Log.i("reader",);
 			} catch (Exception e) {
-				Log.v("QLQ", "is not connect");
+				Log.v(TAG, "is not connect");
 				e.printStackTrace();
 				workStatus = "Output err";
 			}
@@ -127,35 +140,36 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
+			Log.i(TAG, "socket is connectted");
 			// reader = new BufferedReader(new InputStreamReader(
 			// socket.getInputStream()));
 			// writer = new PrintWriter(new BufferedWriter(new
 			// OutputStreamWriter(
 			// socket.getOutputStream())), true);
 		} catch (SocketException e) {
-			Log.v("QLQ", "socketException");
+			Log.v(TAG, e.toString());
 			e.printStackTrace();
 			workStatus = e.toString();
 			return;
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(TAG, e.toString());
 			workStatus = e.toString();
 			return;
 		}
 	}
 
-	public void getMessage(String str) {
+	public void getMessage(String str, String action) {
 		try {
 			// IntentFilter filter = new IntentFilter();
 			// filter.addAction("com.cover.service.InternetService");
 			// registerReceiver(myReceiver,filter);
 			Intent serviceIntent = new Intent();
-			serviceIntent.setAction("com.wxq.test");
+			serviceIntent.setAction(action);
 			serviceIntent.putExtra("msg", str);
 			sendBroadcast(serviceIntent);
-			Log.i("QLQ", str);
-			// get message
+			Log.i(TAG, action + "广播发送成功");
 		} catch (Exception e) {
+			Log.e(TAG, e.toString());
 		}
 	}
 
@@ -191,21 +205,16 @@ public class InternetService extends Service implements Runnable {
 						// readLine()方法一直等待直到socket关闭为止
 						// if ((content = reader.readLine()) != null) {
 						/*
-						{
-							DataInputStream bufferedReader = new DataInputStream(
-									socket.getInputStream());
-							byte[] cbuff = new byte[5];
-							char[] charBuff = new char[5];
-							int size = 0;
-							size = bufferedReader.read(cbuff);
-							// while ((size = bufferedReader.read(cbuff)) > 0) {
-							convertByteToChar(cbuff, charBuff, size);
-							System.out.println(charBuff);
-							// }
-							// bufferedReader.close();
-						}
-						*/
-						getMessage("testBroadcast");
+						 * { DataInputStream bufferedReader = new
+						 * DataInputStream( socket.getInputStream()); byte[]
+						 * cbuff = new byte[5]; char[] charBuff = new char[5];
+						 * int size = 0; size = bufferedReader.read(cbuff); //
+						 * while ((size = bufferedReader.read(cbuff)) > 0) {
+						 * convertByteToChar(cbuff, charBuff, size);
+						 * System.out.println(charBuff); // } //
+						 * bufferedReader.close(); }
+						 */
+						// getMessage("testBroadcast","com.wxq.test");
 						// }
 					}
 				} else {
@@ -230,21 +239,92 @@ public class InternetService extends Service implements Runnable {
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
-				byte[] cbuff = new byte[5];
-				char[] charBuff = new char[5];
+				byte[] cbuff = new byte[4];
+				char[] charBuff = new char[4];
 				int size = 0;
 				size = bufferedReader.read(cbuff);
 				// while ((size = bufferedReader.read(cbuff)) > 0) {
 				convertByteToChar(cbuff, charBuff, size);
+				System.out.println(cbuff);
 				System.out.println(charBuff);
-				//msgLength is the length got from the msg header.
-				int msgLength = 10; 
+
+				// String temp = charBuff[2]+charBuff[3];
+				// int msgLength_test = Integer.parseInt(temp);
+				// msgLength is the length got from the msg header.
+				int msgLength = Integer.parseInt(String.valueOf(charBuff[2])
+						+ "" + String.valueOf(charBuff[3]));
+				msgLength -= 6;
+				System.out.println(msgLength);
 				byte[] msgBuff = new byte[msgLength];
 				char[] messageBuff = new char[msgLength];
 				size = 0;
-				size = bufferedReader.read(msgBuff);
-				convertByteToChar(msgBuff,messageBuff,size);
-				System.out.println(charBuff[1]+charBuff[2]);
+				size = bufferedReader.read(msgBuff);// set chaoshi
+				convertByteToChar(msgBuff, messageBuff, size);
+				System.out.println(messageBuff);
+				byte[] checkBuf = new byte[2];
+				char[] charCheckBuf = new char[2];
+				size = 0;
+				size = bufferedReader.read(checkBuf);
+				convertByteToChar(checkBuf, charCheckBuf, size);
+
+				functionStatus fs;
+				if (CoverUtils.isCRCRight()) {
+					if (messageBuff[0] == 0xFA && messageBuff[1] == 0xF5) {
+						switch ((int) messageBuff[0]) {
+						case 0x01: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverList);
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverMapList);
+							break;
+						}
+						case 0x02: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverMapList);
+							break;
+						}
+						case 0x03: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_MainActivity);
+							break;
+						}
+						case 0x04: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverList);
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverMapList);
+							break;
+						}
+						case 0x05: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_Settings);
+							break;
+						}
+						case 0x06: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverList);
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverMapList);
+							break;
+						}
+						case 0x07: {
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverList);
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverMapList);
+							break;
+						}
+						case 0x08: {// 维修状态结束设置接收成功的ACK信息
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverList);
+							getMessage(String.valueOf(messageBuff),
+									ACTION_CoverMapList);
+							break;
+						}
+						default:Toast.makeText(getApplicationContext(), "服务器发送了未知命令", Toast.LENGTH_LONG).show();
+						}
+					}
+				}
 				// }
 				// bufferedReader.close();
 			} catch (IOException e) {
@@ -275,7 +355,7 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
-		myReceiver = new MyReceiver();
+		myReceiver = new ServiceReceiver();
 		super.onCreate();
 	}
 

@@ -1,4 +1,4 @@
-package com.cover.main;
+package com.test.covers;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;

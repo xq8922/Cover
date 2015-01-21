@@ -36,10 +36,51 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="com.cover.ui.CoverLis" />
+        <activity android:name="com.cover.ui.CoverMapList" />
+        <activity android:name="com.cover.ui.Detail" />
+        <activity android:name="com.cover.ui.Settings" />
+        <activity android:name="com.cover.ui.SoftwareSettings" />
 
         <receiver android:name="com.cover.main.MainActivity$MyBroadcastReceiver" >
             <intent-filter>
                 <action android:name="com.wxq.test" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.ui.CoverList$CoverListReceiver" >
+            <intent-filter>
+                <action android:name="com.cover.coverlist" >
+                </action>
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.ui.CoverMapList$CoverMapListReceiver" >
+            <intent-filter>
+                <action android:name="com.cover.covermaplist" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.ui.Detail$DetailReceiver" >
+            <intent-filter>
+                <action android:name="com.cover.detail" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.ui.Settings$SettingsReceiver" >
+            <intent-filter>
+                <action android:name="com.cover.settings" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.ui.SoftwareSettings$SoftwareSettingsReceiver" >
+            <intent-filter>
+                <action android:name="com.cover.softwaresettings" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.ui.MainACtivity$MainActivityReceiver" >
+            <intent-filter>
+                <action android:name="com.cover.main.mainactivity" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.cover.service.InternetService$ServiceReceiver">
+            <intent-filter >
+                <action android:name="com.cover.service.IntenetService"/>
             </intent-filter>
         </receiver>
 

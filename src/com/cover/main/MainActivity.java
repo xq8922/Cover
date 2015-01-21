@@ -107,7 +107,7 @@ public class MainActivity extends Activity {
 		super.onDestroy();
 	}
 
-	public static class MyBroadcastReceiver extends BroadcastReceiver {
+	public static class MainActivityReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {

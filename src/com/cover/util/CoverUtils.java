@@ -55,4 +55,39 @@ public class CoverUtils {
 		}
 		return null;
 	}
+	/**
+	 * CRCCHECK
+	 */
+	public static boolean isCRCRight(){
+		/*
+		unsigned int CRC_Check(unsigned char *ucCRC_Buf, unsigned char ucBufLength)
+		{
+		    unsigned int uiX, uiY, uiCRC;
+		    unsigned char ucStart = 0;
+		    uiCRC = 0xFFFF;  //set all 1
+
+		    if (ucBufLength <= 0 || ucStart > ucBufLength)
+		        uiCRC = 0;
+		    else
+		    {
+		        ucBufLength += ucStart;
+		        for (uiX = (unsigned int)ucStart; uiX < ucBufLength; uiX++)
+		        {
+		            uiCRC = (unsigned int)(uiCRC ^ ucCRC_Buf [uiX]);
+		            
+		            for (uiY = 0; uiY <= 7; uiY++)
+		            {
+		                if ((uiCRC & 1) != 0)
+		                    uiCRC = (unsigned int)((uiCRC >> 1) ^ 0xA001);
+		                else
+		                    uiCRC = (unsigned int)(uiCRC >> 1);
+		            }
+		        }
+		    }
+
+		    return uiCRC;
+		}
+		*/
+		return true;
+	}
 }
