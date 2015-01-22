@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
+import com.cover.bean.Message;
 import com.cover.util.CoverUtils;
 
 import android.app.Service;
@@ -43,8 +44,8 @@ public class InternetService extends Service implements Runnable {
 	// public String ip = "192.168.0.1";
 	// public String ip = "219.244.118.30";
 	// public String ip = "192.168.42.145";
-	// public String ip = "192.168.100.101";
-	public String ip = "219.245.66.226";
+	public String ip = "192.168.100.102";
+	// public String ip = "219.245.66.226";
 	public int port = 10001;
 	private Socket socket;
 	private BufferedReader reader;
@@ -54,20 +55,22 @@ public class InternetService extends Service implements Runnable {
 	private String workStatus = "test";
 	private String currAction;
 	ServiceReceiver myReceiver;
+	Message message = new Message();
 
 	private class ServiceReceiver extends BroadcastReceiver {
 
 		@Override
-		public void onReceive(Context arg0, Intent arg1) {
-
+		public void onReceive(Context context, Intent intent) {
+			byte[] msg = intent.getByteArrayExtra("msg");
+			sendMessage(msg);
 		}
 
 	}
 
-	public void sendRequest(String action) {
+	public void sendRequest(byte[] action) {
 		try {
 			workStatus = null;
-			currAction = action;
+			currAction = action.toString();
 			sendMessage(action);
 		} catch (Exception e) {
 			workStatus = "sendmessage fail";
@@ -76,16 +79,20 @@ public class InternetService extends Service implements Runnable {
 
 	// public void
 
-	private void sendMessage(String action) {
+	private void sendMessage(byte[] bs) {
 		if (!CoverUtils.isNetworkAvailable(this)) {
 			Log.v(TAG, "workStatus is not connectted");
 			workStatus = "connect failed";
+			Toast.makeText(getApplicationContext(), "network is not connected",
+					Toast.LENGTH_LONG).show();
 			return;
 		}
 		if (socket == null) {
+			Toast.makeText(getApplicationContext(), "socket is not connected",
+					Toast.LENGTH_LONG).show();
 			connectService();
 		} else {
-			if (action != null) {
+			if (bs != null) {
 				try {
 					writer = new PrintWriter(new BufferedWriter(
 							new OutputStreamWriter(socket.getOutputStream())),
@@ -98,19 +105,24 @@ public class InternetService extends Service implements Runnable {
 			}
 		}
 		if (!InternetService.this.thread.isAlive()) {
+			Toast.makeText(getApplicationContext(), "Thread is not connected",
+					Toast.LENGTH_LONG).show();
 			(thread = new Thread(InternetService.this)).start();
 		}
 		if (!socket.isConnected() || socket.isClosed()) {
+			Toast.makeText(getApplicationContext(), "socket closed",
+					Toast.LENGTH_LONG).show();
 			workStatus = "socket not connect";
 			Log.v(TAG, "not connect");
 			return;
 		}
 		if (!socket.isOutputShutdown()) {
 			try {
-				writer.println(action);
-				// String temp = reader.readLine().toString();
-				// Log.i("reader",);
+				if (bs != null)
+					writer.println(bs);
 			} catch (Exception e) {
+				Toast.makeText(getApplicationContext(), "output is shutdown",
+						Toast.LENGTH_LONG).show();
 				Log.v(TAG, "is not connect");
 				e.printStackTrace();
 				workStatus = "Output err";
@@ -159,14 +171,14 @@ public class InternetService extends Service implements Runnable {
 		}
 	}
 
-	public void getMessage(String str, String action) {
+	public void getMessage(byte[] msg, String action) {
 		try {
 			// IntentFilter filter = new IntentFilter();
 			// filter.addAction("com.cover.service.InternetService");
 			// registerReceiver(myReceiver,filter);
 			Intent serviceIntent = new Intent();
 			serviceIntent.setAction(action);
-			serviceIntent.putExtra("msg", str);
+			serviceIntent.putExtra("msg", msg);
 			sendBroadcast(serviceIntent);
 			Log.i(TAG, action
 					+ "send Broadcast in InternetService && action is "
@@ -203,22 +215,8 @@ public class InternetService extends Service implements Runnable {
 				Thread.sleep(1000);
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
-						sendMessage("hello");
+						// sendMessage("hello".getBytes());
 						new Thread(new Reader()).start();
-						// readLine()����һֱ�ȴ�ֱ��socket�ر�Ϊֹ
-						// if ((content = reader.readLine()) != null) {
-						/*
-						 * { DataInputStream bufferedReader = new
-						 * DataInputStream( socket.getInputStream()); byte[]
-						 * cbuff = new byte[5]; char[] charBuff = new char[5];
-						 * int size = 0; size = bufferedReader.read(cbuff); //
-						 * while ((size = bufferedReader.read(cbuff)) > 0) {
-						 * convertByteToChar(cbuff, charBuff, size);
-						 * System.out.println(charBuff); // } //
-						 * bufferedReader.close(); }
-						 */
-						// getMessage("testBroadcast","com.wxq.test");
-						// }
 					}
 				} else {
 					connectService();
@@ -243,108 +241,76 @@ public class InternetService extends Service implements Runnable {
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
-				byte[] cbuff = new byte[4];
-				char[] charBuff = new char[4];
+				byte[] headerBuff = new byte[2];
 				int size = 0;
-				size = bufferedReader.read(cbuff);
-				convertByteToChar(cbuff, charBuff, size);
-				System.out.println(cbuff);
-				System.out.println(charBuff);
-				// String temp = charBuff[2]+charBuff[3];
-				// int msgLength_test = Integer.parseInt(temp);
-				// msgLength is the length got from the msg header.
-				int msgLength = Integer.parseInt(String.valueOf(charBuff[2])
-						+ "" + String.valueOf(charBuff[3]));
+				size = bufferedReader.read(headerBuff);
+				if (!(headerBuff[0] == 0xFA || headerBuff[1] == 0xF5))
+					return;
+				byte[] length = new byte[2];
+				int msgLength = CoverUtils.getShort(length);
 				msgLength -= 6;
 				System.out.println(msgLength);
 				byte[] msgBuff = new byte[msgLength];
-				char[] messageBuff = new char[msgLength];
-				size = 0;
 				size = bufferedReader.read(msgBuff);// set chaoshi
-				convertByteToChar(msgBuff, messageBuff, size);
-				System.out.println(messageBuff);
 				byte[] checkBuf = new byte[2];
-				char[] charCheckBuf = new char[2];
-				size = 0;
 				size = bufferedReader.read(checkBuf);
-				convertByteToChar(checkBuf, charCheckBuf, size);
-
-				functionStatus fs;
-				if (CoverUtils.isCRCRight()) {
-					if (messageBuff[0] == 0xFA && messageBuff[1] == 0xF5) {
-						switch ((int) messageBuff[0]) {
-						case 0x01: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverList);
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverMapList);
-							break;
-						}
-						case 0x02: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverMapList);
-							break;
-						}
-						case 0x03: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_MainActivity);
-							break;
-						}
-						case 0x04: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverList);
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverMapList);
-							break;
-						}
-						case 0x05: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_Settings);
-							break;
-						}
-						case 0x06: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverList);
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverMapList);
-							break;
-						}
-						case 0x07: {
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverList);
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverMapList);
-							break;
-						}
-						case 0x08: {// ά��״̬�������ý��ճɹ���ACK��Ϣ
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverList);
-							getMessage(String.valueOf(messageBuff),
-									ACTION_CoverMapList);
-							break;
-						}
-						default:
-							Toast.makeText(getApplicationContext(),
-									"������������δ֪����", Toast.LENGTH_LONG)
-									.show();
-						}
+				byte[] totalMsg = new byte[2 + msgLength];
+				for (int i = 0; i < 2 + msgLength; i++) {
+					if (i < 2)
+						totalMsg[i] = length[i];
+					else
+						totalMsg[i] = msgBuff[i];
+				}
+				// functionStatus fs;
+				if (CoverUtils.isCRCRight(totalMsg, checkBuf)) {
+					switch (msgBuff[0]) {
+					case 0x01: {
+						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_CoverMapList);
+						break;
+					}
+					case 0x02: {
+						getMessage(msgBuff, ACTION_CoverMapList);
+						break;
+					}
+					case 0x03: {
+						getMessage(msgBuff, ACTION_MainActivity);
+						break;
+					}
+					case 0x04: {
+						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_CoverMapList);
+						break;
+					}
+					case 0x05: {
+						getMessage(msgBuff, ACTION_Settings);
+						break;
+					}
+					case 0x06: {
+						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_CoverMapList);
+						break;
+					}
+					case 0x07: {
+						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_CoverMapList);
+						break;
+					}
+					case 0x08: {// ά��״̬�������ý��ճɹ���ACK��Ϣ
+						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_CoverMapList);
+						break;
+					}
+					default:
+						Toast.makeText(getApplicationContext(),
+								"������������δ֪����", Toast.LENGTH_LONG)
+								.show();
 					}
 				}
 				// }
 				// bufferedReader.close();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-		}
-
-	}
-
-	private void convertByteToChar(byte[] cbuff, char[] charBuff, int size) {
-		for (int i = 0; i < charBuff.length; i++) {
-			if (i < size) {
-				charBuff[i] = (char) cbuff[i];
-			} else {
-				charBuff[i] = ' ';
 			}
 		}
 

@@ -1,5 +1,6 @@
 package com.cover.main;
 
+import com.cover.bean.Message;
 import com.cover.service.InternetService;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -23,7 +24,7 @@ import android.widget.Toast;
 
 @SuppressLint("NewApi")
 public class MainActivity extends Activity {
-	final String TAG = "MainActivity";
+	final static String TAG = "MainActivity";
 	private final String ACTION = "com.cover.service.IntenetService";
 	String msg = null;
 	String userName;
@@ -34,7 +35,8 @@ public class MainActivity extends Activity {
 	static String hostIp;
 	Button btn_test;
 	Button btn_ping;
-	static String recv;
+	static byte[] recv;
+	Message msgAsk = new Message();
 
 	InternetService internetService;
 	public ServiceConnection internetServiceConnection = new ServiceConnection() {
@@ -79,18 +81,26 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				userName = et_usr.getText().toString();
 				password = et_pwd.getText().toString();
-				String msg = userName + password;
-				byte[] msgBuff = msg.getBytes();
-				sendMessage("msg", ACTION);
+				String msg = "userName:" + userName + "password:" + password;
+				int length = 7+msg.length();
+				msgAsk.data = msg.getBytes();
+				msgAsk.function = 0x0c;
+				msgAsk.length = Integer.toHexString(length).getBytes();
+				byte[] checkMsg = new byte[3+msg.length()];
+				msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
+				sendMessage(msgAsk, ACTION);
 				System.out.println("test");
 			}
 		});
 	}
 
-	public void sendMessage(String msg, String action) {
+	public void sendMessage(Message msg, String action) {
 		Intent serviceIntent = new Intent();
 		serviceIntent.setAction(action);
-		serviceIntent.putExtra("msg", msg);
+		int length = msg.getLength();
+		byte[] totalMsg = new byte[length];
+		totalMsg = CoverUtils.msg2ByteArray(msg,length);
+		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
 		Log.i(TAG, action + "sned broadcast " + action);
 	}
@@ -106,9 +116,23 @@ public class MainActivity extends Activity {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			recv = intent.getStringExtra("msg");
-			Log.i("test", recv);
-			Toast.makeText(context, recv, Toast.LENGTH_SHORT).show();
+			recv = intent.getByteArrayExtra("msg");
+			if (recv[0] == 0x03) {
+				switch (recv[1]) {
+				case 0x01:
+					break;
+				case 0x02:
+					Toast.makeText(context, "用户名或密码错误", Toast.LENGTH_LONG)
+							.show();
+					break;
+				case 0x03:
+					Toast.makeText(context, "用户已登录", Toast.LENGTH_LONG).show();
+					break;
+				default:
+					Log.w(TAG, "wrong code");
+					Toast.makeText(context, "错误指令", Toast.LENGTH_LONG).show();
+				}
+			}
 		}
 
 	}

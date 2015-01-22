@@ -2,8 +2,8 @@ package com.cover.bean;
 
 /**
  * @NORMAL 正常
- * @Repair 维修状态
- * @Exception 1,2,3分别代表两种的异常状态
+ * @Repair 维修状�??
+ * @Exception 1,2,3分别代表两种的异常状�?
  * @author W
  *
  */
@@ -15,14 +15,14 @@ enum Status{
  * @author W
  *
  */
-public class Msg {	
+public class Entity {	
 	String id = null;
 	String name = null;
 	Status status = null; 
 	String tag = null;
 	String longtitude = null;
 	String latitude = null;
-	public Msg(String id,String name, Status status, String tag, String longtitude,
+	public Entity(String id,String name, Status status, String tag, String longtitude,
 			String latitude) {
 		super();
 		this.id = id;
@@ -35,7 +35,7 @@ public class Msg {
 	public String getId() {
 		return id;
 	}
-	public Msg() {
+	public Entity() {
 		super();
 	}
 	public Status getStatus() {

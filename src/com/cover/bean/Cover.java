@@ -1,6 +1,6 @@
 package com.cover.bean;
 
-public class Cover extends Msg{
+public class Cover extends Entity{
 	private String alarmAngle = null;
 	private String reportTime = null;
 	private String alarmFrequency = null;

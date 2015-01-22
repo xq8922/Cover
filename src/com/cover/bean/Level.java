@@ -1,6 +1,6 @@
 package com.cover.bean;
 
-public class Level extends Msg {
+public class Level extends Entity {
 	private String reportTime = null;
 	private String alarmFrequency = null;
 	
