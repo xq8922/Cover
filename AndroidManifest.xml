@@ -32,7 +32,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.cover.ui.CoverLis" />
+        <activity android:name="com.cover.ui.CoverList" />
         <activity android:name="com.cover.ui.CoverMapList" />
         <activity android:name="com.cover.ui.Detail" />
         <activity android:name="com.cover.ui.Settings" />

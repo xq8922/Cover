@@ -54,15 +54,18 @@ public class InternetService extends Service implements Runnable {
 	private Thread thread;
 	private String workStatus = "test";
 	private String currAction;
+	static boolean flag_send = false;
+	static byte[] msg;
 	ServiceReceiver myReceiver;
 	Message message = new Message();
 
-	private class ServiceReceiver extends BroadcastReceiver {
+	public static class ServiceReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			byte[] msg = intent.getByteArrayExtra("msg");
-			sendMessage(msg);
+			msg = intent.getByteArrayExtra("msg");
+			// sendMessage(msg);
+			flag_send = true;
 		}
 
 	}
@@ -71,7 +74,11 @@ public class InternetService extends Service implements Runnable {
 		try {
 			workStatus = null;
 			currAction = action.toString();
-			sendMessage(action);
+			if (flag_send && msg != null) {
+				sendMessage(action);
+				flag_send = false;
+				Log.i(TAG, "msg sent");
+			}
 		} catch (Exception e) {
 			workStatus = "sendmessage fail";
 		}
@@ -245,7 +252,8 @@ public class InternetService extends Service implements Runnable {
 				int size = 0;
 				size = bufferedReader.read(headerBuff);
 				if (!(headerBuff[0] == 0xFA || headerBuff[1] == 0xF5))
-					return;
+					;
+				// return;
 				byte[] length = new byte[2];
 				int msgLength = CoverUtils.getShort(length);
 				msgLength -= 6;

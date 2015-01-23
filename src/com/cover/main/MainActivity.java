@@ -2,6 +2,7 @@ package com.cover.main;
 
 import com.cover.bean.Message;
 import com.cover.service.InternetService;
+import com.cover.ui.CoverList;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
@@ -90,6 +91,10 @@ public class MainActivity extends Activity {
 				msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 				sendMessage(msgAsk, ACTION);
 				System.out.println("test");
+				
+				Intent intent = new Intent();
+				intent.setClass(MainActivity.this,CoverList.class);
+				startActivity(intent);
 			}
 		});
 	}
