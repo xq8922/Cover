@@ -65,6 +65,7 @@ public class InternetService extends Service implements Runnable {
 		public void onReceive(Context context, Intent intent) {
 			msg = intent.getByteArrayExtra("msg");
 			// sendMessage(msg);
+			Toast.makeText(context, msg.toString(), Toast.LENGTH_LONG).show();
 			flag_send = true;
 		}
 
@@ -104,8 +105,8 @@ public class InternetService extends Service implements Runnable {
 					writer = new PrintWriter(new BufferedWriter(
 							new OutputStreamWriter(socket.getOutputStream())),
 							true);
-					reader = new BufferedReader(new InputStreamReader(
-							socket.getInputStream()));
+					// reader = new BufferedReader(new InputStreamReader(
+					// socket.getInputStream()));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -125,8 +126,11 @@ public class InternetService extends Service implements Runnable {
 		}
 		if (!socket.isOutputShutdown()) {
 			try {
-				if (bs != null)
-					writer.println(bs);
+				if (msg != null) {
+					writer.println(msg);
+					Log.i(TAG, "msg sent " + msg.toString());
+					msg = null;
+				}
 			} catch (Exception e) {
 				Toast.makeText(getApplicationContext(), "output is shutdown",
 						Toast.LENGTH_LONG).show();
@@ -187,8 +191,7 @@ public class InternetService extends Service implements Runnable {
 			serviceIntent.setAction(action);
 			serviceIntent.putExtra("msg", msg);
 			sendBroadcast(serviceIntent);
-			Log.i(TAG, action
-					+ "send Broadcast in InternetService && action is "
+			Log.i(TAG, "send Broadcast in InternetService && action is "
 					+ action);
 		} catch (Exception e) {
 			Log.e(TAG, e.toString());
@@ -224,6 +227,11 @@ public class InternetService extends Service implements Runnable {
 					if (!socket.isInputShutdown()) {
 						// sendMessage("hello".getBytes());
 						new Thread(new Reader()).start();
+					}
+					if (msg != null && flag_send) {
+						sendMessage(msg);
+						flag_send = false;
+						Log.i(TAG, "message send to server .");
 					}
 				} else {
 					connectService();

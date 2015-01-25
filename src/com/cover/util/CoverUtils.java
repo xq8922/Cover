@@ -16,7 +16,7 @@ import android.util.Log;
 public class CoverUtils {
 
 	/**
-	 * 判段是否可以连接网络
+	 * judge network is available or not
 	 * 
 	 * @param activity
 	 * @return
@@ -39,15 +39,18 @@ public class CoverUtils {
 		}
 
 	}
+
 	/**
+	 * convert byte to char
 	 * 
 	 * @param cbuff
 	 * @param charBuff
 	 * @param size
-	 * @return
+	 * @return char[]
 	 */
-	public static char[] convertByteToChar(byte[] cbuff, char[] charBuff,
-			int size) {
+	public static char[] convertByteArrToChar(byte[] cbuff) {
+		int size = cbuff.length;
+		char[] charBuff = new char[size];
 		for (int i = 0; i < charBuff.length; i++) {
 			if (i < size) {
 				charBuff[i] = (char) cbuff[i];
@@ -59,7 +62,7 @@ public class CoverUtils {
 	}
 
 	/**
-	 * 获取本地ip
+	 * get local phone ip
 	 * 
 	 * @return
 	 */
@@ -84,6 +87,8 @@ public class CoverUtils {
 
 	/**
 	 * is crcRight
+	 * 
+	 * @return crc is right or not
 	 */
 	public static boolean isCRCRight(byte[] ucCRC_Buf, byte[] check) {
 		short uiX, uiY, uiCRC;
@@ -110,7 +115,7 @@ public class CoverUtils {
 	/**
 	 * gen CRCCHECK
 	 * 
-	 * @param msg
+	 * @return byte[]
 	 */
 	public static byte[] genCRC(byte[] ucCRC_Buf, int ucBufLength) {
 		short uiX, uiY, uiCRC;
@@ -165,6 +170,8 @@ public class CoverUtils {
 
 	/**
 	 * short2byte
+	 * 
+	 * @return return byte[]
 	 */
 	public static byte[] short2ByteArray(short s) {
 		byte[] shortBuf = new byte[2];
@@ -176,7 +183,7 @@ public class CoverUtils {
 	}
 
 	/**
-	 * form
+	 * form byte[] from Message
 	 */
 	public static byte[] msg2ByteArray(Message msg, int length) {
 		byte[] totalMsg = new byte[length];
@@ -190,6 +197,24 @@ public class CoverUtils {
 			totalMsg[j++] = msg.data[i];
 		for (int i = 0; i < msg.check.length; i++)
 			totalMsg[j++] = msg.check[i];
+		return totalMsg;
+	}
+
+	/**
+	 * form byte[] from Message except check
+	 */
+	public static byte[] msg2ByteArrayExcepteCheck(Message msg) {
+		byte[] totalMsg = new byte[msg.getLength() - 2];
+		int j = 0;
+		totalMsg[j++] = msg.header1;
+		totalMsg[j++] = msg.header2;
+		for (int i = 0; i < msg.length.length; i++) {
+			totalMsg[j++] = msg.length[i];
+		}
+		totalMsg[j++] = msg.function;
+		for (int i = 0; i < msg.data.length; i++) {
+			totalMsg[j++] = msg.data[i];
+		}
 		return totalMsg;
 	}
 }
