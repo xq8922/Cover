@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/ll_coverlist_top"
-		android:layout_above="@id/ll_coverlist_bottom"
+		android:layout_above="@+id/ll_coverlist_bottom"
         android:orientation="vertical" >
 
         <View

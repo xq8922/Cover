@@ -15,6 +15,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.sax.StartElementListener;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -83,17 +84,17 @@ public class MainActivity extends Activity {
 				userName = et_usr.getText().toString();
 				password = et_pwd.getText().toString();
 				String msg = "userName:" + userName + "password:" + password;
-				int length = 7+msg.length();
+				int length = 7 + msg.length();
 				msgAsk.data = msg.getBytes();
 				msgAsk.function = 0x0c;
 				msgAsk.length = Integer.toHexString(length).getBytes();
-				byte[] checkMsg = new byte[3+msg.length()];
+				byte[] checkMsg = new byte[3 + msg.length()];
 				msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 				sendMessage(msgAsk, ACTION);
 				System.out.println("test");
-				
+
 				Intent intent = new Intent();
-				intent.setClass(MainActivity.this,CoverList.class);
+				intent.setClass(MainActivity.this, CoverList.class);
 				startActivity(intent);
 			}
 		});
@@ -104,7 +105,7 @@ public class MainActivity extends Activity {
 		serviceIntent.setAction(action);
 		int length = msg.getLength();
 		byte[] totalMsg = new byte[length];
-		totalMsg = CoverUtils.msg2ByteArray(msg,length);
+		totalMsg = CoverUtils.msg2ByteArray(msg, length);
 		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
 		Log.i(TAG, action + "sned broadcast " + action);
@@ -125,6 +126,9 @@ public class MainActivity extends Activity {
 			if (recv[0] == 0x03) {
 				switch (recv[1]) {
 				case 0x01:
+					Intent i = new Intent();
+					i.setClass(context, CoverList.class);
+					context.startActivity(i);
 					break;
 				case 0x02:
 					Toast.makeText(context, "用户名或密码错误", Toast.LENGTH_LONG)
