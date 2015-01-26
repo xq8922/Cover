@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
@@ -33,7 +34,7 @@ enum functionStatus {
 }
 
 public class InternetService extends Service implements Runnable {
-	private final String TAG = "COVER";
+	private final static String TAG = "COVER";
 
 	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
 	private static final String ACTION_CoverList = "com.cover.coverlist";
@@ -42,11 +43,12 @@ public class InternetService extends Service implements Runnable {
 	private static final String ACTION_Settings = "com.cover.settings";
 	private static final String ACTION_SoftwareSettings = "com.cover.softwaresettings";
 	// public String ip = "192.168.0.1";
-	// public String ip = "219.244.118.30";
-	// public String ip = "192.168.42.145";
-	public String ip = "192.168.100.102";
+	// public String ip = "219.244.118.168";
+	// public String ip = "192.168.0.01";
+	public String ip = "124.115.169.98";
+	// public String ip = "192.168.100.201";
 	// public String ip = "219.245.66.226";
-	public int port = 10001;
+	public int port = 6221;
 	private Socket socket;
 	private BufferedReader reader;
 	private PrintWriter writer;
@@ -55,7 +57,7 @@ public class InternetService extends Service implements Runnable {
 	private String workStatus = "test";
 	private String currAction;
 	static boolean flag_send = false;
-	static byte[] msg;
+	static byte[] msg = null;
 	ServiceReceiver myReceiver;
 	Message message = new Message();
 
@@ -64,6 +66,7 @@ public class InternetService extends Service implements Runnable {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			msg = intent.getByteArrayExtra("msg");
+			Log.i(TAG, msg.toString());
 			// sendMessage(msg);
 			Toast.makeText(context, msg.toString(), Toast.LENGTH_LONG).show();
 			flag_send = true;
@@ -102,9 +105,13 @@ public class InternetService extends Service implements Runnable {
 		} else {
 			if (bs != null) {
 				try {
-					writer = new PrintWriter(new BufferedWriter(
-							new OutputStreamWriter(socket.getOutputStream())),
-							true);
+					 writer = new PrintWriter(new BufferedWriter(
+					 new OutputStreamWriter(socket.getOutputStream())),
+					 true);
+//					OutputStream ops = socket.getOutputStream();
+//					OutputStreamWriter opsw = new OutputStreamWriter(ops);
+//					BufferedWriter bw = new BufferedWriter(opsw);
+//					bw.write()
 					// reader = new BufferedReader(new InputStreamReader(
 					// socket.getInputStream()));
 				} catch (IOException e) {
@@ -127,7 +134,17 @@ public class InternetService extends Service implements Runnable {
 		if (!socket.isOutputShutdown()) {
 			try {
 				if (msg != null) {
-					writer.println(msg);
+					// msg = {0xFA};
+//					OutputStream ops = socket.getOutputStream();
+//					OutputStreamWriter opsw = new OutputStreamWriter(ops);
+//					BufferedWriter bw = new BufferedWriter(opsw);
+//					writer.println(msg);
+//					bw.write("hello".getBytes());
+//					bw.flush();
+					OutputStream socketWriter = socket.getOutputStream();
+					socketWriter.write(msg);
+					System.out.println("OK");
+					socketWriter.flush();
 					Log.i(TAG, "msg sent " + msg.toString());
 					msg = null;
 				}
@@ -217,6 +234,7 @@ public class InternetService extends Service implements Runnable {
 
 	}
 
+	// Thread t = new Thread();
 	@Override
 	public void run() {
 		try {
@@ -226,7 +244,7 @@ public class InternetService extends Service implements Runnable {
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						// sendMessage("hello".getBytes());
-						new Thread(new Reader()).start();
+						// new Thread(new Reader()).start();
 					}
 					if (msg != null && flag_send) {
 						sendMessage(msg);
@@ -319,8 +337,7 @@ public class InternetService extends Service implements Runnable {
 					}
 					default:
 						Toast.makeText(getApplicationContext(),
-								"������������δ֪����", Toast.LENGTH_LONG)
-								.show();
+								"������������δ֪����", Toast.LENGTH_LONG).show();
 					}
 				}
 				// }
@@ -348,6 +365,12 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void onDestroy() {
+		try {
+			socket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		super.onDestroy();
 		Log.v("QLQ", "service is on destroy");
 	}

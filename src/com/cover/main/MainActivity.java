@@ -1,8 +1,12 @@
 package com.cover.main;
 
+import java.io.UnsupportedEncodingException;
+
 import com.cover.bean.Message;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
+import com.cover.util.CRC16;
+import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
@@ -83,13 +87,28 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				userName = et_usr.getText().toString();
 				password = et_pwd.getText().toString();
-				String msg = "userName:" + userName + "password:" + password;
+				userName = "13468833168";
+				password = "1234";
+				String msg = userName + password;
 				int length = 7 + msg.length();
 				msgAsk.data = msg.getBytes();
-				msgAsk.function = 0x0c;
-				msgAsk.length = Integer.toHexString(length).getBytes();
-				byte[] checkMsg = new byte[3 + msg.length()];
-				msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
+				msgAsk.function = Integer.valueOf("0C", 16).byteValue();
+				msgAsk.length = CoverUtils.short2ByteArray((short) length);
+				byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msgAsk);
+				CRC16M crc = new CRC16M();
+				String str = bytes2HexString(checkMsg);
+//				byte[] tmp = str.getBytes();
+				byte[] str_ = crc.getSendBuf(bytes2HexString(checkMsg));
+//				try {
+					msgAsk.check[0] = str_[str_.length-1];
+					msgAsk.check[1] = str_[str_.length-2];
+//					msgAsk.check = crc.getSendBuf(checkMsg.toString());
+//				} catch (UnsupportedEncodingException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				msgAsk.check = CoverUtils.short2ByteArray(new CRC16().getCrc(checkMsg));
+//				msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 				sendMessage(msgAsk, ACTION);
 				System.out.println("test");
 
@@ -99,7 +118,17 @@ public class MainActivity extends Activity {
 			}
 		});
 	}
-
+	public static String bytes2HexString(byte[] b) {  
+		  String ret = "";  
+		  for (int i = 0; i < b.length; i++) {  
+		   String hex = Integer.toHexString(b[ i ] & 0xFF);  
+		   if (hex.length() == 1) {  
+		    hex = '0' + hex;  
+		   }  
+		   ret += hex.toUpperCase();  
+		  }  
+		  return ret;  
+		}  
 	public void sendMessage(Message msg, String action) {
 		Intent serviceIntent = new Intent();
 		serviceIntent.setAction(action);
