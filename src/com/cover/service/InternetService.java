@@ -15,6 +15,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 
 import com.cover.bean.Message;
+import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 
 import android.app.Service;
@@ -59,6 +60,7 @@ public class InternetService extends Service implements Runnable {
 	static boolean flag_send = false;
 	static byte[] msg = null;
 	ServiceReceiver myReceiver;
+	boolean flagReaderThread = true;
 	Message message = new Message();
 
 	public static class ServiceReceiver extends BroadcastReceiver {
@@ -244,7 +246,7 @@ public class InternetService extends Service implements Runnable {
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						// sendMessage("hello".getBytes());
-						// new Thread(new Reader()).start();
+						 new Thread(new Reader()).start();
 					}
 					if (msg != null && flag_send) {
 						sendMessage(msg);
@@ -275,28 +277,38 @@ public class InternetService extends Service implements Runnable {
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
 				byte[] headerBuff = new byte[2];
+				Message msg = new Message();
 				int size = 0;
 				size = bufferedReader.read(headerBuff);
 				if (!(headerBuff[0] == 0xFA || headerBuff[1] == 0xF5))
-					;
-				// return;
+					return;
 				byte[] length = new byte[2];
+				size = bufferedReader.read(length);
 				int msgLength = CoverUtils.getShort(length);
-				msgLength -= 6;
-				System.out.println(msgLength);
-				byte[] msgBuff = new byte[msgLength];
+//				msgLength -= 6;
+				System.out.println(msgLength-6);
+				byte[] msgBuff = new byte[msgLength-6];
 				size = bufferedReader.read(msgBuff);// set chaoshi
 				byte[] checkBuf = new byte[2];
 				size = bufferedReader.read(checkBuf);
-				byte[] totalMsg = new byte[2 + msgLength];
-				for (int i = 0; i < 2 + msgLength; i++) {
-					if (i < 2)
-						totalMsg[i] = length[i];
-					else
-						totalMsg[i] = msgBuff[i];
+				byte[] totalMsg = new byte[msgLength];
+				int j = 0;
+				totalMsg[j++] = (byte) 0xFA;
+				totalMsg[j++] = (byte) 0xF5;
+				for (int i = 0; i < 2; i++) {
+					totalMsg[j++] = length[i];
+					msg.length[i] = length[i];
 				}
-				// functionStatus fs;
-				if (CoverUtils.isCRCRight(totalMsg, checkBuf)) {
+				for(int i = 0;i < msgBuff.length;i ++){
+					totalMsg[j++] = msgBuff[i];
+					if(i == 0)
+						msg.function = totalMsg[i];
+					else{
+						msg.data[i] = totalMsg[i];
+					}
+				}
+//				byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
+				if(CRC16M.checkBuf(CoverUtils.msg2ByteArrayExcepteCheck(msg))){
 					switch (msgBuff[0]) {
 					case 0x01: {
 						getMessage(msgBuff, ACTION_CoverList);

@@ -23,7 +23,7 @@ public class CoverMapList extends Activity {
 
 		@Override
 		public void onReceive(Context arg0, Intent arg1) {
-
+			
 		}
 
 	}
