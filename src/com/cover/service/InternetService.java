@@ -60,7 +60,7 @@ public class InternetService extends Service implements Runnable {
 	static boolean flag_send = false;
 	static byte[] msg = null;
 	ServiceReceiver myReceiver;
-	boolean flagReaderThread = true;
+	boolean flagReaderThread = false;
 	Message message = new Message();
 
 	public static class ServiceReceiver extends BroadcastReceiver {
@@ -246,7 +246,8 @@ public class InternetService extends Service implements Runnable {
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						// sendMessage("hello".getBytes());
-						new Thread(new Reader()).start();
+						if(!flagReaderThread)
+							new Thread(new Reader()).start();
 					}
 					if (msg != null && flag_send) {
 						sendMessage(msg);
@@ -273,22 +274,23 @@ public class InternetService extends Service implements Runnable {
 
 		@Override
 		public void run() {
+			flagReaderThread = true;
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
-				byte[] headerBuff = new byte[2];
 				Message msg = new Message();
 				int size = 0;
+				byte[] headerBuff = new byte[2];
 				size = bufferedReader.read(headerBuff);
 				if (!(headerBuff[0] == 0xFA || headerBuff[1] == 0xF5))
 					return;
 				byte[] length = new byte[2];
 				size = bufferedReader.read(length);
 				int msgLength = CoverUtils.getShort(length);
-				// msgLength -= 6;
 				System.out.println(msgLength - 6);
 				byte[] msgBuff = new byte[msgLength - 6];
-				size = bufferedReader.read(msgBuff);// set chaoshi
+				// set chaoshi;msgBuff includes function && data;
+				size = bufferedReader.read(msgBuff);
 				byte[] checkBuf = new byte[2];
 				size = bufferedReader.read(checkBuf);
 				msg.check[0] = checkBuf[0];
@@ -297,7 +299,7 @@ public class InternetService extends Service implements Runnable {
 				int j = 0;
 				totalMsg[j++] = (byte) 0xFA;
 				totalMsg[j++] = (byte) 0xF5;
-				for (int i = 0; i < 2; i++) {
+				for (int i = 0; i < length.length; i++) {
 					totalMsg[j++] = length[i];
 					msg.length[i] = length[i];
 				}
@@ -309,14 +311,16 @@ public class InternetService extends Service implements Runnable {
 						msg.data[i] = totalMsg[i];
 					}
 				}
+				totalMsg[j++] = checkBuf[0];
+				totalMsg[j++] = checkBuf[1];
 				// byte[] check =
 				// CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
-				if (CRC16M.checkBuf(CoverUtils.msg2ByteArray(msg,
-						msg.getLength() - 4))) {
+				if (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExcepteCheck(msg))) {
 					switch (msgBuff[0]) {
 					case 0x01: {
 						getMessage(msgBuff, ACTION_CoverList);
 						getMessage(msgBuff, ACTION_CoverMapList);
+						//when alarm,need alarm
 						break;
 					}
 					case 0x02: {
@@ -361,6 +365,7 @@ public class InternetService extends Service implements Runnable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			flagReaderThread = false;
 		}
 	}
 
