@@ -5,7 +5,6 @@ import java.io.UnsupportedEncodingException;
 import com.cover.bean.Message;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
-import com.cover.util.CRC16;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
