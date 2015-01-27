@@ -107,13 +107,13 @@ public class InternetService extends Service implements Runnable {
 		} else {
 			if (bs != null) {
 				try {
-					 writer = new PrintWriter(new BufferedWriter(
-					 new OutputStreamWriter(socket.getOutputStream())),
-					 true);
-//					OutputStream ops = socket.getOutputStream();
-//					OutputStreamWriter opsw = new OutputStreamWriter(ops);
-//					BufferedWriter bw = new BufferedWriter(opsw);
-//					bw.write()
+					writer = new PrintWriter(new BufferedWriter(
+							new OutputStreamWriter(socket.getOutputStream())),
+							true);
+					// OutputStream ops = socket.getOutputStream();
+					// OutputStreamWriter opsw = new OutputStreamWriter(ops);
+					// BufferedWriter bw = new BufferedWriter(opsw);
+					// bw.write()
 					// reader = new BufferedReader(new InputStreamReader(
 					// socket.getInputStream()));
 				} catch (IOException e) {
@@ -137,12 +137,12 @@ public class InternetService extends Service implements Runnable {
 			try {
 				if (msg != null) {
 					// msg = {0xFA};
-//					OutputStream ops = socket.getOutputStream();
-//					OutputStreamWriter opsw = new OutputStreamWriter(ops);
-//					BufferedWriter bw = new BufferedWriter(opsw);
-//					writer.println(msg);
-//					bw.write("hello".getBytes());
-//					bw.flush();
+					// OutputStream ops = socket.getOutputStream();
+					// OutputStreamWriter opsw = new OutputStreamWriter(ops);
+					// BufferedWriter bw = new BufferedWriter(opsw);
+					// writer.println(msg);
+					// bw.write("hello".getBytes());
+					// bw.flush();
 					OutputStream socketWriter = socket.getOutputStream();
 					socketWriter.write(msg);
 					System.out.println("OK");
@@ -246,7 +246,7 @@ public class InternetService extends Service implements Runnable {
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						// sendMessage("hello".getBytes());
-						 new Thread(new Reader()).start();
+						new Thread(new Reader()).start();
 					}
 					if (msg != null && flag_send) {
 						sendMessage(msg);
@@ -285,12 +285,14 @@ public class InternetService extends Service implements Runnable {
 				byte[] length = new byte[2];
 				size = bufferedReader.read(length);
 				int msgLength = CoverUtils.getShort(length);
-//				msgLength -= 6;
-				System.out.println(msgLength-6);
-				byte[] msgBuff = new byte[msgLength-6];
+				// msgLength -= 6;
+				System.out.println(msgLength - 6);
+				byte[] msgBuff = new byte[msgLength - 6];
 				size = bufferedReader.read(msgBuff);// set chaoshi
 				byte[] checkBuf = new byte[2];
 				size = bufferedReader.read(checkBuf);
+				msg.check[0] = checkBuf[0];
+				msg.check[1] = checkBuf[1];
 				byte[] totalMsg = new byte[msgLength];
 				int j = 0;
 				totalMsg[j++] = (byte) 0xFA;
@@ -299,16 +301,18 @@ public class InternetService extends Service implements Runnable {
 					totalMsg[j++] = length[i];
 					msg.length[i] = length[i];
 				}
-				for(int i = 0;i < msgBuff.length;i ++){
+				for (int i = 0; i < msgBuff.length; i++) {
 					totalMsg[j++] = msgBuff[i];
-					if(i == 0)
+					if (i == 0)
 						msg.function = totalMsg[i];
-					else{
+					else {
 						msg.data[i] = totalMsg[i];
 					}
 				}
-//				byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
-				if(CRC16M.checkBuf(CoverUtils.msg2ByteArrayExcepteCheck(msg))){
+				// byte[] check =
+				// CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
+				if (CRC16M.checkBuf(CoverUtils.msg2ByteArray(msg,
+						msg.getLength() - 4))) {
 					switch (msgBuff[0]) {
 					case 0x01: {
 						getMessage(msgBuff, ACTION_CoverList);
@@ -358,7 +362,6 @@ public class InternetService extends Service implements Runnable {
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 	@Override

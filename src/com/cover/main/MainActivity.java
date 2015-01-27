@@ -96,18 +96,20 @@ public class MainActivity extends Activity {
 				msgAsk.length = CoverUtils.short2ByteArray((short) length);
 				byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msgAsk);
 				CRC16M crc = new CRC16M();
-//				String str = bytes2HexString(checkMsg);
-//				byte[] tmp = str.getBytes();
-				byte[] str_ = CRC16M.getSendBuf(CoverUtils.bytes2HexString(checkMsg));
-//				try {
-					msgAsk.check[0] = str_[str_.length-1];
-					msgAsk.check[1] = str_[str_.length-2];
-//					msgAsk.check = crc.getSendBuf(checkMsg.toString());
-//				} catch (UnsupportedEncodingException e) {
-//					e.printStackTrace();
-//				}
-//				msgAsk.check = CoverUtils.short2ByteArray(new CRC16().getCrc(checkMsg));
-//				msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
+				// String str = bytes2HexString(checkMsg);
+				// byte[] tmp = str.getBytes();
+				byte[] str_ = CRC16M.getSendBuf(CoverUtils
+						.bytes2HexString(checkMsg));
+				// try {
+				msgAsk.check[0] = str_[str_.length - 1];
+				msgAsk.check[1] = str_[str_.length - 2];
+				// msgAsk.check = crc.getSendBuf(checkMsg.toString());
+				// } catch (UnsupportedEncodingException e) {
+				// e.printStackTrace();
+				// }
+				// msgAsk.check = CoverUtils.short2ByteArray(new
+				// CRC16().getCrc(checkMsg));
+				// msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 				sendMessage(msgAsk, ACTION);
 				System.out.println("test");
 
@@ -117,17 +119,18 @@ public class MainActivity extends Activity {
 			}
 		});
 	}
-//	public static String bytes2HexString(byte[] b) {  
-//		  String ret = "";  
-//		  for (int i = 0; i < b.length; i++) {  
-//		   String hex = Integer.toHexString(b[ i ] & 0xFF);  
-//		   if (hex.length() == 1) {  
-//		    hex = '0' + hex;  
-//		   }  
-//		   ret += hex.toUpperCase();  
-//		  }  
-//		  return ret;  
-//		}  
+
+	// public static String bytes2HexString(byte[] b) {
+	// String ret = "";
+	// for (int i = 0; i < b.length; i++) {
+	// String hex = Integer.toHexString(b[ i ] & 0xFF);
+	// if (hex.length() == 1) {
+	// hex = '0' + hex;
+	// }
+	// ret += hex.toUpperCase();
+	// }
+	// return ret;
+	// }
 	public void sendMessage(Message msg, String action) {
 		Intent serviceIntent = new Intent();
 		serviceIntent.setAction(action);

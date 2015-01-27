@@ -16,17 +16,17 @@ import android.net.NetworkInfo;
 import android.util.Log;
 
 public class CoverUtils {
-	public static String bytes2HexString(byte[] b) {  
-		  String ret = "";  
-		  for (int i = 0; i < b.length; i++) {  
-		   String hex = Integer.toHexString(b[ i ] & 0xFF);  
-		   if (hex.length() == 1) {  
-		    hex = '0' + hex;  
-		   }  
-		   ret += hex.toUpperCase();  
-		  }  
-		  return ret;  
-		}  
+	public static String bytes2HexString(byte[] b) {
+		String ret = "";
+		for (int i = 0; i < b.length; i++) {
+			String hex = Integer.toHexString(b[i] & 0xFF);
+			if (hex.length() == 1) {
+				hex = '0' + hex;
+			}
+			ret += hex.toUpperCase();
+		}
+		return ret;
+	}
 
 	/**
 	 * judge network is available or not
@@ -138,7 +138,7 @@ public class CoverUtils {
 			uiCRC = 0;
 		else {
 			ucBufLength += ucStart;
-			for (uiX = (short)ucStart; uiX < ucBufLength; uiX++) {
+			for (uiX = (short) ucStart; uiX < ucBufLength; uiX++) {
 				uiCRC = (short) (uiCRC ^ ucCRC_Buf[uiX]);
 				for (uiY = 0; uiY <= 7; uiY++) {
 					if ((uiCRC & 1) != 0)
@@ -150,30 +150,27 @@ public class CoverUtils {
 		}
 		System.out.println(Integer.toHexString(uiCRC));
 		return short2ByteArray(uiCRC);
-		
+
 	}
-	
-    private short CreateCRC(byte[] Array, int Len)
-    {
-        short IX, IY, CRC;
-        CRC = (short) 0xFFFF;//set all 1
-        if (Len <= 0)
-            CRC = 0;
-        else
-        {
-            Len--;
-            for (IX = 0; IX <= Len; IX++)
-            {
-                CRC = (short)(CRC ^ Array[IX]);
-                for (IY = 0; IY <= 7; IY++)
-                    if ((CRC & 1) != 0)
-                        CRC = (short)((CRC >> 1) ^ 0xA001);
-                    else
-                        CRC = (short)(CRC >> 1);
-            }
-        }
-        return CRC;
-    }
+
+	private short CreateCRC(byte[] Array, int Len) {
+		short IX, IY, CRC;
+		CRC = (short) 0xFFFF;// set all 1
+		if (Len <= 0)
+			CRC = 0;
+		else {
+			Len--;
+			for (IX = 0; IX <= Len; IX++) {
+				CRC = (short) (CRC ^ Array[IX]);
+				for (IY = 0; IY <= 7; IY++)
+					if ((CRC & 1) != 0)
+						CRC = (short) ((CRC >> 1) ^ 0xA001);
+					else
+						CRC = (short) (CRC >> 1);
+			}
+		}
+		return CRC;
+	}
 
 	/**
 	 * sendMessage throw broadcast
@@ -216,10 +213,10 @@ public class CoverUtils {
 		// int offset = (shortBuf.length - 1 - i) * 8;
 		// shortBuf[i] = (byte) ((s >>> offset) & 0xff);
 		// }
-//		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//		DataOutputStream dos = new DataOutputStream(baos);
+		// ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		// DataOutputStream dos = new DataOutputStream(baos);
 
-//		((String) baos).getBytes();
+		// ((String) baos).getBytes();
 
 		shortBuf[0] = (byte) ((s & 0xFF00) >> 8);
 		shortBuf[1] = (byte) (s & 0xFF);
@@ -249,7 +246,7 @@ public class CoverUtils {
 	 * form byte[] from Message except check
 	 */
 	public static byte[] msg2ByteArrayExcepteCheck(Message msg) {
-		byte[] totalMsg = new byte[msg.length.length+1+msg.data.length];
+		byte[] totalMsg = new byte[msg.length.length + 1 + msg.data.length];
 		int j = 0;
 		for (int i = 0; i < msg.length.length; i++) {
 			totalMsg[j++] = msg.length[i];

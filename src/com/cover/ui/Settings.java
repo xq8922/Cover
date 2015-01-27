@@ -21,23 +21,23 @@ public class Settings extends Activity {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings);
-		
-		//ask for result of settings
-//		int le+ngth = 7 + msg.length();
-//		askMsg.length
-//		msgAsk.data = msg.getBytes();
-//		msgAsk.function = 0x0c;
-//		msgAsk.length = Integer.toHexString(length).getBytes();
-//		byte[] checkMsg = new byte[3 + msg.length()];
-//		msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
-//		sendMessage()
+
+		// ask for result of settings
+		// int le+ngth = 7 + msg.length();
+		// askMsg.length
+		// msgAsk.data = msg.getBytes();
+		// msgAsk.function = 0x0c;
+		// msgAsk.length = Integer.toHexString(length).getBytes();
+		// byte[] checkMsg = new byte[3 + msg.length()];
+		// msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
+		// sendMessage()
 	}
 
 	public static class SettingsReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			
+
 		}
 
 	}

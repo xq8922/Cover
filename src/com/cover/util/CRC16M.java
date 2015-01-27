@@ -263,11 +263,13 @@ public class CRC16M {
 
 	private static byte uniteBytes(byte src0, byte src1) {
 
-		byte _b0 = Byte.decode("0x" + new String(new byte[] { src0 })).byteValue();
+		byte _b0 = Byte.decode("0x" + new String(new byte[] { src0 }))
+				.byteValue();
 
 		_b0 = (byte) (_b0 << 4);
 
-		byte _b1 = Byte.decode("0x" + new String(new byte[] { src1 })).byteValue();
+		byte _b1 = Byte.decode("0x" + new String(new byte[] { src1 }))
+				.byteValue();
 
 		byte ret = (byte) (_b0 ^ _b1);
 
@@ -359,9 +361,9 @@ public class CRC16M {
 
 		// TODO Auto-generated method stub
 
-//		byte[] sbuf = CRC16M.getSendBuf("010304f8003fac");
-//
-//		System.out.println(CRC16M.getBufHexStr(sbuf));
+		// byte[] sbuf = CRC16M.getSendBuf("010304f8003fac");
+		//
+		// System.out.println(CRC16M.getBufHexStr(sbuf));
 
 	}
 
