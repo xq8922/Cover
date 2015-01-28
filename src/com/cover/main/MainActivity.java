@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import com.cover.bean.Message;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
+import com.cover.ui.CoverMapList;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -69,6 +70,7 @@ public class MainActivity extends Activity {
 					Toast.LENGTH_SHORT).show();
 			return;
 		}
+		
 		bindService(new Intent(MainActivity.this, InternetService.class),
 				internetServiceConnection, Context.BIND_AUTO_CREATE);
 		// myBroadcast = new MyBroadcast();
@@ -99,6 +101,7 @@ public class MainActivity extends Activity {
 				msgAsk.check[0] = str_[str_.length - 1];
 				msgAsk.check[1] = str_[str_.length - 2];				
 				sendMessage(msgAsk, ACTION);
+				
 				System.out.println("test");
 			}
 		});
@@ -131,7 +134,9 @@ public class MainActivity extends Activity {
 				switch (recv[1]) {
 				case 0x01:
 					Intent i = new Intent();
-					i.setClass(context, CoverList.class);
+//					i.setClass(context, CoverList.class);
+					i.setClass(context, CoverMapList.class);
+					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 					context.startActivity(i);
 					break;
 				case 0x02:

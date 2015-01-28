@@ -246,8 +246,9 @@ public class InternetService extends Service implements Runnable {
 				if (socket.isConnected()) {
 					if (!socket.isInputShutdown()) {
 						// sendMessage("hello".getBytes());
-						if(!flagReaderThread)
+						if (!flagReaderThread)
 							new Thread(new Reader()).start();
+						// socket.
 					}
 					if (msg != null && flag_send) {
 						sendMessage(msg);
@@ -278,21 +279,33 @@ public class InternetService extends Service implements Runnable {
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
+
+				// bufferedReader.close();
+				// bufferedReader = new DataInputStream(
+				// socket.getInputStream());
 				Message msg = new Message();
 				int size = 0;
 				byte[] headerBuff = new byte[2];
 				size = bufferedReader.read(headerBuff);
-				if (!(headerBuff[0] == 0xFA || headerBuff[1] == 0xF5))
+
+				if (!((headerBuff[0] == (byte) 0xFA) && (headerBuff[1] == (byte) 0xF5))) {
+					flagReaderThread = false;
+					// bufferedReader;
 					return;
+				}
 				byte[] length = new byte[2];
 				size = bufferedReader.read(length);
+				byte[] length_temp = new byte[2];
+				for (int i = 0; i < length.length; i++)
+					length_temp[i] = length[i];
 				int msgLength = CoverUtils.getShort(length);
 				System.out.println(msgLength - 6);
 				byte[] msgBuff = new byte[msgLength - 6];
-				// set chaoshi;msgBuff includes function && data;
 				size = bufferedReader.read(msgBuff);
+
 				byte[] checkBuf = new byte[2];
 				size = bufferedReader.read(checkBuf);
+
 				msg.check[0] = checkBuf[0];
 				msg.check[1] = checkBuf[1];
 				byte[] totalMsg = new byte[msgLength];
@@ -300,27 +313,41 @@ public class InternetService extends Service implements Runnable {
 				totalMsg[j++] = (byte) 0xFA;
 				totalMsg[j++] = (byte) 0xF5;
 				for (int i = 0; i < length.length; i++) {
-					totalMsg[j++] = length[i];
-					msg.length[i] = length[i];
+					totalMsg[j++] = length_temp[i];
+					msg.length[i] = length_temp[i];
 				}
-				for (int i = 0; i < msgBuff.length; i++) {
+				msg.data = new byte[msgBuff.length - 1];
+				for (int i = 0, k = 0; i < msgBuff.length; i++) {
 					totalMsg[j++] = msgBuff[i];
 					if (i == 0)
-						msg.function = totalMsg[i];
+						msg.function = msgBuff[i];
 					else {
-						msg.data[i] = totalMsg[i];
+						msg.data[k++] = msgBuff[i];
 					}
 				}
 				totalMsg[j++] = checkBuf[0];
 				totalMsg[j++] = checkBuf[1];
 				// byte[] check =
 				// CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
-				if (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExcepteCheck(msg))) {
+				byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
+				byte[] str_ = CRC16M.getSendBuf(CoverUtils
+						.bytes2HexString(checkMsg));
+				byte[] check_temp = new byte[2];
+				check_temp[0] = str_[str_.length - 1];
+				check_temp[1] = str_[str_.length - 2];
+				boolean f = CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg));
+//				if ((check_temp[0] == msg.check[0])
+//						&& (check_temp[1] == msg.check[1]))
+				{
+					Log.i(TAG, "check right");
+					// if
+					// (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg)))
+					// {
 					switch (msgBuff[0]) {
-					case 0x01: {
+					case 0x01: {//需要处理报警信息ack
 						getMessage(msgBuff, ACTION_CoverList);
 						getMessage(msgBuff, ACTION_CoverMapList);
-						//when alarm,need alarm
+						// when alarm,need alarm
 						break;
 					}
 					case 0x02: {

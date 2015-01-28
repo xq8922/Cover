@@ -7,8 +7,8 @@ public class Message {
 	public byte function;
 	public byte[] data;
 	public byte[] check = new byte[2];
-	
-	public int getLength(){
-		return 7+data.length;
+
+	public int getLength() {
+		return 7 + (data == null ? 0 : data.length);
 	}
 }

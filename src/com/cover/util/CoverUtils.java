@@ -16,6 +16,63 @@ import android.net.NetworkInfo;
 import android.util.Log;
 
 public class CoverUtils {
+	/**
+	 * make askMessage
+	 */
+	public static Message makeMessageExceptCheck(byte function,byte[] length,byte[] data){
+		Message askMsg = new Message();
+		askMsg.function = function;
+		askMsg.length = length;
+		askMsg.data = data;
+		return askMsg;
+	}
+	/**
+	 * 
+	 * @param context
+	 * @param msg
+	 * @param action
+	 */
+	public static void sendMessage(Context context,Message msg, String action) {
+		Intent serviceIntent = new Intent();
+		serviceIntent.setAction(action);
+		int length = msg.getLength();
+		byte[] totalMsg = new byte[length];
+		totalMsg = CoverUtils.msg2ByteArray(msg, length);
+		serviceIntent.putExtra("msg", totalMsg);
+		context.sendBroadcast(serviceIntent);
+		Log.i("cover", action + "send broadcast " + action);
+	}
+	
+	// 浮点到字节转换 
+	public static byte[] double2Byte(double d) {
+		byte[] b = new byte[8];
+		long l = Double.doubleToLongBits(d);
+		for (int i = 0; i < b.length; i++) {
+			b[i] = new Long(l).byteValue();
+			l = l >> 8;
+		}
+		return b;
+	}
+
+	public static double byte2Double(byte[] b) {
+		long l;
+		l = b[0];
+		l &= 0xFF;
+		l |= ((long) b[1] << 8);
+		l &= 0xFFFF;
+		l |= ((long) b[2] << 16);
+		l &= 0xFFFFFF;
+		l |= ((long) b[3] << 24);
+		l &= 0xFFFFFFFFl;
+		l |= ((long) b[4] << 32);
+		l &= 0xffffffffffl;
+		l |= ((long) b[5] << 40);
+		l &= 0xffffffffffffl;
+		l |= ((long) b[6] << 48);
+		l |= ((long) b[7] << 56);
+		return Double.longBitsToDouble(l);
+	}
+
 	public static String bytes2HexString(byte[] b) {
 		String ret = "";
 		for (int i = 0; i < b.length; i++) {
@@ -235,7 +292,7 @@ public class CoverUtils {
 		for (int i = 0; i < msg.length.length; i++)
 			totalMsg[j++] = msg.length[i];
 		totalMsg[j++] = msg.function;
-		for (int i = 0; i < msg.data.length; i++)
+		for (int i = 0; i < (msg.data != null ? msg.data.length : 0); i++)
 			totalMsg[j++] = msg.data[i];
 		for (int i = 0; i < msg.check.length; i++)
 			totalMsg[j++] = msg.check[i];
@@ -246,7 +303,25 @@ public class CoverUtils {
 	 * form byte[] from Message except check
 	 */
 	public static byte[] msg2ByteArrayExcepteCheck(Message msg) {
-		byte[] totalMsg = new byte[msg.length.length + 1 + msg.data.length];
+		byte[] totalMsg = new byte[msg.length.length + 1
+				+ (msg.data != null ? msg.data.length : 0)];
+		int j = 0;
+		for (int i = 0; i < msg.length.length; i++) {
+			totalMsg[j++] = msg.length[i];
+		}
+		totalMsg[j++] = msg.function;
+		for (int i = 0; i < (msg.data != null ? msg.data.length : 0); i++) {
+			totalMsg[j++] = msg.data[i];
+		}
+		return totalMsg;
+	}
+
+	/**
+	 * form byte[] from Message except check
+	 */
+	public static byte[] msg2ByteArrayExceptHeader(Message msg) {
+		byte[] totalMsg = new byte[msg.length.length + 1 + msg.data.length
+				+ msg.check.length];
 		int j = 0;
 		for (int i = 0; i < msg.length.length; i++) {
 			totalMsg[j++] = msg.length[i];
@@ -254,6 +329,9 @@ public class CoverUtils {
 		totalMsg[j++] = msg.function;
 		for (int i = 0; i < msg.data.length; i++) {
 			totalMsg[j++] = msg.data[i];
+		}
+		for (int i = 0; i < msg.check.length; i++) {
+			totalMsg[j++] = msg.check[i];
 		}
 		return totalMsg;
 	}

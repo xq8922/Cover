@@ -3,7 +3,10 @@ package com.cover.ui;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.cover.bean.Entity;
 import com.cover.bean.Message;
+import com.cover.bean.Entity.Status;
+import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
@@ -23,74 +26,127 @@ import android.widget.SimpleAdapter;
 
 public class CoverList extends Activity {
 	private final String TAG = "cover";
+	private final String ACTION = "com.cover.service.IntenetService";
 	private static ListView lv_coverlist;
+	public static ArrayList<Entity> items;
+	public static ArrayList<Entity> waterItems;
+	public static ArrayList<Entity> coverItems;
 	private Message askMsg = new Message();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cover_list);
+		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
 
-		askMsg.function = 0x0D;
+		askMsg.function = (byte)0x0D;
 		askMsg.data = null;
 		askMsg.length = CoverUtils.short2ByteArray((short) 7);
-		byte[] temp = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
-		askMsg.check = CoverUtils.genCRC(CoverUtils.genCRC(temp, temp.length),
-				askMsg.getLength() - 2);
-		byte[] total = CoverUtils.msg2ByteArray(askMsg, askMsg.getLength());
+		
+		byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
+		byte[] str_ = CRC16M.getSendBuf(CoverUtils
+				.bytes2HexString(checkMsg));
+		askMsg.check[0] = str_[str_.length - 1];
+		askMsg.check[1] = str_[str_.length - 2];				
+		sendMessage(askMsg, ACTION);
+		
+	}
 
-		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
-		// String[] strs = new String[] { "first", "second", "third", "fourth",
-		// "fifth" };
-		// lv_coverlist.setAdapter(new ArrayAdapter<String>(this,
-		// android.R.layout.simple_list_item_1, strs));
+	public void sendMessage(Message msg, String action) {
 		Intent serviceIntent = new Intent();
-		serviceIntent.setAction("com.cover.service.InternetService");
-		serviceIntent.putExtra("msg", total);
+		serviceIntent.setAction(action);
+		int length = msg.getLength();
+		byte[] totalMsg = new byte[length];
+		totalMsg = CoverUtils.msg2ByteArray(msg, length);
+		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
+		Log.i(TAG, action + "sned broadcast " + action);
 	}
 
 	public static class CoverListReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			byte[] msg = intent.getByteArrayExtra("msg");
-			if (msg[0] == 0x04) {
-				ArrayList<HashMap<String, Object>> listItem = new ArrayList<HashMap<String, Object>>();
-				for (int i = 0; i < (msg.length - 1) / 5; i++) {
-					HashMap<String, Object> map = new HashMap<String, Object>();
-					map.put("iv_itemstatus", R.drawable.checkbox_selected);
-					map.put("tv_itemname", "testname");
-					map.put("tv_itemstatus", "teststatus");
-					listItem.add(map);
-					SimpleAdapter simpleAdapter = new SimpleAdapter(context,
-							listItem, R.layout.listview, new String[] {
-									"iv_itemstatus", "tv_itemname",
-									"tv_itemstatus" }, new int[] {
-									R.id.iv_itemstatus, R.id.tv_itemname,
-									R.id.tv_itemstatus });
-					lv_coverlist.setAdapter(simpleAdapter);
-					lv_coverlist
-							.setOnItemClickListener(new OnItemClickListener() {
+			items = new ArrayList<Entity>();
+			waterItems = new ArrayList<Entity>();
+			coverItems = new ArrayList<Entity>();
 
-								@Override
-								public void onItemClick(AdapterView<?> arg0,
-										View arg1, int arg2, long arg3) {
-									arg1.setSelected(true);
-								}
+			byte[] recv = intent.getByteArrayExtra("msg");
+			if (recv[0] == 0x01) {
+				final int dataLength = 4;
+				int numOfEntity = (recv.length - 1) / dataLength;
+				byte[] idByte = new byte[2];
+				for (int j = 0; j < numOfEntity; j++) {
+					Entity entity = new Entity();
+					int i = 0;
+					idByte[i] = recv[j * dataLength + i++ + 1];
+					idByte[i] = recv[j * dataLength + i++ + 1];
 
-							});
+					entity.setId(CoverUtils.getShort(idByte));
+					entity.setTag(recv[j * dataLength + i++ + 1] == 0x51 ? "cover"
+							: "level");
+					switch (recv[j * dataLength + i++ + 1]) {
+					case 0x01:
+						entity.setStatus(Status.NORMAL);
+					case 0x02:
+						entity.setStatus(Status.EXCEPTION_1);
+					case 0x03:
+						entity.setStatus(Status.REPAIR);
+					case 0x04:
+						entity.setStatus(Status.EXCEPTION_2);
+					case 0x05:
+						entity.setStatus(Status.EXCEPTION_3);
+					}
+					if (entity.getTag() == "cover") {
+						coverItems.add(entity);
+						items.add(entity);
+					} else {
+						waterItems.add(entity);
+						items.add(entity);
+					}
+				}
+			} else if (recv[0] == 0x04) {
+				final int dataLength = 20;
+				int numOfEntity = (recv.length - 1) / dataLength;
+				byte[] idByte = new byte[2];
+				for (int j = 0; j < numOfEntity; j++) {
+					Entity entity = new Entity();
+					int i = 0;
+					idByte[i] = recv[j * dataLength + i++ + 1];
+					idByte[i] = recv[j * dataLength + i++ + 1];
+					entity.setId(CoverUtils.getShort(idByte));
+					entity.setTag(recv[j * dataLength + i++ + 1] == 0x51 ? "cover"
+							: "level");
+					byte[] longTi = new byte[8];
+					for (int k = 0, t = i; i < t + 8; i++) {
+						longTi[k++] = recv[j * dataLength + i + 1];
+					}
+					byte[] laTi = new byte[8];
+					for (int k = 0, t = i; i < t + 8; i++) {
+						laTi[k++] = recv[j * dataLength + i + 1];
+					}
+					entity.setLongtitude(CoverUtils.byte2Double(longTi));
+					switch (recv[j * dataLength + i + 1]) {
+					case 0x01:
+						entity.setStatus(Status.NORMAL);
+					case 0x02:
+						entity.setStatus(Status.EXCEPTION_1);
+					case 0x03:
+						entity.setStatus(Status.REPAIR);
+					case 0x04:
+						entity.setStatus(Status.EXCEPTION_2);
+					case 0x05:
+						entity.setStatus(Status.EXCEPTION_3);
+					}
+					if (entity.getTag() == "cover") {
+						coverItems.add(entity);
+						items.add(entity);
+					} else {
+						waterItems.add(entity);
+						items.add(entity);
+					}
 				}
 			}
 		}
 	}
-
-	public void sendMessage(byte[] msg, String action) {
-		Intent serviceIntent = new Intent();
-		serviceIntent.setAction(action);
-		serviceIntent.putExtra("msg", msg);
-		sendBroadcast(serviceIntent);
-		Log.i(TAG, action + "sned broadcast " + action);
-	}
-
 }

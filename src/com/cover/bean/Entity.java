@@ -1,15 +1,5 @@
 package com.cover.bean;
 
-/**
- * @NORMAL 正常
- * @Repair 维修状�??
- * @Exception 1,2,3分别代表两种的异常状�?
- * @author W
- * 
- */
-enum Status {
-	NORMAL, REPAIR, EXCEPTION_1, EXCEPTION_2, EXCEPTION_3
-}
 
 /**
  * @TAG identify Message is Cover or Level
@@ -17,15 +7,15 @@ enum Status {
  * 
  */
 public class Entity {
-	String id = null;
+	short id = 0;
 	String name = null;
 	Status status = null;
 	String tag = null;
-	String longtitude = null;
-	String latitude = null;
+	double longtitude = 0;
+	double latitude = 0;
 
-	public Entity(String id, String name, Status status, String tag,
-			String longtitude, String latitude) {
+	public Entity(short id, String name, Status status, String tag,
+			double longtitude, double latitude) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -35,7 +25,7 @@ public class Entity {
 		this.latitude = latitude;
 	}
 
-	public String getId() {
+	public short getId() {
 		return id;
 	}
 
@@ -54,20 +44,19 @@ public class Entity {
 	public String getName() {
 		return name;
 	}
-
 	public String getTag() {
 		return tag;
 	}
 
-	public String getLongtitude() {
+	public double getLongtitude() {
 		return longtitude;
 	}
 
-	public String getLatitude() {
+	public double getLatitude() {
 		return latitude;
 	}
 
-	public void setId(String id) {
+	public void setId(short id) {
 		this.id = id;
 	}
 
@@ -79,12 +68,23 @@ public class Entity {
 		this.tag = tag;
 	}
 
-	public void setLongtitude(String longtitude) {
+	public void setLongtitude(double longtitude) {
 		this.longtitude = longtitude;
 	}
 
-	public void setLatitude(String latitude) {
+	public void setLatitude(double latitude) {
 		this.latitude = latitude;
 	}
 
+	/**
+	 * @NORMAL 正常
+	 * @Repair 维修状�??
+	 * @Exception 1,2,3分别代表两种的异常状�?
+	 * @author W
+	 * 
+	 */
+	public enum Status {
+		NORMAL, REPAIR, EXCEPTION_1, EXCEPTION_2, EXCEPTION_3
+	}
+	
 }

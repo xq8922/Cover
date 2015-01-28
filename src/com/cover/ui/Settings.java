@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 public class Settings extends Activity {
 	private static final String TAG = "cover";
@@ -32,22 +33,27 @@ public class Settings extends Activity {
 		// msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 		// sendMessage()
 	}
+	
+	public void sendArgSettings(){
+		
+	}
 
 	public static class SettingsReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-
+			byte[] recv = intent.getByteArrayExtra("msg");
+			if(recv[0] == 0x05){
+				int length = 4;
+				if(recv[3] == 0x01){
+					Toast.makeText(context, "set success", Toast.LENGTH_LONG).show();
+				}else if(recv[3] == 0x02){
+					Toast.makeText(context,"set failed",Toast.LENGTH_LONG).show();
+				}
+				//需要在刷新列表的时候检测是否超限
+			}
 		}
 
-	}
-
-	public void sendMessage(String msg, String action) {
-		Intent serviceIntent = new Intent();
-		serviceIntent.setAction(action);
-		serviceIntent.putExtra("msg", msg);
-		sendBroadcast(serviceIntent);
-		Log.i(TAG, action + "sned broadcast " + action);
 	}
 
 }
