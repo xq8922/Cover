@@ -14,17 +14,23 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.sax.StartElementListener;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,61 +39,86 @@ public class MainActivity extends Activity {
 	final static String TAG = "MainActivity";
 	private final String ACTION = "com.cover.service.IntenetService";
 	String msg = null;
-	String userName;
-	String password;
-	TextView et_ip;
-	EditText et_usr;
-	EditText et_pwd;
-	static String hostIp;
-	Button btn_test;
-	Button btn_ping;
 	static byte[] recv;
 	Message msgAsk = new Message();
-
-	InternetService internetService;
-	public ServiceConnection internetServiceConnection = new ServiceConnection() {
-
-		@Override
-		public void onServiceConnected(ComponentName arg0, IBinder service) {
-			internetService = ((InternetService.InterBinder) service)
-					.getService();
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName arg0) {
-			internetService = null;
-		}
-
-	};
+	private EditText et_username;
+	private EditText et_password;
+	static String userName;
+	static String password;
+	private ImageView btn_test;
+	private SharedPreferences sp;
+	private TextView tvChangeIP;
+	private static Editor editor;
+	private static CheckBox cbIsRemeber;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-
+		et_username = (EditText) findViewById(R.id.et_login_user_name);
+		et_password = (EditText) findViewById(R.id.et_login_password);
+		tvChangeIP = (TextView) findViewById(R.id.tv_changeip);
+		cbIsRemeber = (CheckBox) findViewById(R.id.cb_is_remeber);
+		sp = getSharedPreferences("douyatech", MODE_PRIVATE);
+		editor = sp.edit();
+		userName = sp.getString("username", "");
+		password = sp.getString("password", "");
+		et_username.setText(userName);
+		et_password.setText(password);
+		cbIsRemeber.setChecked(sp.getBoolean("isremem", false));
+		
 		if (!CoverUtils.isNetworkAvailable(MainActivity.this)) {
 			Toast.makeText(getApplicationContext(), "Network is offline",
 					Toast.LENGTH_SHORT).show();
 			return;
 		}
-		
-		bindService(new Intent(MainActivity.this, InternetService.class),
-				internetServiceConnection, Context.BIND_AUTO_CREATE);
-		// myBroadcast = new MyBroadcast();
-		// IntentFilter filter = new IntentFilter();
-		// filter.addAction("com.cover.service.InternetService");
-		// registerReceiver(myBroadcast,filter);
 
-		hostIp = CoverUtils.getLocalIpAdress();
-		et_usr = (EditText) findViewById(R.id.et_login_user_name);
-		et_pwd = (EditText) findViewById(R.id.et_login_password);
-		btn_test = (Button) findViewById(R.id.btn_login);
-		et_usr.setText(hostIp);
+		tvChangeIP.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				final EditText et_Ip = new EditText(MainActivity.this);
+				new AlertDialog.Builder(MainActivity.this)
+						.setTitle("报警角度")
+						.setIcon(android.R.drawable.ic_dialog_info)
+						.setView(et_Ip)
+						.setPositiveButton(
+								"确定",
+								new android.content.DialogInterface.OnClickListener() {
+
+									@Override
+									public void onClick(DialogInterface dialog,
+											int which) {
+										// 保存设置
+										// 修改显示
+										editor.putString("ip", et_Ip.getText()
+												.toString());
+										// 本地化 下次从文件读取一下 getString
+									}
+								}).setNegativeButton("取消", null).show();
+			}
+		});
+		{
+			Intent mainActivity = getIntent();
+			String ip = mainActivity.getStringExtra("ip");
+			if (ip != null) {
+				Intent intent = new Intent("com.cover.service.InternetService");
+				stopService(intent);
+				intent.putExtra("ip", ip);
+				startService(intent);
+			} else {
+				// bindService(new Intent(MainActivity.this,
+				// InternetService.class),
+				// internetServiceConnection, Context.BIND_AUTO_CREATE);
+			}
+
+		}
+		btn_test = (ImageView) findViewById(R.id.btn_login);
 		btn_test.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				userName = et_usr.getText().toString();
-				password = et_pwd.getText().toString();
+				// userName = et_usr.getText().toString();
+				// password = et_pwd.getText().toString();
 				userName = "13468833168";
 				password = "1234";
 				String msg = userName + password;
@@ -99,9 +130,8 @@ public class MainActivity extends Activity {
 				byte[] str_ = CRC16M.getSendBuf(CoverUtils
 						.bytes2HexString(checkMsg));
 				msgAsk.check[0] = str_[str_.length - 1];
-				msgAsk.check[1] = str_[str_.length - 2];				
+				msgAsk.check[1] = str_[str_.length - 2];
 				sendMessage(msgAsk, ACTION);
-				
 				System.out.println("test");
 			}
 		});
@@ -120,7 +150,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		unbindService(internetServiceConnection);
+		// unbindService(internetServiceConnection);
 		// unregisterReceiver(myBroadcast);
 		super.onDestroy();
 	}
@@ -134,9 +164,15 @@ public class MainActivity extends Activity {
 				switch (recv[1]) {
 				case 0x01:
 					Intent i = new Intent();
-//					i.setClass(context, CoverList.class);
-					i.setClass(context, CoverMapList.class);
+					i.setClass(context, CoverList.class);
+//					 i.setClass(context, CoverMapList.class);
 					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					if (cbIsRemeber.isChecked()) {
+						editor.putString("username", userName);
+						editor.putString("password", password);
+						editor.putBoolean("isremem", true);
+						editor.commit();						
+					}
 					context.startActivity(i);
 					break;
 				case 0x02:

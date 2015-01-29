@@ -1,12 +1,18 @@
 package com.cover.bean;
 
+import java.io.Serializable;
+
 
 /**
  * @TAG identify Message is Cover or Level
  * @author W
  * 
  */
-public class Entity {
+public class Entity implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6348868576723913291L;
 	short id = 0;
 	String name = null;
 	Status status = null;

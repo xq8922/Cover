@@ -6,11 +6,14 @@ import java.util.HashMap;
 import com.cover.bean.Entity;
 import com.cover.bean.Message;
 import com.cover.bean.Entity.Status;
+import com.cover.fragment.ListFragment;
+import com.cover.fragment.MapFragment;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -21,23 +24,58 @@ import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.SimpleAdapter;
 
-public class CoverList extends Activity {
+public class CoverList extends Activity implements OnClickListener {
 	private final String TAG = "cover";
 	private final String ACTION = "com.cover.service.IntenetService";
 	private static ListView lv_coverlist;
-	public static ArrayList<Entity> items;
-	public static ArrayList<Entity> waterItems;
-	public static ArrayList<Entity> coverItems;
+	private  ImageView setting;
+	private byte flag = 0x11; // 0x10 表示水位  0x01表示井盖
+	public static ArrayList<Entity> items = new ArrayList<Entity>();
+	public static ArrayList<Entity> waterItems = new ArrayList<Entity>();
+	public static ArrayList<Entity> coverItems = new ArrayList<Entity>();
 	private Message askMsg = new Message();
+	public static boolean flagSend = false;
+	private CheckBox cbWater; // 水位
+	private CheckBox cbCover; // 井盖
+	public static ListFragment listFragment;
+	private static MapFragment mapFragment;
+	private RadioGroup rgBottom;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cover_list);
+		getDatas();
 		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
+		cbWater = (CheckBox) findViewById(R.id.cb_water);
+		cbCover = (CheckBox) findViewById(R.id.cb_cover);
+		rgBottom = (RadioGroup) findViewById(R.id.rg_bottom_cover);
+		setting = (ImageView) findViewById(R.id.setting);
+		
+		setting.setOnClickListener(this);
+		
+		
+		FragmentTransaction ft = getFragmentManager().beginTransaction();
+		if (listFragment == null) {	
+			listFragment = new ListFragment();
+		}
+		if (mapFragment == null) {
+			mapFragment = new MapFragment();
+		}
+		listFragment.firstData();
+		ft.add(R.id.contain, listFragment, "f1").commit();
+//		rgTop.setOnCheckedChangeListener(checkedChangeListener );
+		cbWater.setOnCheckedChangeListener(cbChangeListener);
+		cbCover.setOnCheckedChangeListener(cbChangeListener);
+		rgBottom.setOnCheckedChangeListener(rgChangeListener);
 
 		askMsg.function = (byte)0x0D;
 		askMsg.data = null;
@@ -48,7 +86,106 @@ public class CoverList extends Activity {
 				.bytes2HexString(checkMsg));
 		askMsg.check[0] = str_[str_.length - 1];
 		askMsg.check[1] = str_[str_.length - 2];				
-		sendMessage(askMsg, ACTION);
+		new Thread(new sendAsk()).start();
+		rgBottom.check(R.id.rb_list);
+	}
+	
+private android.widget.CompoundButton.OnCheckedChangeListener cbChangeListener = new android.widget.CompoundButton.OnCheckedChangeListener() {
+		
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			// 
+			switch (((CheckBox)buttonView).getId()) {
+			case R.id.cb_water:
+				if (isChecked) {
+					// 水位被选中
+					flag += 0x10;
+				}else {
+					// 水位未被选中
+					flag -= 0x10;
+				}
+				break;
+			case R.id.cb_cover:
+				if (isChecked) {
+					// 井盖
+					flag += 0x01;
+				}else {
+					// 井盖未被选中
+					flag -= 0x01;
+				}
+				break;
+			}
+			
+			switch (flag) {
+			case 0x11:
+				// 都显示
+				listFragment.update(0);
+				
+				// 地图都显示
+				mapFragment.update(0);
+				break;
+			case 0x10:
+				// 只显示水位
+				// 让fargment来更新
+				listFragment.update(1);
+				mapFragment.update(1);
+				break;
+			case 0x01:
+				// 只显示井盖
+				listFragment.update(2);
+				mapFragment.update(2);
+				break;
+			case 0x00:
+				// 什么都不显示了
+				listFragment.update(3);
+				mapFragment.update(3);
+				break;				
+			}
+		}
+	};
+	
+	private OnCheckedChangeListener rgChangeListener = new OnCheckedChangeListener() {
+		@Override
+		public void onCheckedChanged(RadioGroup group, int checkedId) {
+
+			switch (checkedId) {
+			case R.id.rb_list:
+				//  显示列表
+				// 再次切换进来 仍然会再实例化 刷新
+				getFragmentManager().beginTransaction().replace(R.id.contain, listFragment).commit();
+				break;
+			case R.id.rb_map:
+				//  显示地图
+				getFragmentManager().beginTransaction().replace(R.id.contain, mapFragment).commit();
+				break;	
+			}
+			
+		}
+
+	};
+	private class sendAsk implements Runnable{
+
+		@Override
+		public void run() {
+			// ask for data
+//			while(flagSend == false){
+						askMsg.function = (byte) 0x0D;
+						askMsg.data = null;
+						askMsg.length = CoverUtils.short2ByteArray((short) 7);
+
+						byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
+						byte[] str_ = CRC16M.getSendBuf(CoverUtils
+								.bytes2HexString(checkMsg));
+						askMsg.check[0] = str_[str_.length - 1];
+						askMsg.check[1] = str_[str_.length - 2];
+						sendMessage(askMsg, ACTION);
+//						try {
+////							Thread.sleep(2000);
+//						} catch (InterruptedException e) {
+//							e.printStackTrace();
+//						}
+//			}
+		}
 		
 	}
 
@@ -67,6 +204,9 @@ public class CoverList extends Activity {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
+			if(flagSend)
+				return;
+			flagSend = true;
 			items = new ArrayList<Entity>();
 			waterItems = new ArrayList<Entity>();
 			coverItems = new ArrayList<Entity>();
@@ -146,6 +286,40 @@ public class CoverList extends Activity {
 						items.add(entity);
 					}
 				}
+			}
+			/////////////////////
+			listFragment.firstData();
+			mapFragment.firstData();
+		}
+	}
+	public void setAllChecked() {
+		cbWater.setChecked(true);
+		cbCover.setChecked(true);
+	}
+	
+	@Override
+	public void onClick(View v) {
+		if (v.getId() == R.id.setting) {
+			// 进入设置界面
+			Intent intent = new Intent(this, SoftwareSettings.class);
+			startActivity(intent);
+		}
+		
+//		if(v.getId() == R.id.)
+	}
+	
+	
+	private void getDatas() {
+		for (int i = 0; i < (16 - 1) / 5; i++) {
+			if(i <= 1){
+
+				Entity entity = new Entity((short) 1, "水位_65535",Status.REPAIR, "水位", 111, 222);
+				waterItems.add(entity);
+				items.add(entity);
+			}else{
+				Entity entity = new Entity((short) 2, "井盖_65535",Status.NORMAL, "井盖", 333, 444);
+				coverItems.add(entity);
+				items.add(entity);
 			}
 		}
 	}

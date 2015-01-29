@@ -1,112 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/wallpaper"
     android:orientation="vertical" >
 
-    <LinearLayout
-        android:id="@+id/ll_coverlist_top"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal" >
+        android:background="@drawable/bg_coverhead"
+         >
 
-        <ImageButton
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="@dimen/space_20"
-            android:src="@drawable/back" />
-
-        <TextView
-            android:name="@+id/tv_cover_name"
+        <ImageView
+            android:padding="18dp"
+            android:clickable="true"
+            android:id="@+id/setting"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="节点异常检测系统"
-            android:textSize="@dimen/text_size_20" >
-        </TextView>
-
-        <TextView
-            android:name="@+id/tv_coverlist_settings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="设置"
-            android:textSize="@dimen/text_size_20" >
-        </TextView>
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:background="@color/gray"
-        android:padding="@dimen/space_2" />
-
-    <LinearLayout
-        android:id="@+id/ll_coverlist_middle"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/ll_coverlist_top"
-		android:layout_above="@+id/ll_coverlist_bottom"
-        android:orientation="vertical" >
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/gray"
-            android:padding="@dimen/space_2" />
+            android:layout_height="60dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/selector_setting" />
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:layout_marginRight="20dp"
+            android:layout_centerInParent="true"
+            android:id="@+id/rg_cover"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
             android:orientation="horizontal" >
 
-            <ListView
-                android:id="@+id/lv_coverlist_cover"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent" >
-            </ListView>
+            <CheckBox
+                android:checked="true"
+                android:padding="5dp"
+                android:paddingRight="20dp"
+                android:layout_gravity="center"
+                android:id="@+id/cb_water"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@null"
+                android:drawableRight="@drawable/selector_water" />
+
+            <CheckBox
+                android:checked="true"
+                android:layout_marginLeft="20dp"
+                android:padding="5dp"
+                android:layout_gravity="center"
+                android:id="@+id/cb_cover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@null"
+                android:drawableLeft="@drawable/selector_cover" />
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/gray"
-            android:padding="@dimen/space_2" />
+    </RelativeLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0.5dp"
-            android:background="@color/gray"
-            android:padding="@dimen/space_2" />
-    </LinearLayout>
+    <FrameLayout 
+        android:id="@+id/contain"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="100"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        >
+        
+    </FrameLayout>
+<!--     <ListView -->
+<!--         android:id="@+id/lv_coverlist_cover" -->
+<!--         android:layout_width="match_parent" -->
+<!--         android:layout_height="0dp" -->
+<!--         android:layout_weight="100" -->
+<!--         android:paddingLeft="5dp" -->
+<!--         android:paddingRight="5dp" -->
+<!--         android:scrollbars="@null" /> -->
+<!--         android:divider="#ccc" -->
+<!--         android:dividerHeight="dp" -->
 
-    <LinearLayout
-        android:id="@+id/ll_coverlist_bottom"
+
+
+    <RadioGroup
+        android:background="@drawable/bg_coverbottom"
+        android:id="@+id/rg_bottom_cover"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="3dp"
+        android:layout_marginTop="8dp"
         android:gravity="center"
         android:orientation="horizontal" >
 
-        <ImageButton
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="@dimen/space_20"
-            android:src="@drawable/back" />
+        <RadioButton
+            android:id="@+id/rb_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@null"
+            android:layout_marginRight="30dp"
+            android:layout_weight="1"
+            android:drawableRight="@drawable/selector_list" />
 
-        <ImageButton
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="@dimen/space_20"
-            android:src="@drawable/back" />
+        <RadioButton
+            android:layout_weight="1"
+            android:layout_marginLeft="30dp"
+            android:id="@+id/rb_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@null"
+            android:drawableLeft="@drawable/selector_map" />
+    </RadioGroup>
 
-        <ImageButton
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="@dimen/space_20"
-            android:src="@drawable/back" />
-    </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>

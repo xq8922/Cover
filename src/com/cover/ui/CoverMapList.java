@@ -26,6 +26,8 @@ import com.baidu.mapapi.model.LatLngBounds;
 import com.cover.bean.Entity;
 import com.cover.bean.Message;
 import com.cover.bean.Entity.Status;
+import com.cover.fragment.ListFragment;
+import com.cover.fragment.MapFragment;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -38,6 +40,10 @@ import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 
 public class CoverMapList extends Activity {
 	private static final String TAG = "cover";
@@ -52,19 +58,134 @@ public class CoverMapList extends Activity {
 	public static ArrayList<Entity> items;
 	public static ArrayList<Entity> waterItems;
 	public static ArrayList<Entity> coverItems;
+	public static boolean flagSend = false;
+	private CheckBox cbWater; // 水位
+	private CheckBox cbCover; // 井盖
+	public static ListFragment listFragment;
+	private static MapFragment mapFragment;
+	private byte flag = 0x11; // 0x10 表示水位 0x01表示井盖
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.cover_map_list);
 
+		getDatas();
+		Entity e = new Entity();
+		e = (Entity) getIntent().getExtras().getSerializable("entity");
 		mMapView = (MapView) findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();// get the map
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
 		{
+			new Thread(new sendAsk()).start();
+		}
+		// 设定中心点坐标
+		LatLng cenpt = new LatLng(34.26667, 108.95000);
+		// 定义地图状态
+		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
+				.build();
+		// 定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
+		MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory
+				.newMapStatus(mMapStatus);
+		// 改变地图状态
+		mBaiduMap.setMapStatus(mMapStatusUpdate);
+	}
+
+	private android.widget.CompoundButton.OnCheckedChangeListener cbChangeListener = new android.widget.CompoundButton.OnCheckedChangeListener() {
+
+		@Override
+		public void onCheckedChanged(CompoundButton buttonView,
+				boolean isChecked) {
+			//
+			switch (((CheckBox) buttonView).getId()) {
+			case R.id.cb_water:
+				if (isChecked) {
+					// 水位被选中
+					flag += 0x10;
+				} else {
+					// 水位未被选中
+					flag -= 0x10;
+				}
+				break;
+			case R.id.cb_cover:
+				if (isChecked) {
+					// 井盖
+					flag += 0x01;
+				} else {
+					// 井盖未被选中
+					flag -= 0x01;
+				}
+				break;
+			}
+
+			switch (flag) {
+			case 0x11:
+				// 都显示
+				listFragment.update(0);
+				break;
+			case 0x10:
+				// 只显示水位
+				// 让fargment来更新
+				listFragment.update(1);
+				break;
+			case 0x01:
+				// 只显示井盖
+				listFragment.update(2);
+				break;
+			case 0x00:
+				// 什么都不显示了
+				listFragment.update(3);
+				break;
+			}
+		}
+	};
+
+	private void getDatas() {
+		for (int i = 0; i < (16 - 1) / 5; i++) {
+			if (i <= 1) {
+
+				Entity entity = new Entity((short) 1, "水位_65535",
+						Status.REPAIR, "水位", 111, 222);
+				waterItems.add(entity);
+				items.add(entity);
+			} else {
+				Entity entity = new Entity((short) 2, "井盖_65535",
+						Status.NORMAL, "井盖", 333, 444);
+				coverItems.add(entity);
+				items.add(entity);
+			}
+		}
+	}
+
+	private OnCheckedChangeListener rgChangeListener = new OnCheckedChangeListener() {
+		@Override
+		public void onCheckedChanged(RadioGroup group, int checkedId) {
+
+			switch (checkedId) {
+			case R.id.rb_list:
+				// 显示列表
+				// 再次切换进来 仍然会再实例化 刷新
+				getFragmentManager().beginTransaction()
+						.replace(R.id.contain, listFragment).commit();
+				break;
+			case R.id.rb_map:
+				// 显示地图
+				getFragmentManager().beginTransaction()
+						.replace(R.id.contain, mapFragment).commit();
+				break;
+			}
+
+		}
+
+	};
+
+	private class sendAsk implements Runnable {
+
+		@Override
+		public void run() {
 			// ask for data
+			// while(flagSend == false){
 			askMsg.function = (byte) 0x0D;
 			askMsg.data = null;
 			askMsg.length = CoverUtils.short2ByteArray((short) 7);
@@ -75,137 +196,22 @@ public class CoverMapList extends Activity {
 			askMsg.check[0] = str_[str_.length - 1];
 			askMsg.check[1] = str_[str_.length - 2];
 			sendMessage(askMsg, ACTION);
+			// try {
+			// Thread.sleep(2000);
+			// } catch (InterruptedException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
+			// ///////////////////////////////////////////////
+			flagSend = true;
+			// }
 		}
 
-		// 定义Ground的显示地理范围
-		LatLng southwest = new LatLng(39.0, 116.0);
-		LatLng northeast = new LatLng(39.9, 116.9);
-		LatLngBounds bounds = new LatLngBounds.Builder().include(northeast)
-				.include(southwest).build();
-		// 定义Ground显示的图片
-		BitmapDescriptor bdGround = BitmapDescriptorFactory
-				.fromResource(R.drawable.ic_launcher);
-		// 定义Ground覆盖物选项
-		OverlayOptions ooGround = new GroundOverlayOptions()
-				.positionFromBounds(bounds).image(bdGround).transparency(0.8f);
-
-		// 设定中心点坐标
-		LatLng cenpt = new LatLng(30.663791, 104.07281);
-		// 定义地图状态
-		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
-				.build();
-		// 定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
-
-		MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory
-				.newMapStatus(mMapStatus);
-		// 改变地图状态
-		mBaiduMap.setMapStatus(mMapStatusUpdate);
-
-		// //在地图中添加Ground覆盖物
-		// mBaiduMap.addOverlay(ooGround);
 	}
 
-	public static class CoverMapListReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			items = new ArrayList<Entity>();
-			waterItems = new ArrayList<Entity>();
-			coverItems = new ArrayList<Entity>();
-
-			byte[] recv = intent.getByteArrayExtra("msg");
-			if (recv[0] == 0x01) {
-				final int dataLength = 4;
-				int numOfEntity = (recv.length - 1) / dataLength;
-				byte[] idByte = new byte[2];
-				for (int j = 0; j < numOfEntity; j++) {
-					Entity entity = new Entity();
-					int i = 0;
-					idByte[i] = recv[j * dataLength + i++ + 1];
-					idByte[i] = recv[j * dataLength + i++ + 1];
-
-					entity.setId(String.valueOf(CoverUtils.getShort(idByte)));
-					entity.setTag(recv[j * dataLength + i++ + 1] == 0x51 ? "cover"
-							: "level");
-					switch (recv[j * dataLength + i++ + 1]) {
-					case 0x01:
-						entity.setStatus(Status.NORMAL);
-					case 0x02:
-						entity.setStatus(Status.EXCEPTION_1);
-					case 0x03:
-						entity.setStatus(Status.REPAIR);
-					case 0x04:
-						entity.setStatus(Status.EXCEPTION_2);
-					case 0x05:
-						entity.setStatus(Status.EXCEPTION_3);
-					}
-					if (entity.getTag() == "cover") {
-						coverItems.add(entity);
-						items.add(entity);
-					} else {
-						waterItems.add(entity);
-						items.add(entity);
-					}
-				}
-			} else if (recv[0] == 0x04) {
-				final int dataLength = 20;
-				int numOfEntity = (recv.length - 1) / dataLength;
-				byte[] idByte = new byte[2];
-				for (int j = 0; j < numOfEntity; j++) {
-					Entity entity = new Entity();
-					int i = 0;
-					idByte[i] = recv[j * dataLength + i++ + 1];
-					idByte[i] = recv[j * dataLength + i++ + 1];
-					entity.setId(String.valueOf(CoverUtils.getShort(idByte)));
-					entity.setTag(recv[j * dataLength + i++ + 1] == 0x51 ? "cover"
-							: "level");
-					byte[] longTi = new byte[8];
-					for (int k = 0, t = i; i < t + 8; i++) {
-						longTi[k++] = recv[j * dataLength + i + 1];
-					}
-					byte[] laTi = new byte[8];
-					for (int k = 0, t = i; i < t + 8; i++) {
-						laTi[k++] = recv[j * dataLength + i + 1];
-					}
-					entity.setLongtitude(CoverUtils.byte2Double(longTi));
-					switch (recv[j * dataLength + i + 1]) {
-					case 0x01:
-						entity.setStatus(Status.NORMAL);
-					case 0x02:
-						entity.setStatus(Status.EXCEPTION_1);
-					case 0x03:
-						entity.setStatus(Status.REPAIR);
-					case 0x04:
-						entity.setStatus(Status.EXCEPTION_2);
-					case 0x05:
-						entity.setStatus(Status.EXCEPTION_3);
-					}
-					if (entity.getTag() == "cover") {
-						coverItems.add(entity);
-						items.add(entity);
-					} else {
-						waterItems.add(entity);
-						items.add(entity);
-					}
-
-				}
-				// msgRecv set onto map.
-				{
-					// 定义Maker坐标点
-					LatLng point = new LatLng(34.272121, 108.951212);
-					// 构建Marker图标
-					BitmapDescriptor bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.back);
-					// 构建MarkerOption，用于在地图上添加Marker
-					OverlayOptions option = new MarkerOptions().position(point)
-							.icon(bitmap).title("cover");
-					// 在地图上添加Marker，并显示
-					mBaiduMap.addOverlay(option);
-				}
-			}
-						
-		}
-
+	public void setAllChecked() {
+		cbWater.setChecked(true);
+		cbCover.setChecked(true);
 	}
 
 	public void sendMessage(Message msg, String action) {
