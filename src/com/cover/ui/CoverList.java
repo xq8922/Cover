@@ -58,10 +58,10 @@ public class CoverList extends Activity implements OnClickListener {
 		@Override
 		public void handleMessage(android.os.Message msg) {
 			super.handleMessage(msg);
-			if(entity == null)
+			if (entity == null)
 				listFragment.update(0);
-			else{
-//				getFragmentManager().beginTransaction()
+			else {
+				// getFragmentManager().beginTransaction()
 				Bundle b = new Bundle();
 				b.putSerializable("entity", entity);
 				mapFragment.setArguments(b);
@@ -78,15 +78,14 @@ public class CoverList extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.cover_list);
-//		getDatas();
+		// getDatas();
 		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
 		cbWater = (CheckBox) findViewById(R.id.cb_water);
 		cbCover = (CheckBox) findViewById(R.id.cb_cover);
 		rgBottom = (RadioGroup) findViewById(R.id.rg_bottom_cover);
 		setting = (ImageView) findViewById(R.id.setting);
-		radioMap = (RadioButton)findViewById(R.id.rb_map);
+		radioMap = (RadioButton) findViewById(R.id.rb_map);
 		setting.setOnClickListener(this);
-		
 
 		ft = getFragmentManager().beginTransaction();
 		if (listFragment == null) {
@@ -96,22 +95,16 @@ public class CoverList extends Activity implements OnClickListener {
 			mapFragment = new MapFragment();
 		}
 		entity = (Entity) getIntent().getSerializableExtra("entity");
-		System.out.println((entity == null?"":entity.toString()+"wxq"));
-		if(entity != null){
-//			Bundle b = new Bundle();
-//			b.putSerializable("entity", entity);
-//			mapFragment.setArguments(b);
+		System.out.println((entity == null ? "" : entity.toString() + "wxq"));
+		if (entity != null) {
+			// Bundle b = new Bundle();
+			// b.putSerializable("entity", entity);
+			// mapFragment.setArguments(b);
 			ft.replace(R.id.contain, mapFragment).commit();
 			System.out.println("wxqwxq+++++");
 			mapFragment.update(4);
 		}
-//		getFragmentManager().beginTransaction();
-//		if(entity == null){
-//			ft.replace(R.id.contain, listFragment, "f1").commit();
-//			System.out.println("test listFragment");
-//		}else
-		// listFragment.update(0);
-		// rgTop.setOnCheckedChangeListener(checkedChangeListener );
+
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
 		cbCover.setOnCheckedChangeListener(cbChangeListener);
 		rgBottom.setOnCheckedChangeListener(rgChangeListener);
@@ -124,7 +117,7 @@ public class CoverList extends Activity implements OnClickListener {
 		byte[] str_ = CRC16M.getSendBuf(CoverUtils.bytes2HexString(checkMsg));
 		askMsg.check[0] = str_[str_.length - 1];
 		askMsg.check[1] = str_[str_.length - 2];
-		if(entity == null)
+		if (entity == null)
 			new Thread(new sendAsk()).start();
 		rgBottom.check(R.id.rb_list);
 
@@ -160,7 +153,7 @@ public class CoverList extends Activity implements OnClickListener {
 			switch (flag) {
 			case 0x11:
 				// 都显示
-				if(flagWhitchIsCurrent == 1)
+				if (flagWhitchIsCurrent == 1)
 					listFragment.update(0);
 
 				// 地图都显示
@@ -170,24 +163,24 @@ public class CoverList extends Activity implements OnClickListener {
 			case 0x10:
 				// 只显示水位
 				// 让fargment来更新
-				if(flagWhitchIsCurrent == 1)
-				listFragment.update(1);
+				if (flagWhitchIsCurrent == 1)
+					listFragment.update(1);
 				else
-				mapFragment.update(1);
+					mapFragment.update(1);
 				break;
 			case 0x01:
 				// 只显示井盖
-				if(flagWhitchIsCurrent == 1)
-				listFragment.update(2);
+				if (flagWhitchIsCurrent == 1)
+					listFragment.update(2);
 				else
-				mapFragment.update(2);
+					mapFragment.update(2);
 				break;
 			case 0x00:
 				// 什么都不显示了
-				if(flagWhitchIsCurrent == 1)
-				listFragment.update(3);
+				if (flagWhitchIsCurrent == 1)
+					listFragment.update(3);
 				else
-				mapFragment.update(3);
+					mapFragment.update(3);
 				break;
 			}
 		}
@@ -233,12 +226,6 @@ public class CoverList extends Activity implements OnClickListener {
 			askMsg.check[0] = str_[str_.length - 1];
 			askMsg.check[1] = str_[str_.length - 2];
 			sendMessage(askMsg, ACTION);
-			// try {
-			// // Thread.sleep(2000);
-			// } catch (InterruptedException e) {
-			// e.printStackTrace();
-			// }
-			// }
 		}
 
 	}
@@ -296,12 +283,6 @@ public class CoverList extends Activity implements OnClickListener {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			// if(flagSend)
-			// return;
-			// flagSend = true;
-			// items = new ArrayList<Entity>();
-			// waterItems = new ArrayList<Entity>();
-			// coverItems = new ArrayList<Entity>();
 			items.clear();
 			waterItems.clear();
 			coverItems.clear();
@@ -349,7 +330,7 @@ public class CoverList extends Activity implements OnClickListener {
 					idByte[i] = recv[j * dataLength + i++ + 1];
 					idByte[i] = recv[j * dataLength + i++ + 1];
 					entity.setId(CoverUtils.getShort(idByte));
-					entity.setTag(recv[j * dataLength + i++ + 1] == (byte)0x51 ? "cover"
+					entity.setTag(recv[j * dataLength + i++ + 1] == (byte) 0x51 ? "cover"
 							: "level");
 					byte[] longTi = new byte[8];
 					for (int k = 0, t = i; i < t + 8; i++) {
@@ -363,15 +344,20 @@ public class CoverList extends Activity implements OnClickListener {
 					entity.setLatitude(CoverUtils.byte2Double(laTi));
 					switch (recv[j * dataLength + i + 1]) {
 					case 0x01:
-						entity.setStatus(Status.NORMAL);break;
+						entity.setStatus(Status.NORMAL);
+						break;
 					case 0x02:
-						entity.setStatus(Status.EXCEPTION_1);break;
+						entity.setStatus(Status.EXCEPTION_1);
+						break;
 					case 0x03:
-						entity.setStatus(Status.REPAIR);break;
+						entity.setStatus(Status.REPAIR);
+						break;
 					case 0x04:
-						entity.setStatus(Status.EXCEPTION_2);break;
+						entity.setStatus(Status.EXCEPTION_2);
+						break;
 					case 0x05:
-						entity.setStatus(Status.EXCEPTION_3);break;
+						entity.setStatus(Status.EXCEPTION_3);
+						break;
 					}
 					if (entity.getTag().equals("cover")) {
 						coverItems.add(entity);
@@ -385,7 +371,6 @@ public class CoverList extends Activity implements OnClickListener {
 			// ///////////////////
 			listFragment.firstData();
 			mapFragment.firstData();
-
 			handler.sendEmptyMessage(11);
 		}
 	}
@@ -403,7 +388,6 @@ public class CoverList extends Activity implements OnClickListener {
 			startActivity(intent);
 		}
 
-		// if(v.getId() == R.id.)
 	}
 
 	private void getDatas() {

@@ -11,28 +11,107 @@ import com.cover.bean.Message;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import android.widget.Toast;
 
 public class CoverUtils {
 	/**
+	 * sendExit
+	 */
+	// public static void sendExit(){
+	// Message msg = new Message();
+	// msg.data = "13468833168".getBytes();
+	// msg.function = (byte)0x12;
+	// msg.length = CoverUtils.short2ByteArray((short)(7+msg.data.length));
+	// byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
+	// byte[] str_ = CRC16M.getSendBuf(CoverUtils
+	// .bytes2HexString(checkMsg));
+	// msg.check[0] = str_[str_.length - 1];
+	// msg.check[1] = str_[str_.length - 2];
+	// sendMessage(msg,ACTION);
+	// }
+	/**
+	 * 
+	 * @param context
+	 * @param name
+	 * @param value
+	 */
+	public static void putString2SharedP(Context context, String name,
+			String value) {
+		// 实例化SharedPreferences对象（第一步）
+		SharedPreferences mySharedPreferences = context.getSharedPreferences(
+				"douyatech", Activity.MODE_PRIVATE);
+		// 实例化SharedPreferences.Editor对象（第二步）
+		SharedPreferences.Editor editor = mySharedPreferences.edit();
+		// 用putString的方法保存数据
+		editor.putString(name, value);
+		// 提交当前数据
+		editor.commit();
+		// 使用toast信息提示框提示成功写入数据
+		// Toast.makeText(context, "数据成功写入SharedPreferences！" ,
+		// Toast.LENGTH_LONG).show();
+	}
+
+	public static void putInt2SharedP(Context context, String name, int value) {
+		SharedPreferences sp = context.getSharedPreferences("douyatech",
+				Activity.MODE_PRIVATE);
+		SharedPreferences.Editor editor = sp.edit();
+		editor.putInt(name, value);
+		editor.commit();
+	}
+
+	public static String getStringSharedP(Context context, String name) {
+		String value = null;
+		// 同样，在读取SharedPreferences数据前要实例化出一个SharedPreferences对象
+		SharedPreferences sharedPreferences = context.getSharedPreferences(
+				"douyatech", Activity.MODE_PRIVATE);
+		// 使用getString方法获得value，注意第2个参数是value的默认值
+		value = sharedPreferences.getString(name, "");
+
+		return value;
+	}
+
+	public static int getIntSharedP(Context context, String name) {
+		int value = 0;
+		SharedPreferences sp = context.getSharedPreferences("douyatech",
+				Activity.MODE_PRIVATE);
+		value = sp.getInt(name, 0);
+		return value;
+	}
+
+	public static boolean getBooleanSharedP(Context context, String name) {
+		boolean value = false;
+		// 同样，在读取SharedPreferences数据前要实例化出一个SharedPreferences对象
+		SharedPreferences sharedPreferences = context.getSharedPreferences(
+				"douyatech", Activity.MODE_PRIVATE);
+		// 使用getString方法获得value，注意第2个参数是value的默认值
+		value = sharedPreferences.getBoolean(name, false);
+
+		return value;
+	}
+
+	/**
 	 * make askMessage
 	 */
-	public static Message makeMessageExceptCheck(byte function,byte[] length,byte[] data){
+	public static Message makeMessageExceptCheck(byte function, byte[] length,
+			byte[] data) {
 		Message askMsg = new Message();
 		askMsg.function = function;
 		askMsg.length = length;
 		askMsg.data = data;
 		return askMsg;
 	}
+
 	/**
 	 * 
 	 * @param context
 	 * @param msg
 	 * @param action
 	 */
-	public static void sendMessage(Context context,Message msg, String action) {
+	public static void sendMessage(Context context, Message msg, String action) {
 		Intent serviceIntent = new Intent();
 		serviceIntent.setAction(action);
 		int length = msg.getLength();
@@ -42,7 +121,7 @@ public class CoverUtils {
 		context.sendBroadcast(serviceIntent);
 		Log.i("cover", action + "send broadcast " + action);
 	}
-	
+
 	// 浮点到字节转换 
 	public static byte[] double2Byte(double d) {
 		byte[] b = new byte[8];
@@ -258,28 +337,28 @@ public class CoverUtils {
 		}
 		return sum;
 	}
-	
+
 	public static short getShort(byte[] buf, boolean bBigEnding) {
-		  if (buf == null) {
-		   throw new IllegalArgumentException("byte array is null!");
-		  }
-		  if (buf.length > 2) {
-		   throw new IllegalArgumentException("byte array size > 2 !");
-		  }
-		  short r = 0;
-		  if (bBigEnding) {
-		   for (int i = 0; i < buf.length; i++) {
-		    r <<= 8;
-		    r |= (buf[i] & 0x00ff);
-		   }
-		  } else {
-		   for (int i = buf.length - 1; i >= 0; i--) {
-		    r <<= 8;
-		    r |= (buf[i] & 0x00ff);
-		   }
-		  }
-		  return r;
-		 }
+		if (buf == null) {
+			throw new IllegalArgumentException("byte array is null!");
+		}
+		if (buf.length > 2) {
+			throw new IllegalArgumentException("byte array size > 2 !");
+		}
+		short r = 0;
+		if (bBigEnding) {
+			for (int i = 0; i < buf.length; i++) {
+				r <<= 8;
+				r |= (buf[i] & 0x00ff);
+			}
+		} else {
+			for (int i = buf.length - 1; i >= 0; i--) {
+				r <<= 8;
+				r |= (buf[i] & 0x00ff);
+			}
+		}
+		return r;
+	}
 
 	/**
 	 * short2byte

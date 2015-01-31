@@ -20,16 +20,17 @@ import com.cover.ui.Detail;
 import com.wxq.covers.R;
 
 public class ListFragment extends Fragment {
-	
+
 	private CoverAdapter adapter;
-	private int flag = 0;  // 0 全都显示 1显示水位 2显示井盖 
+	private int flag = 0; // 0 全都显示 1显示水位 2显示井盖
 	private ListView lv;
 	private ArrayList<Entity> items = new ArrayList<Entity>();
 	private ArrayList<Entity> waterItems = new ArrayList<Entity>();
 	private ArrayList<Entity> coverItems = new ArrayList<Entity>();
 	private ArrayList<Entity> nullItems = new ArrayList<Entity>();
 	public boolean flagWhitchIsCurrent;
-	public void update(int flag){
+
+	public void update(int flag) {
 		switch (flag) {
 		case 0:
 			adapter.update(items);
@@ -50,7 +51,7 @@ public class ListFragment extends Fragment {
 			break;
 		}
 	}
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -59,42 +60,41 @@ public class ListFragment extends Fragment {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		this.items = ((CoverList)getActivity()).items ;
-		this.waterItems = ((CoverList)getActivity()).waterItems ;
-		this.coverItems = ((CoverList)getActivity()).coverItems ;
-		
-		View view = inflater.inflate(R.layout.list_fragment,null);
+		this.items = ((CoverList) getActivity()).items;
+		this.waterItems = ((CoverList) getActivity()).waterItems;
+		this.coverItems = ((CoverList) getActivity()).coverItems;
+
+		View view = inflater.inflate(R.layout.list_fragment, null);
 		lv = (ListView) view.findViewById(R.id.lv_coverlist_cover);
 		return view;
 	}
-	public void firstData(){
-		// 
-		System.out.println("---------------------------------------------");
-		this.items = ((CoverList)getActivity()).items ;
-		this.waterItems = ((CoverList)getActivity()).waterItems ;
-		this.coverItems = ((CoverList)getActivity()).coverItems ;
-		System.out.println("uuuuuuuuu---"+this.items);
+
+	public void firstData() {
+		this.items = ((CoverList) getActivity()).items;
+		this.waterItems = ((CoverList) getActivity()).waterItems;
+		this.coverItems = ((CoverList) getActivity()).coverItems;
 	}
+
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		((CoverList)getActivity()).setAllChecked();
+		((CoverList) getActivity()).setAllChecked();
 		// 获取到activity里面的数据并进行显示
-		this.items = ((CoverList)getActivity()).items ;
-		this.waterItems = ((CoverList)getActivity()).waterItems ;
-		this.coverItems = ((CoverList)getActivity()).coverItems ;
-		
+		this.items = ((CoverList) getActivity()).items;
+		this.waterItems = ((CoverList) getActivity()).waterItems;
+		this.coverItems = ((CoverList) getActivity()).coverItems;
+
 		adapter = new CoverAdapter(getActivity(), items);
 		lv.setAdapter(adapter);
 		lv.setOnItemClickListener(itemClickListener);
 	}
-	
+
 	private OnItemClickListener itemClickListener = new OnItemClickListener() {
 
 		@Override
 		public void onItemClick(AdapterView<?> arg0, View arg1, int position,
 				long id) {
-			// 进入详情界面  传进对象
+			// 进入详情界面 传进对象
 			Entity entity = null;
 			switch (flag) {
 			case 0:

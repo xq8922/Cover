@@ -19,32 +19,35 @@ import android.view.animation.AnimationUtils;
 public class WelcomeActivity extends Activity implements AnimationListener {
 
 	private View welcomeView;
-	
-//	InternetService internetService;
-//	public ServiceConnection internetServiceConnection = new ServiceConnection() {
-//
-//		@Override
-//		public void onServiceConnected(ComponentName arg0, IBinder service) {
-//			internetService = ((InternetService.InterBinder) service)
-//					.getService();
-//		}
-//
-//		@Override
-//		public void onServiceDisconnected(ComponentName arg0) {
-//			internetService = null;
-//		}
-//
-//	};
+
+	// InternetService internetService;
+	// public ServiceConnection internetServiceConnection = new
+	// ServiceConnection() {
+	//
+	// @Override
+	// public void onServiceConnected(ComponentName arg0, IBinder service) {
+	// internetService = ((InternetService.InterBinder) service)
+	// .getService();
+	// }
+	//
+	// @Override
+	// public void onServiceDisconnected(ComponentName arg0) {
+	// internetService = null;
+	// }
+	//
+	// };
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.welcome);
-		
-//		Intent intent = new Intent(WelcomeActivity.this,InternetService.class);、
-		startService(new Intent(WelcomeActivity.this,InternetService.class));
-		Log.i("cover","start service");
+
+		// Intent intent = new
+		// Intent(WelcomeActivity.this,InternetService.class);、
+		startService(new Intent(WelcomeActivity.this, InternetService.class));
+		Log.i("cover", "start service");
 		welcomeView = findViewById(R.id.ll);
-		Animation welAnimation = AnimationUtils.loadAnimation(this, R.anim.welcome_animation);
+		Animation welAnimation = AnimationUtils.loadAnimation(this,
+				R.anim.welcome_animation);
 		welcomeView.startAnimation(welAnimation);
 		welAnimation.setAnimationListener(this);
 	}
@@ -55,7 +58,7 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 
 	@Override
 	public void onAnimationEnd(Animation animation) {
-		Intent intent = new Intent(this,MainActivity.class);
+		Intent intent = new Intent(this, MainActivity.class);
 		startActivity(intent);
 		finish();
 	}
@@ -63,9 +66,9 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 	@Override
 	public void onAnimationRepeat(Animation animation) {
 	}
-	
+
 	@Override
 	public void onBackPressed() {
-		//屏蔽返回键
+		// 屏蔽返回键
 	}
 }

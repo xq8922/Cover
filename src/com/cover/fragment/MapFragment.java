@@ -41,13 +41,13 @@ import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
 public class MapFragment extends Fragment {
-	
+
 	private static final String TAG = "cover";
 	Message askMsg = new Message();
 	private final String ACTION = "com.cover.service.IntenetService";
 	private CoverAdapter adapter;
-	private int flag = 0;  // 0 全都显示 1显示水位 2显示井盖 
-	
+	private int flag = 0; // 0 全都显示 1显示水位 2显示井盖
+
 	private MapView mMapView;
 	private static BaiduMap mBaiduMap;
 	private LocationClient mLocationClient;
@@ -57,21 +57,20 @@ public class MapFragment extends Fragment {
 	private static ArrayList<Entity> waterItems = new ArrayList<Entity>();
 	private static ArrayList<Entity> coverItems = new ArrayList<Entity>();
 	private static ArrayList<Entity> nullItems = new ArrayList<Entity>();
-	private static Map<LatLng,Entity> markerEntity1 = new HashMap<LatLng, Entity>();
-	private static Map<LatLng,Entity> markerEntity2 = new HashMap<LatLng, Entity>();
-	private static Map<LatLng,Entity> markerEntity3 = new HashMap<LatLng, Entity>();
-	
-	public void update(int flag){
+	private static Map<LatLng, Entity> markerEntity1 = new HashMap<LatLng, Entity>();
+	private static Map<LatLng, Entity> markerEntity2 = new HashMap<LatLng, Entity>();
+	private static Map<LatLng, Entity> markerEntity3 = new HashMap<LatLng, Entity>();
+
+	public void update(int flag) {
 		switch (flag) {
 		case 0:
 			// 在这里 修改地图上 全部显示 items
-//			if(mBaiduMap != null)
-//				mBaiduMap.clear();
-		
-			System.out.println("1111111111111asdfff222222");
+			// if(mBaiduMap != null)
+			// mBaiduMap.clear();
 			Iterator<Entity> it1 = items.iterator();
-			while(it1.hasNext()){
-				LatLng point = new LatLng(it1.next().getLatitude(), it1.next().getLongtitude());
+			while (it1.hasNext()) {
+				LatLng point = new LatLng(it1.next().getLatitude(), it1.next()
+						.getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -81,16 +80,18 @@ public class MapFragment extends Fragment {
 				// 在地图上添加Marker，并显示
 				mBaiduMap.addOverlay(option);
 				markerEntity1.put(point, it1.next());
-			}System.out.println("1111111111111111");
+			}
 			this.flag = 0;
 			break;
 		case 1:
-//			if(mBaiduMap != null)
-//				mBaiduMap.clear();
-			Iterator<Entity> it2 = waterItems.iterator(); 
-			while(it2.hasNext()){
-//				LatLng point = new LatLng(it2.next().getLatitude(), it2.next().getLongtitude());
-				LatLng point = new LatLng(it2.next().getLatitude(), it2.next().getLongtitude());
+			// if(mBaiduMap != null)
+			// mBaiduMap.clear();
+			Iterator<Entity> it2 = waterItems.iterator();
+			while (it2.hasNext()) {
+				// LatLng point = new LatLng(it2.next().getLatitude(),
+				// it2.next().getLongtitude());
+				LatLng point = new LatLng(it2.next().getLatitude(), it2.next()
+						.getLongtitude());
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
 				OverlayOptions option = new MarkerOptions().position(point)
@@ -103,11 +104,12 @@ public class MapFragment extends Fragment {
 			break;
 		case 2:
 
-//			if(mBaiduMap != null)
-//				mBaiduMap.clear();
+			// if(mBaiduMap != null)
+			// mBaiduMap.clear();
 			Iterator<Entity> it3 = coverItems.iterator();
-			while(it3.hasNext()){
-				LatLng point = new LatLng(it3.next().getLatitude(), it3.next().getLongtitude());
+			while (it3.hasNext()) {
+				LatLng point = new LatLng(it3.next().getLatitude(), it3.next()
+						.getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -118,53 +120,55 @@ public class MapFragment extends Fragment {
 				mBaiduMap.addOverlay(option);
 				markerEntity3.put(point, it3.next());
 			}
-//			adapter.update(coverItems);
+			// adapter.update(coverItems);
 			this.flag = 2;
 			break;
 		case 3:
 			// 什么都不显示
-			if(mBaiduMap != null)
+			if (mBaiduMap != null)
 				mBaiduMap.clear();
-//			adapter.update(nullItems);
+			// adapter.update(nullItems);
 			this.flag = 3;
 			break;
 		case 4:
-			System.out.println("2222222222222222222222222222222222222222222222");
-//			Entity entity = (Entity) getArguments().getSerializable("entity");
-//			System.out.println("test Map"+entity);
+			// Entity entity = (Entity)
+			// getArguments().getSerializable("entity");
+			// System.out.println("test Map"+entity);
 		}
 	}
 
 	private void getDatas() {
 		for (int i = 0; i < (16 - 1) / 5; i++) {
-			if(i <= 1){
+			if (i <= 1) {
 
-				Entity entity = new Entity((short) 1, "水位_65535",Status.REPAIR, "水位", 111, 222);
+				Entity entity = new Entity((short) 1, "水位_65535",
+						Status.REPAIR, "水位", 111, 222);
 				waterItems.add(entity);
 				items.add(entity);
-			}else{
-				Entity entity = new Entity((short) 2, "井盖_65535",Status.NORMAL, "井盖", 333, 444);
+			} else {
+				Entity entity = new Entity((short) 2, "井盖_65535",
+						Status.NORMAL, "井盖", 333, 444);
 				coverItems.add(entity);
 				items.add(entity);
 			}
 		}
 	}
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		SDKInitializer.initialize(getActivity().getApplicationContext());
-		((CoverList)getActivity()).setAllChecked();
-//		getDatas();
-		View view = inflater.inflate(R.layout.cover_map_list,null);
-//		Entity entity = (Entity) getArguments().getSerializable("entity");	
-		
+		((CoverList) getActivity()).setAllChecked();
+		// getDatas();
+		View view = inflater.inflate(R.layout.cover_map_list, null);
+		// Entity entity = (Entity) getArguments().getSerializable("entity");
+
 		mMapView = (MapView) view.findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();// get the map
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
-//
+		//
 		// 设定中心点坐标
-		LatLng cenpt = new LatLng(34.26667,108.95000);
+		LatLng cenpt = new LatLng(34.26667, 108.95000);
 		// 定义地图状态
 		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
 				.build();
@@ -175,28 +179,27 @@ public class MapFragment extends Fragment {
 		mBaiduMap.setMapStatus(mMapStatusUpdate);
 		return view;
 	}
-	
-	public void firstData(){
-		// 
-		System.out.println("---------------------------------------------");
-		this.items = ((CoverList)getActivity()).items ;
-		this.waterItems = ((CoverList)getActivity()).waterItems ;
-		this.coverItems = ((CoverList)getActivity()).coverItems ;
-		System.out.println("uuuuuuuuu---"+this.items);
+
+	public void firstData() {
+		this.items = ((CoverList) getActivity()).items;
+		this.waterItems = ((CoverList) getActivity()).waterItems;
+		this.coverItems = ((CoverList) getActivity()).coverItems;
+		System.out.println("uuuuuuuuu---" + this.items);
 	}
-	
+
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		((CoverList)getActivity()).setAllChecked();
-		//全部显示
-		Entity e =  CoverList.entity;
-//		e = (Entity) getActivity().getIntent().getExtras().getSerializable("entity");
-		if(e == null){
-			Log.i(TAG,"test entity is null");			
+		((CoverList) getActivity()).setAllChecked();
+		// 全部显示
+		Entity e = CoverList.entity;
+		// e = (Entity)
+		// getActivity().getIntent().getExtras().getSerializable("entity");
+		if (e == null) {
+			Log.i(TAG, "test entity is null");
 			Iterator<Entity> it = items.iterator();
-			while(it.hasNext()){
-				LatLng point = new LatLng(34.272121+0.1, 108.951212-0.1);
+			while (it.hasNext()) {
+				LatLng point = new LatLng(34.272121 + 0.1, 108.951212 - 0.1);
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -207,14 +210,14 @@ public class MapFragment extends Fragment {
 				mBaiduMap.addOverlay(option);
 				markerEntity1.put(point, it.next());
 				mBaiduMap.setMyLocationEnabled(true);
-//			mBaiduMap.
+				// mBaiduMap.
 				mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-					
+
 					@Override
 					public boolean onMarkerClick(Marker arg0) {
-						// 进入详情界面  传进对象
+						// 进入详情界面 传进对象
 						Entity entity = null;
-						
+
 						switch (flag) {
 						case 0:
 							entity = markerEntity1.get(arg0.getPosition());
@@ -227,16 +230,16 @@ public class MapFragment extends Fragment {
 							break;
 						}
 						Intent intent = new Intent(getActivity(), Detail.class);
-						
+
 						intent.putExtra("entity", entity);
 						startActivity(intent);
 						return false;
 					}
 				});
 			}
-		}else{
-			Log.i(TAG,"test entity is not null"+e);
-			LatLng point = new LatLng(34.272121-0.1, 108.951212-0.1);
+		} else {
+			Log.i(TAG, "test entity is not null" + e);
+			LatLng point = new LatLng(34.272121 - 0.1, 108.951212 - 0.1);
 			// 构建Marker图标
 			BitmapDescriptor bitmap = BitmapDescriptorFactory
 					.fromResource(R.drawable.red_small);
@@ -251,14 +254,12 @@ public class MapFragment extends Fragment {
 
 	@Override
 	public void onStart() {
-		// TODO Auto-generated method stub
 		super.onStart();
 		// mLocationClient.start();
 	}
 
 	@Override
 	public void onResume() {
-		// TODO Auto-generated method stub
 		super.onResume();
 		mMapView.onResume();
 		// if (!mLocationClient.isStarted()) mLocationClient.start();
@@ -268,14 +269,12 @@ public class MapFragment extends Fragment {
 
 	@Override
 	public void onPause() {
-		// TODO Auto-generated method stub
 		super.onPause();
 		mMapView.onPause();
 	}
 
 	@Override
 	public void onStop() {
-		// TODO Auto-generated method stub
 		super.onStop();
 		mBaiduMap.setMyLocationEnabled(false);
 		// mLocationClient.stop();
@@ -283,7 +282,6 @@ public class MapFragment extends Fragment {
 
 	@Override
 	public void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
 		mMapView.onDestroy();
 

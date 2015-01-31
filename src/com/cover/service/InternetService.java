@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -27,7 +25,6 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -35,26 +32,26 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
-enum functionStatus {
-	WARNING, TERMINAL_CHANGED, LOGIN_VALIDATE, DEVICE_REPLAY, TERMINAL_ARGS_REPLAY, ACK_REMOVE_WARNING, ACK_SET_REPAIR_BRGIN, ACK_SET_REPAIR_END
-}
-
 public class InternetService extends Service implements Runnable {
 	private final static String TAG = "COVER";
 
 	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
 	private static final String ACTION_CoverList = "com.cover.coverlist";
-//	private static final String ACTION_CoverMapList = "com.cover.covermaplist";
+	// private static final String ACTION_CoverMapList =
+	// "com.cover.covermaplist";
 	private static final String ACTION_Detail = "com.cover.detail";
 	private static final String ACTION_Settings = "com.cover.settings";
 	private static final String ACTION_SoftwareSettings = "com.cover.softwaresettings";
 	// public String ip = "192.168.0.1";
 	// public String ip = "219.244.118.168";
 	// public String ip = "192.168.0.01";
-	public String ip = "124.115.169.98";
+	// public String ip = "124.115.169.98";
+	public String ip = CoverUtils.getStringSharedP(getApplicationContext(),
+			"ip");
 	// public String ip = "192.168.100.201";
 	// public String ip = "219.245.66.226";
-	public int port = 6221;
+	// public int port = 6221;
+	public int port = CoverUtils.getIntSharedP(getApplicationContext(), "port");
 	private Socket socket;
 	private BufferedReader reader;
 	private PrintWriter writer;
@@ -67,63 +64,65 @@ public class InternetService extends Service implements Runnable {
 	ServiceReceiver myReceiver;
 	boolean flagReaderThread = false;
 	Message message = new Message();
-	
-	public void setNotify(){
-		//创建一个NotificationManager的引用
+
+	public void setNotify(String title, String content) {
+		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
-		NotificationManager mNotificationManager = (NotificationManager)getSystemService(ns);
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 		// 定义Notification的各种属性
-		int icon = R.drawable.icon; //通知图标
-		CharSequence tickerText = "Hello"; //状态栏显示的通知文本提示
-		long when = System.currentTimeMillis(); //通知产生的时间，会在通知信息里显示
-		//用上面的属性初始化 Nofification
-		Notification notification = new Notification(icon,tickerText,when);
+		int icon = R.drawable.icon; // 通知图标
+		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
+		// 用上面的属性初始化 Nofification
+		Notification notification = new Notification(icon, tickerText, when);
+		// 添加声音
+		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
+			notification.defaults |= Notification.DEFAULT_ALL;
+		// notification.sound =
+		// Uri.parse("file:///sdcard/notification/ringer.mp3");
+		// notification.sound =
+		// Uri.withAppendedPath(Audio.Media.INTERNAL_CONTENT_URI, "6");
+		// 如果想要让声音持续重复直到用户对通知做出反应，则可以在notification的flags字段增加"FLAG_INSISTENT"
+		// * 如果notification的defaults字段包括了"DEFAULT_SOUND"属性，则这个属性将覆盖sound字段中定义的声音
+
 		/*
-		* 添加声音*/
-		 notification.defaults |=Notification.DEFAULT_SOUND;		
-//		 notification.sound = Uri.parse("file:///sdcard/notification/ringer.mp3");
-//		 notification.sound = Uri.withAppendedPath(Audio.Media.INTERNAL_CONTENT_URI, "6");
-//		 如果想要让声音持续重复直到用户对通知做出反应，则可以在notification的flags字段增加"FLAG_INSISTENT"
-//		* 如果notification的defaults字段包括了"DEFAULT_SOUND"属性，则这个属性将覆盖sound字段中定义的声音
-		
+		 * 添加振动 notification.defaults |= Notification.DEFAULT_VIBRATE;
+		 * 或者可以定义自己的振动模式： long[] vibrate = {0,100,200,300};
+		 * //0毫秒后开始振动，振动100毫秒后停止，再过200毫秒后再次振动300毫秒 notification.vibrate =
+		 * vibrate; long数组可以定义成想要的任何长度
+		 * 如果notification的defaults字段包括了"DEFAULT_VIBRATE",则这个属性将覆盖vibrate字段中定义的振动
+		 */
 		/*
-		* 添加振动
-		* notification.defaults |= Notification.DEFAULT_VIBRATE;
-		* 或者可以定义自己的振动模式：
-		* long[] vibrate = {0,100,200,300}; //0毫秒后开始振动，振动100毫秒后停止，再过200毫秒后再次振动300毫秒
-		* notification.vibrate = vibrate;
-		* long数组可以定义成想要的任何长度
-		* 如果notification的defaults字段包括了"DEFAULT_VIBRATE",则这个属性将覆盖vibrate字段中定义的振动
-		*/
-		/*
-		* 添加LED灯提醒*/
+		 * 添加LED灯提醒
+		 */
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
-//		* 或者可以自己的LED提醒模式:
-//		* notification.ledARGB = 0xff00ff00;
-//		* notification.ledOnMS = 300; //亮的时间
-//		* notification.ledOffMS = 1000; //灭的时间
-//		* notification.flags |= Notification.FLAG_SHOW_LIGHTS;
-		
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		// * 或者可以自己的LED提醒模式:
+		// * notification.ledARGB = 0xff00ff00;
+		// * notification.ledOnMS = 300; //亮的时间
+		// * notification.ledOffMS = 1000; //灭的时间
+		// * notification.flags |= Notification.FLAG_SHOW_LIGHTS;
+
 		/*
-		* 更多的特征属性
-		* notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
-		* notification.flags |= FLAG_INSISTENT; //重复发出声音，直到用户响应此通知
-		* notification.flags |= FLAG_ONGOING_EVENT; //将此通知放到通知栏的"Ongoing"即"正在运行"组中
-		* notification.flags |= FLAG_NO_CLEAR; //表明在点击了通知栏中的"清除通知"后，此通知不清除，
-		* //经常与FLAG_ONGOING_EVENT一起使用
-		* notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
-		* //如果要使用此字段，必须从1开始
-		* notification.iconLevel = ; //
-		*/
-		//设置通知的事件消息
-		Context context = getApplicationContext(); //上下文
-		CharSequence contentTitle = "My Notification"; //通知栏标题
-		CharSequence contentText = "Hello World!"; //通知栏内容
-		Intent notificationIntent = new Intent(this,CoverList.class); //点击该通知后要跳转的Activity
-		PendingIntent contentIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
-		notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
-		//把Notification传递给 NotificationManager
-		mNotificationManager.notify(0,notification);
+		 * 更多的特征属性 notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
+		 * notification.flags |= FLAG_INSISTENT; //重复发出声音，直到用户响应此通知
+		 * notification.flags |= FLAG_ONGOING_EVENT;
+		 * //将此通知放到通知栏的"Ongoing"即"正在运行"组中 notification.flags |= FLAG_NO_CLEAR;
+		 * //表明在点击了通知栏中的"清除通知"后，此通知不清除， //经常与FLAG_ONGOING_EVENT一起使用
+		 * notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
+		 * //如果要使用此字段，必须从1开始 notification.iconLevel = ; //
+		 */
+		// 设置通知的事件消息
+		Context context = getApplicationContext(); // 上下文
+		CharSequence contentTitle = title; // 通知栏标题
+		CharSequence contentText = content; // 通知栏内容
+		Intent notificationIntent = new Intent(this, CoverList.class); // 点击该通知后要跳转的Activity
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, 0);
+		notification.setLatestEventInfo(context, contentTitle, contentText,
+				contentIntent);
+		// 把Notification传递给 NotificationManager
+		mNotificationManager.notify(0, notification);
 	}
 
 	public static class ServiceReceiver extends BroadcastReceiver {
@@ -131,10 +130,11 @@ public class InternetService extends Service implements Runnable {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			msg = intent.getByteArrayExtra("msg");
-			
+
 			Log.i(TAG, msg.toString());
 			// sendMessage(msg);
-			Toast.makeText(context, "service accept msg", Toast.LENGTH_LONG).show();
+			Toast.makeText(context, "service accept msg", Toast.LENGTH_LONG)
+					.show();
 			flag_send = true;
 		}
 
@@ -197,7 +197,7 @@ public class InternetService extends Service implements Runnable {
 					System.out.println("OK");
 					socketWriter.flush();
 					Log.i(TAG, "msg sent " + msg.toString());
-					if(msg[0] == (byte)0x12){
+					if (msg[4] == (byte) 0x12) {
 						this.stopSelf();
 						System.exit(0);
 					}
@@ -228,16 +228,18 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
+			Toast.makeText(getApplicationContext(), "服务器已连接",
+					Toast.LENGTH_SHORT).show();
 			Log.i(TAG, "socket is connectted");
 		} catch (SocketException e) {
+			Toast.makeText(getApplicationContext(), "服务器连接超时",
+					Toast.LENGTH_SHORT).show();
 			Log.v(TAG, e.toString());
 			e.printStackTrace();
 			workStatus = e.toString();
 			return;
-		} catch (Exception e) {
-			Log.e(TAG, e.toString());
-			workStatus = e.toString();
-			return;
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -331,7 +333,7 @@ public class InternetService extends Service implements Runnable {
 				byte[] length_temp = new byte[2];
 				for (int i = 0; i < length.length; i++)
 					length_temp[i] = length[i];
-				int msgLength = CoverUtils.getShort(length,true);
+				int msgLength = CoverUtils.getShort(length, true);
 				System.out.println(msgLength - 6);
 				byte[] msgBuff = new byte[msgLength - 6];
 				size = bufferedReader.read(msgBuff);
@@ -368,35 +370,72 @@ public class InternetService extends Service implements Runnable {
 				byte[] check_temp = new byte[2];
 				check_temp[0] = str_[str_.length - 1];
 				check_temp[1] = str_[str_.length - 2];
-				boolean f = CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg));
-//				if ((check_temp[0] == msg.check[0])
-//						&& (check_temp[1] == msg.check[1]))
+				boolean f = CRC16M.checkBuf(CoverUtils
+						.msg2ByteArrayExceptHeader(msg));
+				// if ((check_temp[0] == msg.check[0])
+				// && (check_temp[1] == msg.check[1]))
 				{
 					Log.i(TAG, "check right");
 					// if
 					// (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg)))
 					// {
 					switch (msgBuff[0]) {
-					case 0x01: {//需要处理报警信息ack
-//						getMessage(msgBuff, ACTION_CoverList);
-//						getMessage(msgBuff, ACTION_CoverMapList);
-						// when alarm,need alarm						
+					case 0x01: {// 需要处理报警信息ack
+						// 获取软件设置是否响铃
+						byte[] b = new byte[2];
+						b[0] = msgBuff[1];
+						b[1] = msgBuff[2];
+						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
+								: "井盖 ID：") + CoverUtils.getShort(b);
+						String content = null;
+						switch (msgBuff[4]) {
+						case (byte) 0x01:
+							content = "正常状态";
+							break;
+						case (byte) 0x02:
+							content = "报警状态";
+							break;
+						case (byte) 0x03:
+							content = "维修状态";
+							break;
+						case (byte) 0x04:
+							content = "欠压状态";
+							break;
+						case (byte) 0x05:
+							content = "报警欠压状态";
+							break;
+						default:
+							content = "未知状态";
+						}
+						;
+						setNotify(title, content);
+						byte[] ackAlert = new byte[] { (byte) 0xFA,
+								(byte) 0xF5, (byte) 0x00, (byte) 0x07,
+								(byte) 0x0A };
+						byte[] checkAck = CRC16M.getSendBuf(CoverUtils
+								.bytes2HexString(ackAlert));
+						sendMessage(checkAck);
 						break;
 					}
 					case 0x02: {
-//						getMessage(msgBuff, ACTION_CoverMapList);
-						NotificationManager m_NotificationManager=(NotificationManager)getApplicationContext().getSystemService(NOTIFICATION_SERVICE);
-						Notification  m_Notification=new Notification();
-						m_Notification.icon=R.drawable.icon;
-						//当我们点击通知时显示的内容
-						m_Notification.tickerText="Button1 通知内容.....";
-						m_Notification.defaults=Notification.DEFAULT_SOUND;
-						//设置通知显示的参数
-						Intent   m_Intent=new Intent(InternetService.this,CoverList.class);       
-						PendingIntent m_PendingIntent=PendingIntent.getActivity(InternetService.this, 0, m_Intent, 0);
-						m_Notification.setLatestEventInfo(InternetService.this, "Button1", "Button1通知",m_PendingIntent );
-						//这个可以理解为开始执行这个通知
-						m_NotificationManager.notify(0,m_Notification);
+						// getMessage(msgBuff, ACTION_CoverMapList);
+						NotificationManager m_NotificationManager = (NotificationManager) getApplicationContext()
+								.getSystemService(NOTIFICATION_SERVICE);
+						Notification m_Notification = new Notification();
+						m_Notification.icon = R.drawable.icon;
+						// 当我们点击通知时显示的内容
+						m_Notification.tickerText = "Button1 通知内容.....";
+						m_Notification.defaults = Notification.DEFAULT_SOUND;
+						// 设置通知显示的参数
+						Intent m_Intent = new Intent(InternetService.this,
+								CoverList.class);
+						PendingIntent m_PendingIntent = PendingIntent
+								.getActivity(InternetService.this, 0, m_Intent,
+										0);
+						m_Notification.setLatestEventInfo(InternetService.this,
+								"Button1", "Button1通知", m_PendingIntent);
+						// 这个可以理解为开始执行这个通知
+						m_NotificationManager.notify(0, m_Notification);
 						break;
 					}
 					case 0x03: {
@@ -405,7 +444,6 @@ public class InternetService extends Service implements Runnable {
 					}
 					case 0x04: {
 						getMessage(msgBuff, ACTION_CoverList);
-//						getMessage(msgBuff, ACTION_CoverMapList);
 						break;
 					}
 					case 0x05: {
@@ -414,22 +452,19 @@ public class InternetService extends Service implements Runnable {
 					}
 					case 0x06: {
 						getMessage(msgBuff, ACTION_CoverList);
-//						getMessage(msgBuff, ACTION_CoverMapList);
 						break;
 					}
 					case 0x07: {
 						getMessage(msgBuff, ACTION_CoverList);
-//						getMessage(msgBuff, ACTION_CoverMapList);
 						break;
 					}
-					case 0x08: {// ά��״̬�������ý��ճɹ���ACK��Ϣ
+					case 0x08: {
 						getMessage(msgBuff, ACTION_CoverList);
-//						getMessage(msgBuff, ACTION_CoverMapList);
 						break;
 					}
 					default:
-						Toast.makeText(getApplicationContext(),
-								"������������δ֪����", Toast.LENGTH_LONG).show();
+						Toast.makeText(getApplicationContext(), "未知",
+								Toast.LENGTH_LONG).show();
 					}
 				}
 				// }
@@ -451,6 +486,11 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
+		if (CoverUtils.getStringSharedP(getApplicationContext(), "ip") == "")
+			CoverUtils.putString2SharedP(getApplicationContext(), "ip",
+					"124.115.169.98");
+		if (CoverUtils.getIntSharedP(getApplicationContext(), "port") == 0)
+			CoverUtils.putInt2SharedP(getApplicationContext(), "port", 6221);
 		myReceiver = new ServiceReceiver();
 		thread = new Thread(InternetService.this);
 		thread.start();
@@ -474,7 +514,7 @@ public class InternetService extends Service implements Runnable {
 	public void onStart(Intent intent, int startId) {
 
 		String ip = intent.getStringExtra("ip");
-		if(ip!=null){
+		if (ip != null) {
 			this.ip = ip;
 		}
 		super.onStart(intent, startId);
