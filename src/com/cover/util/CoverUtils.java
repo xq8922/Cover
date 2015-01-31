@@ -258,6 +258,28 @@ public class CoverUtils {
 		}
 		return sum;
 	}
+	
+	public static short getShort(byte[] buf, boolean bBigEnding) {
+		  if (buf == null) {
+		   throw new IllegalArgumentException("byte array is null!");
+		  }
+		  if (buf.length > 2) {
+		   throw new IllegalArgumentException("byte array size > 2 !");
+		  }
+		  short r = 0;
+		  if (bBigEnding) {
+		   for (int i = 0; i < buf.length; i++) {
+		    r <<= 8;
+		    r |= (buf[i] & 0x00ff);
+		   }
+		  } else {
+		   for (int i = buf.length - 1; i >= 0; i--) {
+		    r <<= 8;
+		    r |= (buf[i] & 0x00ff);
+		   }
+		  }
+		  return r;
+		 }
 
 	/**
 	 * short2byte

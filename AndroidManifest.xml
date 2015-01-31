@@ -67,11 +67,11 @@
                 </action>
             </intent-filter>
         </receiver>
-        <receiver android:name="com.cover.ui.CoverMapList$CoverMapListReceiver" >
-            <intent-filter>
-                <action android:name="com.cover.covermaplist" />
-            </intent-filter>
-        </receiver>
+<!--         <receiver android:name="com.cover.ui.CoverMapList$CoverMapListReceiver" > -->
+<!--             <intent-filter> -->
+<!--                 <action android:name="com.cover.covermaplist" /> -->
+<!--             </intent-filter> -->
+<!--         </receiver> -->
         <receiver android:name="com.cover.ui.Detail$DetailReceiver" >
             <intent-filter>
                 <action android:name="com.cover.detail" />

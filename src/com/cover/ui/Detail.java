@@ -5,6 +5,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
@@ -26,18 +30,14 @@ public class Detail extends Activity implements OnClickListener {
 	private ImageView ivState;
 	private TextView tvLocation;
 	private TextView tvName;
-	private ImageView ivType; 
-	
+	private ImageView ivType; 	
 	private ImageView back;
-
 	private ImageView ivReparing;
-
 	private ImageView ivFinish;
-
 	private ImageView ivLeave;
-
 	private ImageView ivParam;
 	private ImageView ivEnterMap;
+	private static MapFragment mapFragment;
 	private final String ACTION = "com.cover.service.IntenetService";
 	Message msg = new Message();
 
@@ -65,6 +65,7 @@ public class Detail extends Activity implements OnClickListener {
 		ivFinish.setOnClickListener(this);
 		ivLeave.setOnClickListener(this);
 		ivParam.setOnClickListener(this);
+		ivEnterMap.setOnClickListener(this);
 		if (entity.getTag().equals("level")) {			
 			ivType.setImageResource(R.drawable.water);
 		}else if (entity.getTag().equals("cover")) {
@@ -92,22 +93,26 @@ public class Detail extends Activity implements OnClickListener {
 	}
 
 	public void setRepairBegin(Entity entity){		
-		msg = CoverUtils.makeMessageExceptCheck((byte)0x0E, CoverUtils.short2ByteArray((short) 10), CoverUtils.short2ByteArray(entity.getId()));
-		msg.check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
-		CoverUtils.sendMessage(getApplicationContext(), msg, ACTION);
+		msg = CoverUtils.makeMessageExceptCheck((byte)0x0E, CoverUtils.short2ByteArray((short) 7), CoverUtils.short2ByteArray(entity.getId()));
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
+		msg.check [0] = check[0];
+		msg.check[1] = check[1];
+		sendMessage( msg, ACTION);
 	}
 	public void setRepairEnd(Entity entity){		
-		msg = CoverUtils.makeMessageExceptCheck((byte)0x0F, CoverUtils.short2ByteArray((short) 10), CoverUtils.short2ByteArray(entity.getId()));
-		msg.check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
-		CoverUtils.sendMessage(getApplicationContext(), msg, ACTION);
+		msg = CoverUtils.makeMessageExceptCheck((byte)0x0F, CoverUtils.short2ByteArray((short) 7), CoverUtils.short2ByteArray(entity.getId()));
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
+		msg.check [0] = check[0];
+		msg.check[1] = check[1];
+		sendMessage( msg, ACTION);
 	}
 	public void setUnAlarm(Entity entity){		
-		msg = CoverUtils.makeMessageExceptCheck((byte)0x10, CoverUtils.short2ByteArray((short) 10), CoverUtils.short2ByteArray(entity.getId()));
-		msg.check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
-		CoverUtils.sendMessage(getApplicationContext(), msg, ACTION);
+		msg = CoverUtils.makeMessageExceptCheck((byte)0x10, CoverUtils.short2ByteArray((short) 7), CoverUtils.short2ByteArray(entity.getId()));
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
+		msg.check [0] = check[0];
+		msg.check[1] = check[1];
+		sendMessage( msg, ACTION);
 	}
-	
-	
 	
 	public static class DetailReceiver extends BroadcastReceiver {
 
@@ -117,20 +122,59 @@ public class Detail extends Activity implements OnClickListener {
 			final int length = 1;
 			switch(recv[0]){
 			case 0x06://报警解除
+				Toast.makeText(context, "报警解除", Toast.LENGTH_LONG).show();
 				break;
 			case 0x07://begin repair
+				Toast.makeText(context, "开始维修", Toast.LENGTH_LONG).show();
 				break;
 			case 0x08://end repair
-				break;
-			case 0x0A://报警信息接收成功
-				break;
-				
-				
+				Toast.makeText(context, "设置结束维修成功", Toast.LENGTH_LONG).show();
+				break;				
 			}
 		}
 
 	}
 	
+	public void sendMessage(Message msg, String action) {
+		Intent serviceIntent = new Intent();
+		serviceIntent.setAction(action);
+		int length = msg.getLength();
+		byte[] totalMsg = new byte[length];
+		totalMsg = CoverUtils.msg2ByteArray(msg, length);
+		serviceIntent.putExtra("msg", totalMsg);
+		sendBroadcast(serviceIntent);
+		Log.i(TAG, action + "sned broadcast " + action);
+	}
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	super.onCreateOptionsMenu(menu);
+	//通过MenuInflater将XML 实例化为 Menu Object
+	MenuInflater inflater = getMenuInflater();
+	inflater.inflate(R.layout.menu, menu);
+
+	return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// TODO Auto-generated method stub
+		switch(item.getItemId()){
+		case R.id.item_exit_settings:
+			Message msg = new Message();
+			msg.data = "13468833168".getBytes();
+			msg.function = (byte)0x12;
+			msg.length = CoverUtils.short2ByteArray((short)(7+msg.data.length));
+			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
+			byte[] str_ = CRC16M.getSendBuf(CoverUtils
+					.bytes2HexString(checkMsg));
+			msg.check[0] = str_[str_.length - 1];
+			msg.check[1] = str_[str_.length - 2];
+			sendMessage(msg,ACTION);
+			this.finish();
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
 	@Override
 	public void onClick(View v) {
 		Toast.makeText(this, v.getId()+"", Toast.LENGTH_SHORT).show();
@@ -162,7 +206,9 @@ public class Detail extends Activity implements OnClickListener {
 			break;
 		case R.id.iv_entermap_detail:
 			Toast.makeText(this, "eeeeeee", Toast.LENGTH_SHORT).show();
-			Intent i = new Intent(Detail.this, MapFragment.class);
+			Intent i = new Intent(Detail.this, CoverList.class);
+//			Bundle b = new Bundle();
+//			b.putSerializable("entity", entity);
 			i.putExtra("entity", entity);
 			startActivity(i);
 			break;

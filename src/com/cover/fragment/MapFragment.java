@@ -2,6 +2,7 @@ package com.cover.fragment;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import android.app.Fragment;
@@ -56,18 +57,21 @@ public class MapFragment extends Fragment {
 	private static ArrayList<Entity> waterItems = new ArrayList<Entity>();
 	private static ArrayList<Entity> coverItems = new ArrayList<Entity>();
 	private static ArrayList<Entity> nullItems = new ArrayList<Entity>();
-	private static Map<Marker,Entity> markerEntity1 = new HashMap<Marker, Entity>();
-	private static Map<Marker,Entity> markerEntity2 = new HashMap<Marker, Entity>();
-	private static Map<Marker,Entity> markerEntity3 = new HashMap<Marker, Entity>();
+	private static Map<LatLng,Entity> markerEntity1 = new HashMap<LatLng, Entity>();
+	private static Map<LatLng,Entity> markerEntity2 = new HashMap<LatLng, Entity>();
+	private static Map<LatLng,Entity> markerEntity3 = new HashMap<LatLng, Entity>();
 	
 	public void update(int flag){
 		switch (flag) {
 		case 0:
 			// 在这里 修改地图上 全部显示 items
-			int i = 0;
-			mBaiduMap.clear();
-			while(i++ < items.size()){
-				LatLng point = new LatLng(34.272121+i*0.1, 108.951212-i*0.1);
+//			if(mBaiduMap != null)
+//				mBaiduMap.clear();
+		
+			System.out.println("1111111111111asdfff222222");
+			Iterator<Entity> it1 = items.iterator();
+			while(it1.hasNext()){
+				LatLng point = new LatLng(it1.next().getLatitude(), it1.next().getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -76,30 +80,34 @@ public class MapFragment extends Fragment {
 						.icon(bitmap).title("cover");
 				// 在地图上添加Marker，并显示
 				mBaiduMap.addOverlay(option);
-//				markerEntity1.put(option., items.get(i));
-			}
+				markerEntity1.put(point, it1.next());
+			}System.out.println("1111111111111111");
 			this.flag = 0;
 			break;
 		case 1:
-			int i1 = 0;mBaiduMap.clear();
-			while(i1++ < waterItems.size()){
-				LatLng point = new LatLng(34.272121+i1*0.1, 108.951212-i1*0.1);
-				// 构建Marker图标
+//			if(mBaiduMap != null)
+//				mBaiduMap.clear();
+			Iterator<Entity> it2 = waterItems.iterator(); 
+			while(it2.hasNext()){
+//				LatLng point = new LatLng(it2.next().getLatitude(), it2.next().getLongtitude());
+				LatLng point = new LatLng(it2.next().getLatitude(), it2.next().getLongtitude());
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
-				// 构建MarkerOption，用于在地图上添加Marker
 				OverlayOptions option = new MarkerOptions().position(point)
 						.icon(bitmap).title("cover");
-				// 在地图上添加Marker，并显示
 				mBaiduMap.addOverlay(option);
+				markerEntity2.put(point, it2.next());
 			}
 			// 只显示水位
 			this.flag = 1;
 			break;
 		case 2:
-			int i11 = 0;mBaiduMap.clear();
-			while(i11++ < coverItems.size()){
-				LatLng point = new LatLng(34.272121+i11*0.1, 108.951212-i11*0.1);
+
+//			if(mBaiduMap != null)
+//				mBaiduMap.clear();
+			Iterator<Entity> it3 = coverItems.iterator();
+			while(it3.hasNext()){
+				LatLng point = new LatLng(it3.next().getLatitude(), it3.next().getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -108,17 +116,22 @@ public class MapFragment extends Fragment {
 						.icon(bitmap).title("cover");
 				// 在地图上添加Marker，并显示
 				mBaiduMap.addOverlay(option);
+				markerEntity3.put(point, it3.next());
 			}
 //			adapter.update(coverItems);
 			this.flag = 2;
 			break;
 		case 3:
 			// 什么都不显示
-			mBaiduMap.clear();
-			
+			if(mBaiduMap != null)
+				mBaiduMap.clear();
 //			adapter.update(nullItems);
 			this.flag = 3;
 			break;
+		case 4:
+			System.out.println("2222222222222222222222222222222222222222222222");
+//			Entity entity = (Entity) getArguments().getSerializable("entity");
+//			System.out.println("test Map"+entity);
 		}
 	}
 
@@ -142,14 +155,10 @@ public class MapFragment extends Fragment {
 			Bundle savedInstanceState) {
 		SDKInitializer.initialize(getActivity().getApplicationContext());
 		((CoverList)getActivity()).setAllChecked();
-		getDatas();
+//		getDatas();
 		View view = inflater.inflate(R.layout.cover_map_list,null);
+//		Entity entity = (Entity) getArguments().getSerializable("entity");	
 		
-		Entity e = new Entity();
-//		e = (Entity) getActivity().getIntent().getExtras().getSerializable("entity");
-		if(e != null){
-			
-		}
 		mMapView = (MapView) view.findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();// get the map
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
@@ -164,19 +173,6 @@ public class MapFragment extends Fragment {
 				.newMapStatus(mMapStatus);
 		// 改变地图状态
 		mBaiduMap.setMapStatus(mMapStatusUpdate);
-//		// //在地图中添加Ground覆盖物
-//		{
-//			// 定义Maker坐标点
-//			LatLng point = new LatLng(34.272121, 108.951212);
-//			// 构建Marker图标
-//			BitmapDescriptor bitmap = BitmapDescriptorFactory
-//					.fromResource(R.drawable.red_small);
-//			// 构建MarkerOption，用于在地图上添加Marker
-//			OverlayOptions option = new MarkerOptions().position(point)
-//					.icon(bitmap).title("cover");
-//			// 在地图上添加Marker，并显示
-//			mBaiduMap.addOverlay(option);
-//		}
 		return view;
 	}
 	
@@ -194,9 +190,53 @@ public class MapFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 		((CoverList)getActivity()).setAllChecked();
 		//全部显示
-		int i = 0;
-		while(i++ < items.size()){
-			LatLng point = new LatLng(34.272121+i*0.1, 108.951212-i*0.1);
+		Entity e =  CoverList.entity;
+//		e = (Entity) getActivity().getIntent().getExtras().getSerializable("entity");
+		if(e == null){
+			Log.i(TAG,"test entity is null");			
+			Iterator<Entity> it = items.iterator();
+			while(it.hasNext()){
+				LatLng point = new LatLng(34.272121+0.1, 108.951212-0.1);
+				// 构建Marker图标
+				BitmapDescriptor bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.red_small);
+				// 构建MarkerOption，用于在地图上添加Marker
+				OverlayOptions option = new MarkerOptions().position(point)
+						.icon(bitmap).title("cover");
+				// 在地图上添加Marker，并显示
+				mBaiduMap.addOverlay(option);
+				markerEntity1.put(point, it.next());
+				mBaiduMap.setMyLocationEnabled(true);
+//			mBaiduMap.
+				mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+					
+					@Override
+					public boolean onMarkerClick(Marker arg0) {
+						// 进入详情界面  传进对象
+						Entity entity = null;
+						
+						switch (flag) {
+						case 0:
+							entity = markerEntity1.get(arg0.getPosition());
+							break;
+						case 1:
+							entity = markerEntity2.get(arg0.getPosition());
+							break;
+						case 2:
+							entity = markerEntity3.get(arg0.getPosition());
+							break;
+						}
+						Intent intent = new Intent(getActivity(), Detail.class);
+						
+						intent.putExtra("entity", entity);
+						startActivity(intent);
+						return false;
+					}
+				});
+			}
+		}else{
+			Log.i(TAG,"test entity is not null"+e);
+			LatLng point = new LatLng(34.272121-0.1, 108.951212-0.1);
 			// 构建Marker图标
 			BitmapDescriptor bitmap = BitmapDescriptorFactory
 					.fromResource(R.drawable.red_small);
@@ -205,33 +245,7 @@ public class MapFragment extends Fragment {
 					.icon(bitmap).title("cover");
 			// 在地图上添加Marker，并显示
 			mBaiduMap.addOverlay(option);
-			mBaiduMap.setMyLocationEnabled(true);
-//			mBaiduMap.
-			mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-				
-				@Override
-				public boolean onMarkerClick(Marker arg0) {
-					// 进入详情界面  传进对象
-					Entity entity = null;
-//					arg0.getPosition()
-//					switch (flag) {
-//					case 0:
-//						entity = items.get(position);
-//						break;
-//					case 1:
-//						entity = waterItems.get(position);
-//						break;
-//					case 2:
-//						entity = coverItems.get(position);
-//						break;
-//					}
-					Intent intent = new Intent(getActivity(), Detail.class);
-					
-					intent.putExtra("entity", entity);
-					startActivity(intent);
-					return false;
-				}
-			});
+			CoverList.entity = null;
 		}
 	}
 

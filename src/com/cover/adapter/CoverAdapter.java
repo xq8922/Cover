@@ -51,7 +51,7 @@ public class CoverAdapter extends BaseAdapter {
 		TextView ivName = (TextView) view.findViewById(R.id.tv_name);
 		ImageView ivState = (ImageView) view.findViewById(R.id.iv_state);
 		Entity entity = items.get(position);
-		if (entity.getTag().equals("水位")) {
+		if (entity.getTag().equals("level")) {
 			ivType.setImageResource(R.drawable.water);
 		}else {
 			ivType.setImageResource(R.drawable.cover);		

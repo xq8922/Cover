@@ -28,6 +28,7 @@ public class ListFragment extends Fragment {
 	private ArrayList<Entity> waterItems = new ArrayList<Entity>();
 	private ArrayList<Entity> coverItems = new ArrayList<Entity>();
 	private ArrayList<Entity> nullItems = new ArrayList<Entity>();
+	public boolean flagWhitchIsCurrent;
 	public void update(int flag){
 		switch (flag) {
 		case 0:
@@ -53,6 +54,14 @@ public class ListFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		this.items = ((CoverList)getActivity()).items ;
+		this.waterItems = ((CoverList)getActivity()).waterItems ;
+		this.coverItems = ((CoverList)getActivity()).coverItems ;
 		
 		View view = inflater.inflate(R.layout.list_fragment,null);
 		lv = (ListView) view.findViewById(R.id.lv_coverlist_cover);

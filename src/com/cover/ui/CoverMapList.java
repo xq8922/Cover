@@ -77,9 +77,9 @@ public class CoverMapList extends Activity {
 		mMapView = (MapView) findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();// get the map
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
-		{
-			new Thread(new sendAsk()).start();
-		}
+//		{
+//			new Thread(new sendAsk()).start();
+//		}
 		// 设定中心点坐标
 		LatLng cenpt = new LatLng(34.26667, 108.95000);
 		// 定义地图状态
