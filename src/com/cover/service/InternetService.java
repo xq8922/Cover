@@ -407,7 +407,7 @@ public class InternetService extends Service implements Runnable {
 						default:
 							content = "未知状态";
 						}
-						;
+
 						setNotify(title, content);
 						byte[] ackAlert = new byte[] { (byte) 0xFA,
 								(byte) 0xF5, (byte) 0x00, (byte) 0x07,
@@ -418,24 +418,23 @@ public class InternetService extends Service implements Runnable {
 						break;
 					}
 					case 0x02: {
-						// getMessage(msgBuff, ACTION_CoverMapList);
-						NotificationManager m_NotificationManager = (NotificationManager) getApplicationContext()
-								.getSystemService(NOTIFICATION_SERVICE);
-						Notification m_Notification = new Notification();
-						m_Notification.icon = R.drawable.icon;
-						// 当我们点击通知时显示的内容
-						m_Notification.tickerText = "Button1 通知内容.....";
-						m_Notification.defaults = Notification.DEFAULT_SOUND;
-						// 设置通知显示的参数
-						Intent m_Intent = new Intent(InternetService.this,
-								CoverList.class);
-						PendingIntent m_PendingIntent = PendingIntent
-								.getActivity(InternetService.this, 0, m_Intent,
-										0);
-						m_Notification.setLatestEventInfo(InternetService.this,
-								"Button1", "Button1通知", m_PendingIntent);
-						// 这个可以理解为开始执行这个通知
-						m_NotificationManager.notify(0, m_Notification);
+						byte[] b = new byte[2];
+						b[0] = msgBuff[1];
+						b[1] = msgBuff[2];
+						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
+								: "井盖 ID：") + CoverUtils.getShort(b);
+						String content = null;
+						byte[] lati = new byte[8];
+						int j1 = 4;
+						for (int i = 0; i < 8; i++) {
+							lati[i] = msgBuff[j1++];
+						}
+						byte[] lonti = new byte[8];
+						for (int i = 0; i < 8; i++) {
+							lonti[i] = msgBuff[j1++];
+						}
+						content = "当前经纬度变化为："+CoverUtils.byte2Double(lati)+","+CoverUtils.byte2Double(lonti);
+						setNotify(title, content);
 						break;
 					}
 					case 0x03: {
