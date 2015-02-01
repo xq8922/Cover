@@ -44,8 +44,7 @@ public class MainActivity extends Activity {
 	private SharedPreferences sp;
 	private TextView tvChangeIP;
 	private static Editor editor;
-	private static CheckBox cbIsRemeber;
-	Intent serviceIntent = new Intent(this, InternetService.class);
+	private static CheckBox cbIsRemeber;	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +99,8 @@ public class MainActivity extends Activity {
 														ip_port.length())));
 										// 本地化 下次从文件读取一下 getString
 										editor.commit();
+										Intent serviceIntent = new Intent();
+										serviceIntent.setClass(MainActivity.this, InternetService.class);
 										stopService(serviceIntent);
 										startService(serviceIntent);
 									}

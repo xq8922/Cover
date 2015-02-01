@@ -60,9 +60,10 @@ public class ListFragment extends Fragment {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		this.items = ((CoverList) getActivity()).items;
-		this.waterItems = ((CoverList) getActivity()).waterItems;
-		this.coverItems = ((CoverList) getActivity()).coverItems;
+		this.items = CoverList.items;
+		this.waterItems = CoverList.waterItems;
+		this.coverItems = CoverList.coverItems;
+//		this.coverItems = ((CoverList) getActivity()).coverItems;
 
 		View view = inflater.inflate(R.layout.list_fragment, null);
 		lv = (ListView) view.findViewById(R.id.lv_coverlist_cover);
@@ -70,9 +71,9 @@ public class ListFragment extends Fragment {
 	}
 
 	public void firstData() {
-		this.items = ((CoverList) getActivity()).items;
-		this.waterItems = ((CoverList) getActivity()).waterItems;
-		this.coverItems = ((CoverList) getActivity()).coverItems;
+		this.items = CoverList.items;
+		this.waterItems = CoverList.waterItems;
+		this.coverItems = CoverList.coverItems;
 	}
 
 	@Override
@@ -80,9 +81,9 @@ public class ListFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 		((CoverList) getActivity()).setAllChecked();
 		// 获取到activity里面的数据并进行显示
-		this.items = ((CoverList) getActivity()).items;
-		this.waterItems = ((CoverList) getActivity()).waterItems;
-		this.coverItems = ((CoverList) getActivity()).coverItems;
+		this.items = CoverList.items;
+		this.waterItems = CoverList.waterItems;
+		this.coverItems = CoverList.coverItems;
 
 		adapter = new CoverAdapter(getActivity(), items);
 		lv.setAdapter(adapter);

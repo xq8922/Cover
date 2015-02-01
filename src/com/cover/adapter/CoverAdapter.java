@@ -59,7 +59,7 @@ public class CoverAdapter extends BaseAdapter {
 			ivType.setImageResource(R.drawable.cover);
 		}
 
-		ivName.setText(entity.getName());
+		ivName.setText(entity.getTag() + "-" + entity.getId());
 
 		if (Status.NORMAL == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_normal);

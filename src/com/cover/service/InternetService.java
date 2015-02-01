@@ -25,6 +25,7 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -42,16 +43,16 @@ public class InternetService extends Service implements Runnable {
 	private static final String ACTION_Detail = "com.cover.detail";
 	private static final String ACTION_Settings = "com.cover.settings";
 	private static final String ACTION_SoftwareSettings = "com.cover.softwaresettings";
+	private SharedPreferences sp;
 	// public String ip = "192.168.0.1";
 	// public String ip = "219.244.118.168";
 	// public String ip = "192.168.0.01";
 	// public String ip = "124.115.169.98";
-	public String ip = CoverUtils.getStringSharedP(getApplicationContext(),
-			"ip");
+	public String ip;
+	public int port;
 	// public String ip = "192.168.100.201";
 	// public String ip = "219.245.66.226";
 	// public int port = 6221;
-	public int port = CoverUtils.getIntSharedP(getApplicationContext(), "port");
 	private Socket socket;
 	private BufferedReader reader;
 	private PrintWriter writer;
@@ -485,11 +486,14 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
+		sp = getSharedPreferences("douyatech", MODE_PRIVATE);
 		if (CoverUtils.getStringSharedP(getApplicationContext(), "ip") == "")
 			CoverUtils.putString2SharedP(getApplicationContext(), "ip",
 					"124.115.169.98");
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "port") == 0)
 			CoverUtils.putInt2SharedP(getApplicationContext(), "port", 6221);
+		ip = sp.getString("ip", "");
+		port = sp.getInt("port", 0);
 		myReceiver = new ServiceReceiver();
 		thread = new Thread(InternetService.this);
 		thread.start();

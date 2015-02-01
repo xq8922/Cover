@@ -166,7 +166,6 @@ public class MapFragment extends Fragment {
 		mMapView = (MapView) view.findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();// get the map
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
-		//
 		// 设定中心点坐标
 		LatLng cenpt = new LatLng(34.26667, 108.95000);
 		// 定义地图状态
@@ -181,10 +180,9 @@ public class MapFragment extends Fragment {
 	}
 
 	public void firstData() {
-		this.items = ((CoverList) getActivity()).items;
-		this.waterItems = ((CoverList) getActivity()).waterItems;
-		this.coverItems = ((CoverList) getActivity()).coverItems;
-		System.out.println("uuuuuuuuu---" + this.items);
+		MapFragment.items = CoverList.items;
+		MapFragment.waterItems = CoverList.waterItems;
+		MapFragment.coverItems = CoverList.coverItems;
 	}
 
 	@Override
