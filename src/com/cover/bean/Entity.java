@@ -18,7 +18,7 @@ public class Entity implements Serializable {
 	double latitude = 0;
 
 	public Entity(short id, String name, Status status, String tag,
-			double longtitude, double latitude) {
+			double latitude, double longtitude) {
 		super();
 		this.id = id;
 		this.name = name;

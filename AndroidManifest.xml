@@ -34,9 +34,10 @@
             android:enabled="true"
             android:process=":remote" >
         </service>
+
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="Z6eTNF2mhWVmuL68p7pyvt8E" />
+            android:value="ai1xH1fgDwLOR2ty7hQFK6Ur" />
 
         <activity android:name="com.cover.ui.WelcomeActivity" >
             <intent-filter>
@@ -55,6 +56,7 @@
         <activity android:name="com.cover.ui.Detail" />
         <activity android:name="com.cover.ui.ParamSettingActivity" />
         <activity android:name="com.cover.ui.SoftwareSettings" />
+        <activity android:name="com.cover.ui.SingleMapDetail" />
 
         <receiver android:name="com.cover.ui.CoverList$CoverListReceiver" >
             <intent-filter>

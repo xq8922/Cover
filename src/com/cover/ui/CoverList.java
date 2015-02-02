@@ -100,7 +100,7 @@ public class CoverList extends Activity implements OnClickListener {
 			// b.putSerializable("entity", entity);
 			// mapFragment.setArguments(b);
 			ft.replace(R.id.contain, mapFragment).commit();
-			mapFragment.update(4);
+//			mapFragment.update(4);
 		}else{
 			ft.replace(R.id.contain, listFragment).commit();
 //			listFragment.update(0);
@@ -118,7 +118,7 @@ public class CoverList extends Activity implements OnClickListener {
 		byte[] str_ = CRC16M.getSendBuf(CoverUtils.bytes2HexString(checkMsg));
 		askMsg.check[0] = str_[str_.length - 1];
 		askMsg.check[1] = str_[str_.length - 2];
-		if (entity == null)
+//		if (entity == null)
 			new Thread(new sendAsk()).start();
 		rgBottom.check(R.id.rb_list);
 

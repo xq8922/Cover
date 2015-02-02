@@ -66,8 +66,8 @@ public class MapFragment extends Fragment {
 		switch (flag) {
 		case 0:
 			// 在这里 修改地图上 全部显示 items
-			// if(mBaiduMap != null)
-			// mBaiduMap.clear();
+			 if(mBaiduMap != null)
+			 mBaiduMap.clear();
 			Iterator<Entity> it1 = items.iterator();
 			while (it1.hasNext()) {
 				Entity tempEntity = it1.next();
@@ -86,8 +86,8 @@ public class MapFragment extends Fragment {
 			this.flag = 0;
 			break;
 		case 1:
-			// if(mBaiduMap != null)
-			// mBaiduMap.clear();
+			 if(mBaiduMap != null)
+			 mBaiduMap.clear();
 			Iterator<Entity> it2 = waterItems.iterator();
 			while (it2.hasNext()) {
 				// LatLng point = new LatLng(it2.next().getLatitude(),
@@ -106,8 +106,8 @@ public class MapFragment extends Fragment {
 			this.flag = 1;
 			break;
 		case 2:
-			// if(mBaiduMap != null)
-			// mBaiduMap.clear();
+			if (mBaiduMap != null)
+				mBaiduMap.clear();
 			Iterator<Entity> it3 = coverItems.iterator();
 			while (it3.hasNext()) {
 				Entity tempEntity3 = it3.next();
@@ -208,6 +208,7 @@ public class MapFragment extends Fragment {
 		// 改变地图状态
 		mBaiduMap.setMapStatus(mMapStatusUpdate);
 		
+		/*
 		// 全部显示
 				Entity e = CoverList.entity;
 				// e = (Entity)
@@ -268,8 +269,9 @@ public class MapFragment extends Fragment {
 					mBaiduMap.addOverlay(option1);
 					CoverList.entity = null;
 				}
-		
-		
+				*/
+				
+				
 		return view;
 	}
 

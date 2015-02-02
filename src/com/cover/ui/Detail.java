@@ -222,7 +222,7 @@ public class Detail extends Activity implements OnClickListener {
 			startActivity(intent);
 			break;
 		case R.id.iv_entermap_detail:
-			Intent i = new Intent(Detail.this, CoverList.class);
+			Intent i = new Intent(Detail.this, SingleMapDetail.class);
 			// Bundle b = new Bundle();
 			// b.putSerializable("entity", entity);
 			i.putExtra("entity", entity);
