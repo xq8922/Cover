@@ -50,6 +50,9 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 				R.anim.welcome_animation);
 		welcomeView.startAnimation(welAnimation);
 		welAnimation.setAnimationListener(this);
+		Intent intent = new Intent();
+		intent.setClass(WelcomeActivity.this, CoverList.class);
+		startActivity(intent);
 	}
 
 	@Override

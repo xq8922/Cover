@@ -62,11 +62,11 @@ public class CoverList extends Activity implements OnClickListener {
 				listFragment.update(0);
 			else {
 				// getFragmentManager().beginTransaction()
-				Bundle b = new Bundle();
-				b.putSerializable("entity", entity);
-				mapFragment.setArguments(b);
-				ft.replace(R.id.contain, mapFragment).commit();
-				mapFragment.update(4);
+				// Bundle b = new Bundle();
+				// b.putSerializable("entity", entity);
+				// mapFragment.setArguments(b);
+				// ft.replace(R.id.contain, mapFragment).commit();
+				// mapFragment.update(4);
 			}
 		}
 
@@ -77,7 +77,7 @@ public class CoverList extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.cover_list);
-		// getDatas();
+		getDatas();
 		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
 		cbWater = (CheckBox) findViewById(R.id.cb_water);
 		cbCover = (CheckBox) findViewById(R.id.cb_cover);
@@ -291,8 +291,8 @@ public class CoverList extends Activity implements OnClickListener {
 				int i = 0;
 				for (int j = 0; j < numOfEntity; j++) {
 					Entity entity = new Entity();
-					idByte[i++] = recv[ i + 1];
-					idByte[i++] = recv[ i + 1];
+					idByte[i++] = recv[i + 1];
+					idByte[i++] = recv[i + 1];
 					entity.setId(CoverUtils.getShort(idByte));
 					entity.setTag(recv[i++ + 1] == (byte) 0x51 ? "cover"
 							: "level");
