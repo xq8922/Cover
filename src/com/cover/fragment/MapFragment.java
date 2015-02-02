@@ -71,8 +71,8 @@ public class MapFragment extends Fragment {
 			Iterator<Entity> it1 = items.iterator();
 			while (it1.hasNext()) {
 				Entity tempEntity = it1.next();
-				LatLng point = new LatLng(tempEntity.getLatitude(),tempEntity
-						.getLongtitude());
+				LatLng point = new LatLng(tempEntity.getLatitude(),
+						tempEntity.getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -93,8 +93,8 @@ public class MapFragment extends Fragment {
 				// LatLng point = new LatLng(it2.next().getLatitude(),
 				// it2.next().getLongtitude());
 				Entity tempEntity2 = it2.next();
-				LatLng point = new LatLng(tempEntity2.getLatitude(), tempEntity2
-						.getLongtitude());
+				LatLng point = new LatLng(tempEntity2.getLatitude(),
+						tempEntity2.getLongtitude());
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
 				OverlayOptions option = new MarkerOptions().position(point)
@@ -111,8 +111,8 @@ public class MapFragment extends Fragment {
 			Iterator<Entity> it3 = coverItems.iterator();
 			while (it3.hasNext()) {
 				Entity tempEntity3 = it3.next();
-				LatLng point = new LatLng(tempEntity3.getLatitude(),tempEntity3
-						.getLongtitude());
+				LatLng point = new LatLng(tempEntity3.getLatitude(),
+						tempEntity3.getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -134,9 +134,28 @@ public class MapFragment extends Fragment {
 			this.flag = 3;
 			break;
 		case 4:
-			// Entity entity = (Entity)
+			Entity entity = (Entity) CoverList.entity;
 			// getArguments().getSerializable("entity");
 			// System.out.println("test Map"+entity);
+			// 设定中心点坐标
+			LatLng cenpt = new LatLng(entity.getLongtitude(), entity.getLatitude());
+			// 构建Marker图标
+			BitmapDescriptor bitmap = BitmapDescriptorFactory
+					.fromResource(R.drawable.red_small);
+			// 构建MarkerOption，用于在地图上添加Marker
+			OverlayOptions option = new MarkerOptions().position(cenpt)
+					.icon(bitmap).title("cover");
+			// 定义地图状态
+			MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
+					.build();
+			// 定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
+			MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory
+					.newMapStatus(mMapStatus);
+			// 在地图上添加Marker，并显示
+			mBaiduMap.addOverlay(option);
+			// 改变地图状态
+			mBaiduMap.setMapStatus(mMapStatusUpdate);
+			
 		}
 	}
 
@@ -169,16 +188,88 @@ public class MapFragment extends Fragment {
 		mMapView = (MapView) view.findViewById(R.id.bmapView);
 		mBaiduMap = mMapView.getMap();// get the map
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
+
 		// 设定中心点坐标
 		LatLng cenpt = new LatLng(34.26667, 108.95000);
+		// 构建Marker图标
+		BitmapDescriptor bitmap = BitmapDescriptorFactory
+				.fromResource(R.drawable.red_small);
+		// 构建MarkerOption，用于在地图上添加Marker
+		OverlayOptions option = new MarkerOptions().position(cenpt)
+				.icon(bitmap).title("cover");
 		// 定义地图状态
 		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
 				.build();
 		// 定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
 		MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory
 				.newMapStatus(mMapStatus);
+		// 在地图上添加Marker，并显示
+		mBaiduMap.addOverlay(option);
 		// 改变地图状态
 		mBaiduMap.setMapStatus(mMapStatusUpdate);
+		
+		// 全部显示
+				Entity e = CoverList.entity;
+				// e = (Entity)
+				// getActivity().getIntent().getExtras().getSerializable("entity");
+				if (e == null) {
+					Log.i(TAG, "test entity is null");
+					Iterator<Entity> it = items.iterator();
+					while (it.hasNext()) {
+						Entity tempEntity = it.next();
+						LatLng point = new LatLng(tempEntity.getLongtitude(),
+								tempEntity.getLatitude());
+						// 构建Marker图标
+						BitmapDescriptor bitmap1 = BitmapDescriptorFactory
+								.fromResource(R.drawable.red_small);
+						// 构建MarkerOption，用于在地图上添加Marker
+						OverlayOptions option1 = new MarkerOptions().position(point)
+								.icon(bitmap1);
+						// 在地图上添加Marker，并显示
+						mBaiduMap.addOverlay(option1);
+						markerEntity1.put(point, tempEntity);
+						mBaiduMap.setMyLocationEnabled(true);
+						// mBaiduMap.
+					}
+					mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+
+						@Override
+						public boolean onMarkerClick(Marker arg0) {
+							// 进入详情界面 传进对象
+							Entity entity = null;
+
+							switch (flag) {
+							case 0:
+								entity = markerEntity1.get(arg0.getPosition());
+								break;
+							case 1:
+								entity = markerEntity2.get(arg0.getPosition());
+								break;
+							case 2:
+								entity = markerEntity3.get(arg0.getPosition());
+								break;
+							}
+							Intent intent = new Intent(getActivity(), Detail.class);
+							intent.putExtra("entity", entity);
+							startActivity(intent);
+							return false;
+						}
+					});
+				} else {
+					Log.i(TAG, "test entity is not null" + e);
+					LatLng point = new LatLng(e.getLatitude(), e.getLongtitude());
+					// 构建Marker图标
+					BitmapDescriptor bitmap1 = BitmapDescriptorFactory
+							.fromResource(R.drawable.red_small);
+					// 构建MarkerOption，用于在地图上添加Marker
+					OverlayOptions option1 = new MarkerOptions().position(point).icon(
+							bitmap1);
+					// 在地图上添加Marker，并显示
+					mBaiduMap.addOverlay(option1);
+					CoverList.entity = null;
+				}
+		
+		
 		return view;
 	}
 
@@ -201,8 +292,8 @@ public class MapFragment extends Fragment {
 			Iterator<Entity> it = items.iterator();
 			while (it.hasNext()) {
 				Entity tempEntity = it.next();
-				LatLng point = new LatLng(tempEntity.getLatitude(), tempEntity
-						.getLongtitude());
+				LatLng point = new LatLng(tempEntity.getLatitude(),
+						tempEntity.getLongtitude());
 				// 构建Marker图标
 				BitmapDescriptor bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.red_small);
@@ -216,12 +307,12 @@ public class MapFragment extends Fragment {
 				// mBaiduMap.
 			}
 			mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-				
+
 				@Override
 				public boolean onMarkerClick(Marker arg0) {
 					// 进入详情界面 传进对象
 					Entity entity = null;
-					
+
 					switch (flag) {
 					case 0:
 						entity = markerEntity1.get(arg0.getPosition());

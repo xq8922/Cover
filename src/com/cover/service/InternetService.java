@@ -516,10 +516,10 @@ public class InternetService extends Service implements Runnable {
 	@Deprecated
 	public void onStart(Intent intent, int startId) {
 
-		String ip = intent.getStringExtra("ip");
-		if (ip != null) {
-			this.ip = ip;
-		}
+//		String ip = intent.getStringExtra("ip");
+//		if (ip != null) {
+//			this.ip = ip;
+//		}
 		super.onStart(intent, startId);
 	}
 

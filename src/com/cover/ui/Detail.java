@@ -68,7 +68,7 @@ public class Detail extends Activity implements OnClickListener {
 		ivEnterMap.setOnClickListener(this);
 		if (entity.getTag().equals("level")) {
 			ivType.setImageResource(R.drawable.water);
-		} else if (entity.getTag().equals("cover")) {
+		} else{
 			ivType.setImageResource(R.drawable.cover);
 		}
 		tvName.setText(entity.getName());
@@ -170,7 +170,6 @@ public class Detail extends Activity implements OnClickListener {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// TODO Auto-generated method stub
 		switch (item.getItemId()) {
 		case R.id.item_exit_settings:
 			Message msg = new Message();
@@ -223,7 +222,6 @@ public class Detail extends Activity implements OnClickListener {
 			startActivity(intent);
 			break;
 		case R.id.iv_entermap_detail:
-			Toast.makeText(this, "eeeeeee", Toast.LENGTH_SHORT).show();
 			Intent i = new Intent(Detail.this, CoverList.class);
 			// Bundle b = new Bundle();
 			// b.putSerializable("entity", entity);

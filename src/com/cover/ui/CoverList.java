@@ -1,6 +1,7 @@
 package com.cover.ui;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
@@ -100,6 +101,9 @@ public class CoverList extends Activity implements OnClickListener {
 			// mapFragment.setArguments(b);
 			ft.replace(R.id.contain, mapFragment).commit();
 			mapFragment.update(4);
+		}else{
+			ft.replace(R.id.contain, listFragment).commit();
+//			listFragment.update(0);
 		}
 
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
@@ -152,7 +156,6 @@ public class CoverList extends Activity implements OnClickListener {
 				// 都显示
 				if (flagWhitchIsCurrent == 1)
 					listFragment.update(0);
-
 				// 地图都显示
 				else
 					mapFragment.update(0);
@@ -357,14 +360,14 @@ public class CoverList extends Activity implements OnClickListener {
 	private void getDatas() {
 		for (int i = 0; i < (16 - 1) / 5; i++) {
 			if (i <= 1) {
-
-				Entity entity = new Entity((short) 1, "水位_65535",
-						Status.REPAIR, "水位", 111, 222);
+				Entity entity = new Entity((short) 1, "65535", Status.REPAIR,
+						"水位", 34.26667, 108.95000);
 				waterItems.add(entity);
 				items.add(entity);
 			} else {
-				Entity entity = new Entity((short) 2, "井盖_65535",
-						Status.NORMAL, "井盖", 333, 444);
+				Entity entity = new Entity((short) 2, "65535", Status.NORMAL,
+						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
+						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);
 				items.add(entity);
 			}
