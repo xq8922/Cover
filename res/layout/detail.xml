@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:divider="@drawable/divider"
-    android:orientation="vertical"
-    
+    android:orientation="vertical"   
      >
     <RelativeLayout
         android:layout_weight="1"
@@ -170,6 +169,7 @@
             android:layout_height="wrap_content"
             android:src="@drawable/selector_done"
             />
+        <!-- 
         <ImageView 
             android:clickable="true"
             android:id="@+id/iv_leave"
@@ -178,6 +178,7 @@
             android:layout_height="wrap_content"
             android:src="@drawable/selector_leave"
             />
+             -->
         <ImageView 
             android:paddingTop="6dp"
             android:clickable="true"

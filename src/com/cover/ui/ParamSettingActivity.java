@@ -188,7 +188,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		byte[] data = new byte[11];
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		data[j++] = entity.getTag() == "cover" ? (byte) 0x51 : (byte) 0x1C;
+		data[j++] = entity.getTag() == "cover" ? (byte) 0x10 : (byte) 0x2C;
 		short jiaodu = 10;
 		tmp = (entity.getTag() == "cover" ? CoverUtils.short2ByteArray(jiaodu)
 				: new byte[] { 0, 0 });
@@ -213,8 +213,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				CoverUtils.short2ByteArray((short) 18), data);
 		byte[] tmp1 = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
 				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = tmp1[tmp1.length - 2];
-		msg.check[1] = tmp1[tmp1.length - 1];
+		msg.check[0] = tmp1[tmp1.length - 1];
+		msg.check[1] = tmp1[tmp1.length - 2];
 		sendMessage(msg, ACTION);
 	}
 

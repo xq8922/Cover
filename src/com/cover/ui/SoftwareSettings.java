@@ -36,7 +36,6 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 	private ImageView ivSwitch;
 	private ImageView exit;
 	private TextView tvIP;
-	Intent serviceIntent = new Intent(this, InternetService.class);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -139,26 +138,36 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 											.trim());
 									String ip_port = et_Ip.getText().toString()
 											.trim();
-									CoverUtils.putString2SharedP(
-											getApplicationContext(), "ip", tvIP
-													.getText().toString()
-													.trim());
-									CoverUtils.putInt2SharedP(
-											getApplicationContext(), "port",
-											Integer.valueOf(ip_port.substring(
-													ip_port.indexOf(":"),
-													ip_port.length())));
-									stopService(serviceIntent);
-									startService(serviceIntent);
-									try {
-										Thread.sleep(1000);
-									} catch (InterruptedException e) {
-										e.printStackTrace();
+									if (et_Ip.getText().toString().trim()
+											.contains(":")) {
+										CoverUtils.putString2SharedP(
+												getApplicationContext(), "ip",
+												tvIP.getText().toString()
+														.trim());
+										CoverUtils.putInt2SharedP(
+												getApplicationContext(),
+												"port",
+												Integer.valueOf(ip_port.substring(
+														ip_port.indexOf(":")+1,
+														ip_port.length())));
+										Intent serviceIntent = new Intent();
+										serviceIntent.setClass(
+												SoftwareSettings.this,
+												InternetService.class);
+										stopService(serviceIntent);
+										startService(serviceIntent);
+										try {
+											Thread.sleep(1000);
+										} catch (InterruptedException e) {
+											e.printStackTrace();
+										}
+										Intent intent = new Intent();
+										intent.setClass(SoftwareSettings.this,
+												MainActivity.class);
+										startActivity(intent);
+									}else{
+										Toast.makeText(getApplicationContext(),"格式不正确,请重新输入",Toast.LENGTH_SHORT).show();
 									}
-									Intent intent = new Intent();
-									intent.setClass(SoftwareSettings.this,
-											MainActivity.class);
-									startActivity(intent);
 								}
 
 							}).setNegativeButton("取消", null).show();

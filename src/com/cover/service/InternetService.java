@@ -229,17 +229,18 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
-			Toast.makeText(getApplicationContext(), "服务器已连接",
-					Toast.LENGTH_SHORT).show();
+//			Toast.makeText(getApplicationContext(), "服务器已连接",
+//					Toast.LENGTH_SHORT).show();
 			Log.i(TAG, "socket is connectted");
 		} catch (SocketException e) {
-			Toast.makeText(getApplicationContext(), "服务器连接超时",
-					Toast.LENGTH_SHORT).show();
-			Log.v(TAG, e.toString());
+//			Toast.makeText(getApplicationContext(), "服务器连接超时",
+//					Toast.LENGTH_SHORT).show();
+			Log.v(TAG, "time out");
 			e.printStackTrace();
 			workStatus = e.toString();
 			return;
 		} catch (IOException e) {
+			Log.v(TAG, "time out");
 			e.printStackTrace();
 		}
 	}
@@ -278,35 +279,31 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			connectService();
-			while (true) {
-				Thread.sleep(1000);
-				if (socket.isConnected()) {
-					if (!socket.isInputShutdown()) {
-						// sendMessage("hello".getBytes());
-						if (!flagReaderThread)
-							new Thread(new Reader()).start();
-						// socket.
-					}
-					if (msg != null && flag_send) {
-						sendMessage(msg);
-						flag_send = false;
-						Log.i(TAG, "message send to server .");
-					}
-				} else {
-					connectService();
-				}
-			}
-		} catch (Exception e) {
+		// try {
+		connectService();
+		while (true) {
 			try {
-				socket.close();
-				Log.w(TAG, e.toString());
-			} catch (Exception ex) {
-				ex.printStackTrace();
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			workStatus = e.toString();
-			e.printStackTrace();
+			if (socket.isConnected()) {
+				if (!socket.isInputShutdown()) {
+					// sendMessage("hello".getBytes());
+					if (!flagReaderThread){
+						new Thread(new Reader()).start();
+						flagReaderThread = true;
+					}
+					// socket.
+				}
+				if (msg != null && flag_send) {
+					sendMessage(msg);
+					flag_send = false;
+					Log.i(TAG, "message send to server .");
+				}
+			} else {
+				connectService();
+			}
 		}
 	}
 
@@ -314,7 +311,7 @@ public class InternetService extends Service implements Runnable {
 
 		@Override
 		public void run() {
-			flagReaderThread = true;
+//			flagReaderThread = true;
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
@@ -327,7 +324,9 @@ public class InternetService extends Service implements Runnable {
 				if (!((headerBuff[0] == (byte) 0xFA) && (headerBuff[1] == (byte) 0xF5))) {
 					flagReaderThread = false;
 					// bufferedReader;
-					return;
+					 return;
+				}if(!flagReaderThread){
+					
 				}
 				byte[] length = new byte[2];
 				size = bufferedReader.read(length);
@@ -369,8 +368,8 @@ public class InternetService extends Service implements Runnable {
 				byte[] str_ = CRC16M.getSendBuf(CoverUtils
 						.bytes2HexString(checkMsg));
 				byte[] check_temp = new byte[2];
-				check_temp[0] = str_[str_.length - 1];
-				check_temp[1] = str_[str_.length - 2];
+				check_temp[0] = str_[str_.length - 2];
+				check_temp[1] = str_[str_.length - 1];
 				boolean f = CRC16M.checkBuf(CoverUtils
 						.msg2ByteArrayExceptHeader(msg));
 				// if ((check_temp[0] == msg.check[0])
@@ -434,7 +433,8 @@ public class InternetService extends Service implements Runnable {
 						for (int i = 0; i < 8; i++) {
 							lonti[i] = msgBuff[j1++];
 						}
-						content = "当前经纬度变化为："+CoverUtils.byte2Double(lati)+","+CoverUtils.byte2Double(lonti);
+						content = "当前经纬度变化为：" + CoverUtils.byte2Double(lati)
+								+ "," + CoverUtils.byte2Double(lonti);
 						setNotify(title, content);
 						break;
 					}
@@ -447,15 +447,15 @@ public class InternetService extends Service implements Runnable {
 						break;
 					}
 					case 0x05: {
-						getMessage(msgBuff, ACTION_Settings);
+						getMessage(msgBuff, ACTION_Detail);
 						break;
 					}
 					case 0x06: {
-						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_Detail);
 						break;
 					}
 					case 0x07: {
-						getMessage(msgBuff, ACTION_CoverList);
+						getMessage(msgBuff, ACTION_Detail);
 						break;
 					}
 					case 0x08: {
@@ -479,8 +479,8 @@ public class InternetService extends Service implements Runnable {
 	@Override
 	public IBinder onBind(Intent arg0) {
 		binder = new InterBinder();
-		thread = new Thread(InternetService.this);
-		thread.start();
+		// thread = new Thread(InternetService.this);
+		// thread.start();
 		return binder;
 	}
 
@@ -516,10 +516,10 @@ public class InternetService extends Service implements Runnable {
 	@Deprecated
 	public void onStart(Intent intent, int startId) {
 
-//		String ip = intent.getStringExtra("ip");
-//		if (ip != null) {
-//			this.ip = ip;
-//		}
+		// String ip = intent.getStringExtra("ip");
+		// if (ip != null) {
+		// this.ip = ip;
+		// }
 		super.onStart(intent, startId);
 	}
 

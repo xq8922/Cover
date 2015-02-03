@@ -34,7 +34,7 @@ public class Detail extends Activity implements OnClickListener {
 	private ImageView back;
 	private ImageView ivReparing;
 	private ImageView ivFinish;
-	private ImageView ivLeave;
+//	private ImageView ivLeave;
 	private ImageView ivParam;
 	private ImageView ivEnterMap;
 	private static MapFragment mapFragment;
@@ -57,18 +57,18 @@ public class Detail extends Activity implements OnClickListener {
 
 		ivReparing = (ImageView) findViewById(R.id.iv_reparing);
 		ivFinish = (ImageView) findViewById(R.id.iv_finish);
-		ivLeave = (ImageView) findViewById(R.id.iv_leave);
+//		ivLeave = (ImageView) findViewById(R.id.iv_leave);
 		ivParam = (ImageView) findViewById(R.id.iv_param);
 		ivEnterMap = (ImageView) findViewById(R.id.iv_entermap_detail);
 
 		ivReparing.setOnClickListener(this);
 		ivFinish.setOnClickListener(this);
-		ivLeave.setOnClickListener(this);
+//		ivLeave.setOnClickListener(this);
 		ivParam.setOnClickListener(this);
 		ivEnterMap.setOnClickListener(this);
 		if (entity.getTag().equals("level")) {
 			ivType.setImageResource(R.drawable.water);
-		} else{
+		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
 		tvName.setText(entity.getName());
@@ -80,8 +80,11 @@ public class Detail extends Activity implements OnClickListener {
 		} else {
 			ivState.setImageResource(R.drawable.state_alarm);
 		}
-		tvLocation
-				.setText(entity.getLongtitude() + "  " + entity.getLatitude());
+		tvLocation.setText(new java.text.DecimalFormat("#.000000")
+				.format(entity.getLatitude())
+				+ " "
+				+ new java.text.DecimalFormat("#.000000").format(entity
+						.getLongtitude()));
 
 		back.setOnClickListener(new OnClickListener() {
 
@@ -94,35 +97,47 @@ public class Detail extends Activity implements OnClickListener {
 	}
 
 	public void setRepairBegin(Entity entity) {
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getName() == "cover" ? (byte) 0x10 : (byte) 0x2C;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0E,
-				CoverUtils.short2ByteArray((short) 7),
-				CoverUtils.short2ByteArray(entity.getId()));
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
 				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = check[0];
-		msg.check[1] = check[1];
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
 		sendMessage(msg, ACTION);
 	}
 
 	public void setRepairEnd(Entity entity) {
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getName() == "cover" ? (byte) 0x10 : (byte) 0x2C;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0F,
-				CoverUtils.short2ByteArray((short) 7),
-				CoverUtils.short2ByteArray(entity.getId()));
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
 				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = check[0];
-		msg.check[1] = check[1];
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
 		sendMessage(msg, ACTION);
 	}
 
 	public void setUnAlarm(Entity entity) {
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getName() == "cover" ? (byte) 0x10 : (byte) 0x2C;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
-				CoverUtils.short2ByteArray((short) 7),
-				CoverUtils.short2ByteArray(entity.getId()));
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
 				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = check[0];
-		msg.check[1] = check[1];
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
 		sendMessage(msg, ACTION);
 	}
 
@@ -137,10 +152,10 @@ public class Detail extends Activity implements OnClickListener {
 				Toast.makeText(context, "报警解除", Toast.LENGTH_LONG).show();
 				break;
 			case 0x07:// begin repair
-				Toast.makeText(context, "开始维修", Toast.LENGTH_LONG).show();
+				Toast.makeText(context, "开始维修命令上传成功", Toast.LENGTH_LONG).show();
 				break;
 			case 0x08:// end repair
-				Toast.makeText(context, "设置结束维修成功", Toast.LENGTH_LONG).show();
+				Toast.makeText(context, "设置结束维修成功 ", Toast.LENGTH_LONG).show();
 				break;
 			}
 		}
@@ -190,7 +205,6 @@ public class Detail extends Activity implements OnClickListener {
 
 	@Override
 	public void onClick(View v) {
-		Toast.makeText(this, v.getId() + "", Toast.LENGTH_SHORT).show();
 		switch (v.getId()) {
 		case R.id.iv_reparing:
 			if (entity.getStatus() != Status.NORMAL
@@ -201,20 +215,23 @@ public class Detail extends Activity implements OnClickListener {
 						Toast.LENGTH_LONG).show();
 			break;
 		case R.id.iv_finish:
-			if (entity.getStatus() != Status.NORMAL)
+			if (entity.getStatus() != Status.REPAIR)
 				Toast.makeText(getApplicationContext(), "不可点击完成",
 						Toast.LENGTH_LONG).show();
 			else {
 				setRepairEnd(entity);
 			}
 			break;
-		case R.id.iv_leave:
-			// if()
-			if (entity.getStatus() != Status.NORMAL
-					&& entity.getStatus() != Status.REPAIR) {
-				setUnAlarm(entity);
-			}
-			break;
+//		case R.id.iv_leave:
+//			// if()
+//			if (entity.getStatus() != Status.NORMAL
+//					&& entity.getStatus() != Status.REPAIR) {
+//				setUnAlarm(entity);
+//			} else {
+//				Toast.makeText(getApplicationContext(), "不可点击撤防",
+//						Toast.LENGTH_LONG).show();
+//			}
+//			break;
 		case R.id.iv_param:
 			// 参数按钮的点击事件
 			Intent intent = new Intent(Detail.this, ParamSettingActivity.class);

@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -17,8 +18,11 @@ import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 
 public class WelcomeActivity extends Activity implements AnimationListener {
-
+	private SharedPreferences sp;
 	private View welcomeView;
+	private boolean cbIsRemeber;
+	static String userName;
+	static String password;
 
 	// InternetService internetService;
 	// public ServiceConnection internetServiceConnection = new
@@ -51,7 +55,8 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 		welcomeView.startAnimation(welAnimation);
 		welAnimation.setAnimationListener(this);
 		Intent intent = new Intent();
-		intent.setClass(WelcomeActivity.this, CoverList.class);
+		 intent.setClass(WelcomeActivity.this, CoverList.class);
+//		intent.setClass(WelcomeActivity.this, MainActivity.class);
 		startActivity(intent);
 	}
 
@@ -61,9 +66,20 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 
 	@Override
 	public void onAnimationEnd(Animation animation) {
-		Intent intent = new Intent(this, MainActivity.class);
-		startActivity(intent);
-		finish();
+		sp = getSharedPreferences("douyatech", MODE_PRIVATE);
+		userName = sp.getString("username", "");
+		password = sp.getString("password", "");
+		cbIsRemeber = sp.getBoolean("isremem", false);
+		if ((cbIsRemeber == true) && (userName != "") && (password != "")) {
+			Intent intent = new Intent();
+			intent.setClass(WelcomeActivity.this, CoverList.class);
+			startActivity(intent);
+			finish();
+		} else {
+			Intent intent = new Intent(this, MainActivity.class);
+			startActivity(intent);
+			finish();
+		}
 	}
 
 	@Override

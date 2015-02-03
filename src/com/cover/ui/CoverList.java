@@ -105,7 +105,7 @@ public class CoverList extends Activity implements OnClickListener {
 			ft.replace(R.id.contain, listFragment).commit();
 //			listFragment.update(0);
 		}
-
+		mapFragment.firstData();listFragment.firstData();
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
 		cbCover.setOnCheckedChangeListener(cbChangeListener);
 		rgBottom.setOnCheckedChangeListener(rgChangeListener);
@@ -200,6 +200,7 @@ public class CoverList extends Activity implements OnClickListener {
 				break;
 			case R.id.rb_map:
 				// 显示地图
+//				mapFragment.firstData();
 				flagWhitchIsCurrent = 2;
 				getFragmentManager().beginTransaction()
 						.replace(R.id.contain, mapFragment).commit();
@@ -269,7 +270,6 @@ public class CoverList extends Activity implements OnClickListener {
 			try {
 				Thread.sleep(3000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			// System.exit(0);
@@ -292,10 +292,11 @@ public class CoverList extends Activity implements OnClickListener {
 				int numOfEntity = (recv.length - 1) / dataLength;
 				byte[] idByte = new byte[2];
 				int i = 0;
+				int tmp = 0;
 				for (int j = 0; j < numOfEntity; j++) {
 					Entity entity = new Entity();
-					idByte[i++] = recv[i + 1];
-					idByte[i++] = recv[i + 1];
+					idByte[0] = recv[i++ + 1];
+					idByte[1] = recv[i++ + 1];
 					entity.setId(CoverUtils.getShort(idByte));
 					entity.setTag(recv[i++ + 1] == (byte) 0x51 ? "cover"
 							: "level");
@@ -358,14 +359,23 @@ public class CoverList extends Activity implements OnClickListener {
 	}
 
 	private void getDatas() {
-		for (int i = 0; i < (16 - 1) / 5; i++) {
-			if (i <= 1) {
+		items.clear();
+		waterItems.clear();
+		coverItems.clear();
+		for (int i = 0; i < (100 - 1) / 5; i++) {
+			if (i <= 5) {
 				Entity entity = new Entity((short) 1, "65535", Status.REPAIR,
 						"水位", 34.26667, 108.95000);
 				waterItems.add(entity);
 				items.add(entity);
-			} else {
+			} else if(i <= 10){
 				Entity entity = new Entity((short) 2, "65535", Status.NORMAL,
+						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
+						108.95000 + 0.1 * new Random().nextFloat());
+				coverItems.add(entity);
+				items.add(entity);
+			}else{
+				Entity entity = new Entity((short) 2, "65535", Status.EXCEPTION_1,
 						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);

@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
 	private SharedPreferences sp;
 	private TextView tvChangeIP;
 	private static Editor editor;
-	private static CheckBox cbIsRemeber;	
+	private static CheckBox cbIsRemeber;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -95,12 +95,14 @@ public class MainActivity extends Activity {
 														ip_port.indexOf(":")));
 										editor.putInt("port", Integer
 												.valueOf(ip_port.substring(
-														ip_port.indexOf(":"),
+														ip_port.indexOf(":")+1,
 														ip_port.length())));
 										// 本地化 下次从文件读取一下 getString
 										editor.commit();
 										Intent serviceIntent = new Intent();
-										serviceIntent.setClass(MainActivity.this, InternetService.class);
+										serviceIntent.setClass(
+												MainActivity.this,
+												InternetService.class);
 										stopService(serviceIntent);
 										startService(serviceIntent);
 									}
@@ -157,7 +159,19 @@ public class MainActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.item_exit_settings:
-			System.exit(0);
+			// System.exit(0);
+			Message msg = new Message();
+			msg.data = CoverUtils.getStringSharedP(getApplicationContext(),
+					"username").getBytes();
+			msg.function = (byte) 0x12;
+			msg.length = CoverUtils
+					.short2ByteArray((short) (7 + msg.data.length));
+			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
+			byte[] str_ = CRC16M.getSendBuf(CoverUtils
+					.bytes2HexString(checkMsg));
+			msg.check[0] = str_[str_.length - 1];
+			msg.check[1] = str_[str_.length - 2];
+			sendMessage(msg, ACTION);
 		}
 		return super.onOptionsItemSelected(item);
 	}
