@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -81,12 +82,12 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		} else {// if (entity.getTag().equals("井盖"))
 			ivType.setImageResource(R.drawable.cover);
 		}
-		String status = null;
+		String status = "";
 		if (entity.getStatus() == Status.SETTING_FINISH)
-			status = "撤防中";
+			status = "_撤防中";
 		else if (entity.getStatus() == Status.SETTING_PARAM)
-			status = "参数设置中";
-		tvName.setText(entity.getName() + "_" + status);
+			status = "_参数设置中";
+		tvName.setText(entity.getTag() + status);
 
 		back.setOnClickListener(this);
 
@@ -116,12 +117,13 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		public void run() {
 			flagThreadIsStart = true;
 			if (flagThreadIsStart) {
-				try {
-					Thread.sleep(60 * 1000 * MINITE);
+				try {//60 * 1000 * MINITE
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
+					Looper.prepare();
 					Toast.makeText(getApplicationContext(), "参数设置失败",
 							Toast.LENGTH_SHORT).show();
 				}
@@ -211,7 +213,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		case R.id.update:
 			if (!flagThreadIsStart) {
 				sendArgSettings(entity);
-				Toast.makeText(ParamSettingActivity.this, "上传数据...", 0).show();
+				Toast.makeText(ParamSettingActivity.this, "上传中...", 0).show();
 				new Thread(new Timer()).start();
 			} else {
 				Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",

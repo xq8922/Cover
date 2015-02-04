@@ -55,10 +55,10 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 				R.anim.welcome_animation);
 		welcomeView.startAnimation(welAnimation);
 		welAnimation.setAnimationListener(this);
-		Intent intent = new Intent();
-		intent.setClass(WelcomeActivity.this, CoverList.class);
+		// Intent intent = new Intent();
+		// intent.setClass(WelcomeActivity.this, CoverList.class);
 		// intent.setClass(WelcomeActivity.this, MainActivity.class);
-		startActivity(intent);
+		// startActivity(intent);
 
 		AppManager.getAppManager().addActivity(this);
 	}
@@ -73,16 +73,16 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 		userName = sp.getString("username", "");
 		password = sp.getString("password", "");
 		cbIsRemeber = sp.getBoolean("isremem", false);
-		if ((cbIsRemeber == true) && (userName != "") && (password != "")) {
-			Intent intent = new Intent();
-			intent.setClass(WelcomeActivity.this, CoverList.class);
-			startActivity(intent);
-			finish();
-		} else {
-			Intent intent = new Intent(this, MainActivity.class);
-			startActivity(intent);
-			finish();
-		}
+		// if ((cbIsRemeber == true) && (userName != "") && (password != "")) {
+		// Intent intent = new Intent();
+		// intent.setClass(WelcomeActivity.this, CoverList.class);
+		// startActivity(intent);
+		// finish();
+		// } else {
+		Intent intent = new Intent(this, MainActivity.class);
+		startActivity(intent);
+		finish();
+		// }
 	}
 
 	@Override

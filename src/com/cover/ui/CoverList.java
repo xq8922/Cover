@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -75,11 +76,26 @@ public class CoverList extends Activity implements OnClickListener {
 	};
 
 	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK )  
+        {
+//			onBackPressed();
+        }
+		return super.onKeyDown(keyCode, event);
+	}
+
+	@Override
+	protected void onResume() {
+		new Thread(new sendAsk()).start();
+		super.onResume();
+	}
+
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.cover_list);
-//		getDatas();
+		// getDatas();
 		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
 		cbWater = (CheckBox) findViewById(R.id.cb_water);
 		cbCover = (CheckBox) findViewById(R.id.cb_cover);
@@ -101,12 +117,12 @@ public class CoverList extends Activity implements OnClickListener {
 			// b.putSerializable("entity", entity);
 			// mapFragment.setArguments(b);
 			ft.replace(R.id.contain, mapFragment).commit();
-//			mapFragment.update(4);
-		}else{
+			// mapFragment.update(4);
+		} else {
 			ft.replace(R.id.contain, listFragment).commit();
-//			listFragment.update(0);
+			// listFragment.update(0);
 		}
-//		mapFragment.firstData();listFragment.firstData();
+		// mapFragment.firstData();listFragment.firstData();
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
 		cbCover.setOnCheckedChangeListener(cbChangeListener);
 		rgBottom.setOnCheckedChangeListener(rgChangeListener);
@@ -119,10 +135,8 @@ public class CoverList extends Activity implements OnClickListener {
 		byte[] str_ = CRC16M.getSendBuf(CoverUtils.bytes2HexString(checkMsg));
 		askMsg.check[0] = str_[str_.length - 1];
 		askMsg.check[1] = str_[str_.length - 2];
-//		if (entity == null)
-			new Thread(new sendAsk()).start();
+		new Thread(new sendAsk()).start();
 		rgBottom.check(R.id.rb_list);
-		
 		AppManager.getAppManager().addActivity(this);
 
 	}
@@ -132,7 +146,6 @@ public class CoverList extends Activity implements OnClickListener {
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView,
 				boolean isChecked) {
-			//
 			switch (((CheckBox) buttonView).getId()) {
 			case R.id.cb_water:
 				if (isChecked) {
@@ -203,7 +216,7 @@ public class CoverList extends Activity implements OnClickListener {
 				break;
 			case R.id.rb_map:
 				// 显示地图
-//				mapFragment.firstData();
+				// mapFragment.firstData();
 				flagWhitchIsCurrent = 2;
 				getFragmentManager().beginTransaction()
 						.replace(R.id.contain, mapFragment).commit();
@@ -218,12 +231,9 @@ public class CoverList extends Activity implements OnClickListener {
 
 		@Override
 		public void run() {
-			// ask for data
-			// while(flagSend == false){
 			askMsg.function = (byte) 0x0D;
 			askMsg.data = null;
 			askMsg.length = CoverUtils.short2ByteArray((short) 7);
-
 			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
 			byte[] str_ = CRC16M.getSendBuf(CoverUtils
 					.bytes2HexString(checkMsg));
@@ -243,43 +253,6 @@ public class CoverList extends Activity implements OnClickListener {
 		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
 		Log.i(TAG, action + "sned broadcast " + action);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-		// 通过MenuInflater将XML 实例化为 Menu Object
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.layout.menu, menu);
-
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.item_exit_settings:
-			Message msg = new Message();
-			msg.data = "13468833168".getBytes();
-			msg.function = (byte) 0x12;
-			msg.length = CoverUtils
-					.short2ByteArray((short) (7 + msg.data.length));
-			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
-			byte[] str_ = CRC16M.getSendBuf(CoverUtils
-					.bytes2HexString(checkMsg));
-			msg.check[0] = str_[str_.length - 1];
-			msg.check[1] = str_[str_.length - 2];
-			sendMessage(msg, ACTION);
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			// System.exit(0);
-			// this.finish();
-
-		}
-		return super.onOptionsItemSelected(item);
 	}
 
 	public static class CoverListReceiver extends BroadcastReceiver {
@@ -375,15 +348,16 @@ public class CoverList extends Activity implements OnClickListener {
 						"水位", 34.26667, 108.95000);
 				waterItems.add(entity);
 				items.add(entity);
-			} else if(i <= 10){
+			} else if (i <= 10) {
 				Entity entity = new Entity((short) 2, "65535", Status.NORMAL,
 						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);
 				items.add(entity);
-			}else{
-				Entity entity = new Entity((short) 2, "65535", Status.EXCEPTION_1,
-						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
+			} else {
+				Entity entity = new Entity((short) 2, "65535",
+						Status.EXCEPTION_1, "井盖",
+						34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);
 				items.add(entity);

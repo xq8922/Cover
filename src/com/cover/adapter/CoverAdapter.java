@@ -69,6 +69,13 @@ public class CoverAdapter extends BaseAdapter {
 					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 			ivName.setText(builder);
 			ivName.setText(string);
+		}else if(Status.SETTING_PARAM == entity.getStatus()){
+			String string = entity.getTag() + "-" + entity.getId() + "_参数设置中";
+			SpannableString builder = new SpannableString(string);
+			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
+					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			ivName.setText(builder);
+			ivName.setText(string);
 		}
 
 		if (Status.NORMAL == entity.getStatus()) {

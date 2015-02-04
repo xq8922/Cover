@@ -15,6 +15,8 @@ import java.net.SocketException;
 import com.cover.bean.Entity;
 import com.cover.bean.Message;
 import com.cover.bean.Entity.Status;
+import com.cover.dbhelper.DouYaSqliteHelper;
+import com.cover.dbhelper.Douyatech;
 import com.cover.ui.CoverList;
 import com.cover.ui.Detail;
 import com.cover.ui.ParamSettingActivity;
@@ -141,7 +143,7 @@ public class InternetService extends Service implements Runnable {
 
 			Log.i(TAG, msg.toString());
 			// sendMessage(msg);
-			Toast.makeText(context, "service accept msg", Toast.LENGTH_LONG)
+			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_LONG)
 					.show();
 			flag_send = true;
 		}
@@ -429,11 +431,13 @@ public class InternetService extends Service implements Runnable {
 							content = "报警解除状态";
 							entity.setStatus(Status.SETTING_FINISH);
 							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
+							new Douyatech(InternetService.this.getApplication()).delete("leave", entity.getTag()+"_"+entity.getId());
 							break;
 						case (byte) 0x07:
 							content = "设置状态";
 							entity.setStatus(Status.SETTING_PARAM);
 							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
+							new Douyatech(InternetService.this.getApplication()).delete("setting", entity.getTag()+"_"+entity.getId());
 							break;
 						default:
 							entity.setStatus(Status.EXCEPTION_3);

@@ -63,7 +63,7 @@ public class ListFragment extends Fragment {
 		this.items = CoverList.items;
 		this.waterItems = CoverList.waterItems;
 		this.coverItems = CoverList.coverItems;
-//		this.coverItems = ((CoverList) getActivity()).coverItems;
+		// this.coverItems = ((CoverList) getActivity()).coverItems;
 
 		View view = inflater.inflate(R.layout.list_fragment, null);
 		lv = (ListView) view.findViewById(R.id.lv_coverlist_cover);
@@ -108,7 +108,7 @@ public class ListFragment extends Fragment {
 				entity = coverItems.get(position);
 				break;
 			}
-			Toast.makeText(getActivity(), entity.toString(), 1).show();
+			// Toast.makeText(getActivity(), entity.toString(), 1).show();
 			Intent intent = new Intent(getActivity(), Detail.class);
 			intent.putExtra("entity", entity);
 			startActivity(intent);

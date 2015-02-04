@@ -4,6 +4,7 @@ import com.cover.app.AppManager;
 import com.cover.bean.Message;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
+import com.cover.ui.SoftwareSettings;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -90,22 +91,32 @@ public class MainActivity extends Activity {
 										String ip_port = et_Ip.getText()
 												.toString().trim();
 
-										editor.putString(
-												"ip",
-												ip_port.substring(0,
-														ip_port.indexOf(":")));
-										editor.putInt("port", Integer
-												.valueOf(ip_port.substring(
-														ip_port.indexOf(":")+1,
-														ip_port.length())));
-										// 本地化 下次从文件读取一下 getString
-										editor.commit();
-										Intent serviceIntent = new Intent();
-										serviceIntent.setClass(
-												MainActivity.this,
-												InternetService.class);
-										stopService(serviceIntent);
-										startService(serviceIntent);
+										if (et_Ip.getText().toString().trim()
+												.contains(":")) {
+											editor.putString("ip", ip_port
+													.substring(0, ip_port
+															.indexOf(":")));
+											editor.putInt(
+													"port",
+													Integer.valueOf(ip_port.substring(
+															ip_port.indexOf(":") + 1,
+															ip_port.length())));
+											// 本地化 下次从文件读取一下 getString
+											editor.commit();
+											Intent serviceIntent = new Intent();
+											serviceIntent.setClass(
+													MainActivity.this,
+													InternetService.class);
+											stopService(serviceIntent);
+											startService(serviceIntent);
+
+										} else {
+											Toast.makeText(
+													getApplicationContext(),
+													"格式不正确,请重新输入",
+													Toast.LENGTH_SHORT).show();
+										}
+
 									}
 								}).setNegativeButton("取消", null).show();
 			}

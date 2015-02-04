@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,6 +20,7 @@ import com.cover.app.AppManager;
 import com.cover.bean.Entity;
 import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
+import com.cover.dbhelper.Douyatech;
 import com.cover.fragment.MapFragment;
 import com.cover.ui.ParamSettingActivity.Timer;
 import com.cover.util.CRC16M;
@@ -45,12 +47,14 @@ public class Detail extends Activity implements OnClickListener {
 	Message msg = new Message();
 	private boolean flagThreadIsStart = false;
 	public static boolean flagIsSetSuccess = false;
+	Douyatech douyadb = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.detail);
 
+		douyadb = new Douyatech(this);
 		entity = (Entity) getIntent().getExtras().getSerializable("entity");
 		back = (ImageView) findViewById(R.id.back);
 		ivType = (ImageView) findViewById(R.id.iv_type_detail);
@@ -81,8 +85,13 @@ public class Detail extends Activity implements OnClickListener {
 			ivState.setImageResource(R.drawable.state_normal);
 		} else if (Status.REPAIR == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_reparing);
-		} else {
+		} else if (Status.EXCEPTION_1 == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_alarm);
+		} else if (Status.EXCEPTION_2 == entity.getStatus()) {
+			ivState.setImageResource(R.drawable.state_less_pressure);
+		} else {
+			// if(Status.EXCEPTION_3 == entity.getStatus())
+			ivState.setImageResource(R.drawable.state_alarm_less_pressure);
 		}
 		tvLocation.setText(new java.text.DecimalFormat("#.000000")
 				.format(entity.getLatitude())
@@ -113,12 +122,13 @@ public class Detail extends Activity implements OnClickListener {
 		public void run() {
 			flagThreadIsStart = true;
 			if (flagThreadIsStart) {
-				try {
-					Thread.sleep(60 * 1000 * MINITE);
+				try {// 60 * 1000 * MINITE
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
+					Looper.prepare();
 					Toast.makeText(getApplicationContext(), "参数设置失败",
 							Toast.LENGTH_SHORT).show();
 				}
@@ -177,7 +187,7 @@ public class Detail extends Activity implements OnClickListener {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			byte[] recv = intent.getByteArrayExtra("msg");
-			final int length = 1;
+			// final int length = 1;
 			switch (recv[0]) {
 			case 0x06:// 报警解除
 				Toast.makeText(context, "报警解除", Toast.LENGTH_LONG).show();
@@ -208,36 +218,6 @@ public class Detail extends Activity implements OnClickListener {
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-		// 通过MenuInflater将XML 实例化为 Menu Object
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.layout.menu, menu);
-
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.item_exit_settings:
-			Message msg = new Message();
-			msg.data = "13468833168".getBytes();
-			msg.function = (byte) 0x12;
-			msg.length = CoverUtils
-					.short2ByteArray((short) (7 + msg.data.length));
-			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
-			byte[] str_ = CRC16M.getSendBuf(CoverUtils
-					.bytes2HexString(checkMsg));
-			msg.check[0] = str_[str_.length - 1];
-			msg.check[1] = str_[str_.length - 2];
-			sendMessage(msg, ACTION);
-			this.finish();
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
-	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.iv_reparing:
@@ -259,11 +239,18 @@ public class Detail extends Activity implements OnClickListener {
 						Toast.LENGTH_LONG).show();
 			else {
 				if (!flagThreadIsStart) {
-					setRepairEnd(entity);
-					new Thread(new Timer()).start();
+					String nameID = entity.getTag() + "_" + entity.getId();
+					if (!douyadb.isExist("leave", nameID)) {
+						setRepairEnd(entity);
+						new Thread(new Timer()).start();
+						douyadb.add("leave", nameID);
+					} else {
+						Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+								Toast.LENGTH_SHORT).show();
+					}
 				} else {
-					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
-							Toast.LENGTH_SHORT).show();
+					// Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+					// Toast.LENGTH_SHORT).show();
 				}
 
 			}

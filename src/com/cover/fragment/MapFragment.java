@@ -263,19 +263,24 @@ public class MapFragment extends Fragment {
 				LatLng point = new LatLng(tempEntity.getLatitude(),
 						tempEntity.getLongtitude());
 				// 构建Marker图标
-				BitmapDescriptor bitmap;
-				switch (tempEntity.getStatus()) {
-				case REPAIR:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.red_small);
-					break;
-				case NORMAL:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_green_small);
-					break;
-				default:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_yellow_small);
+				BitmapDescriptor bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.red_small);
+				try {
+					switch (tempEntity.getStatus()) {
+					case REPAIR:
+						bitmap = BitmapDescriptorFactory
+								.fromResource(R.drawable.red_small);
+						break;
+					case NORMAL:
+						bitmap = BitmapDescriptorFactory
+								.fromResource(R.drawable.map_green_small);
+						break;
+					default:
+						bitmap = BitmapDescriptorFactory
+								.fromResource(R.drawable.map_yellow_small);
+					}
+				} catch (NullPointerException e1) {
+					e1.printStackTrace();
 				}
 				// 构建MarkerOption，用于在地图上添加Marker
 				OverlayOptions option = new MarkerOptions().position(point)

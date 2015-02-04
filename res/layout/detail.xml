@@ -167,7 +167,7 @@
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:src="@drawable/selector_done"
+            android:src="@drawable/selector_leave"
             />
         <!-- 
         <ImageView 
