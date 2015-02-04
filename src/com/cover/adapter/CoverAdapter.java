@@ -7,6 +7,9 @@ import com.cover.bean.Entity.Status;
 import com.wxq.covers.R;
 
 import android.content.Context;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.AbsoluteSizeSpan;
 import android.text.style.UpdateAppearance;
 import android.view.TextureView;
 import android.view.View;
@@ -58,8 +61,15 @@ public class CoverAdapter extends BaseAdapter {
 		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
-
 		ivName.setText(entity.getTag() + "-" + entity.getId());
+		if (Status.SETTING_FINISH == entity.getStatus()) {
+			String string = entity.getTag() + "-" + entity.getId() + "_撤防中";
+			SpannableString builder = new SpannableString(string);
+			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
+					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			ivName.setText(builder);
+			ivName.setText(string);
+		}
 
 		if (Status.NORMAL == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_normal);

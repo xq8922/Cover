@@ -20,7 +20,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cover.app.AppManager;
 import com.cover.bean.Entity;
+import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
@@ -49,6 +51,9 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private short time = 0;
 	private short alarmFrequency = 0;
 	private short seconfAlarm = 0;
+	final static int MINITE = 30;
+	public static boolean flagIsSetSuccess = false;
+	private boolean flagThreadIsStart = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,11 +66,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		ivType = (ImageView) findViewById(R.id.iv_type_param);
 		tvName = (TextView) findViewById(R.id.tv_name_param);
 		tvAlarmAngle = (TextView) findViewById(R.id.tv_angle_param);
-		;
 		tvAlarmTime = (TextView) findViewById(R.id.tv_time_param);
-		;
 		tvAlarmFreq = (TextView) findViewById(R.id.tv_freq_param);
-		;
 		rlAlarmAngle = (RelativeLayout) findViewById(R.id.rl_alarm_angle);
 		rlAlarmTime = (RelativeLayout) findViewById(R.id.rl_alarm_time);
 		rlAlarmFreq = (RelativeLayout) findViewById(R.id.rl_alarm_freq);
@@ -74,12 +76,17 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		rlAlarmTime.setOnClickListener(this);
 		rlAlarmAngle.setOnClickListener(this);
 		rlAlarmFreq.setOnClickListener(this);
-		if (entity.getTag().equals("水位")) {
+		if (entity.getTag().equals("level")) {
 			ivType.setImageResource(R.drawable.water);
-		} else if (entity.getTag().equals("井盖")) {
+		} else {// if (entity.getTag().equals("井盖"))
 			ivType.setImageResource(R.drawable.cover);
 		}
-		tvName.setText(entity.getName());
+		String status = null;
+		if (entity.getStatus() == Status.SETTING_FINISH)
+			status = "撤防中";
+		else if (entity.getStatus() == Status.SETTING_PARAM)
+			status = "参数设置中";
+		tvName.setText(entity.getName() + "_" + status);
 
 		back.setOnClickListener(this);
 
@@ -92,6 +99,35 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		// byte[] checkMsg = new byte[3 + msg.length()];
 		// msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 		// sendMessage()
+
+		AppManager.getAppManager().addActivity(this);
+
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		AppManager.getAppManager().finishActivity(this);
+	}
+
+	class Timer implements Runnable {
+
+		@Override
+		public void run() {
+			flagThreadIsStart = true;
+			if (flagThreadIsStart) {
+				try {
+					Thread.sleep(60 * 1000 * MINITE);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if (!flagIsSetSuccess) {
+					Toast.makeText(getApplicationContext(), "参数设置失败",
+							Toast.LENGTH_SHORT).show();
+				}
+			}
+			flagThreadIsStart = false;
+		}
 	}
 
 	@Override
@@ -173,8 +209,15 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 							}).setNegativeButton("取消", null).show();
 			break;
 		case R.id.update:
-			sendArgSettings(entity);
-			Toast.makeText(ParamSettingActivity.this, "上传数据...", 0).show();
+			if (!flagThreadIsStart) {
+				sendArgSettings(entity);
+				Toast.makeText(ParamSettingActivity.this, "上传数据...", 0).show();
+				new Thread(new Timer()).start();
+			} else {
+				Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+						Toast.LENGTH_SHORT).show();
+			}
+			// flagThreadIsStart = !flagThreadIsStart;
 			break;
 		}
 	}
@@ -216,6 +259,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		msg.check[0] = tmp1[tmp1.length - 1];
 		msg.check[1] = tmp1[tmp1.length - 2];
 		sendMessage(msg, ACTION);
+
 	}
 
 	public void sendMessage(Message msg, String action) {
@@ -249,6 +293,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 					msg.check[0] = check[check.length - 2];
 					msg.check[1] = check[check.length - 1];
 					((ParamSettingActivity) context).sendMessage(msg, ACTION);
+
 				} else if (recv[3] == 0x02) {
 					Toast.makeText(context, "set failed", Toast.LENGTH_LONG)
 							.show();

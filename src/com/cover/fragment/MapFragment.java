@@ -244,9 +244,9 @@ public class MapFragment extends Fragment {
 		// items.clear();
 		// waterItems.clear();
 		// coverItems.clear();
-		MapFragment.items = CoverList.items;
-		MapFragment.waterItems = CoverList.waterItems;
-		MapFragment.coverItems = CoverList.coverItems;
+		items = CoverList.items;
+		waterItems = CoverList.waterItems;
+		coverItems = CoverList.coverItems;
 	}
 
 	@Override

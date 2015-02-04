@@ -15,16 +15,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cover.app.AppManager;
 import com.cover.bean.Entity;
 import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
 import com.cover.fragment.MapFragment;
+import com.cover.ui.ParamSettingActivity.Timer;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
 public class Detail extends Activity implements OnClickListener {
 	private static final String TAG = "cover";
+	public static final int MINITE = 24 * 60;
 	private Entity entity;
 	private TextView tvId;
 	private ImageView ivState;
@@ -32,18 +35,19 @@ public class Detail extends Activity implements OnClickListener {
 	private TextView tvName;
 	private ImageView ivType;
 	private ImageView back;
-	private ImageView ivReparing;
-	private ImageView ivFinish;
-//	private ImageView ivLeave;
+	static ImageView ivReparing;
+	static ImageView ivFinish;
+	// private ImageView ivLeave;
 	private ImageView ivParam;
 	private ImageView ivEnterMap;
 	private static MapFragment mapFragment;
 	private final String ACTION = "com.cover.service.IntenetService";
 	Message msg = new Message();
+	private boolean flagThreadIsStart = false;
+	public static boolean flagIsSetSuccess = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.detail);
 
@@ -57,13 +61,13 @@ public class Detail extends Activity implements OnClickListener {
 
 		ivReparing = (ImageView) findViewById(R.id.iv_reparing);
 		ivFinish = (ImageView) findViewById(R.id.iv_finish);
-//		ivLeave = (ImageView) findViewById(R.id.iv_leave);
+		// ivLeave = (ImageView) findViewById(R.id.iv_leave);
 		ivParam = (ImageView) findViewById(R.id.iv_param);
 		ivEnterMap = (ImageView) findViewById(R.id.iv_entermap_detail);
 
 		ivReparing.setOnClickListener(this);
 		ivFinish.setOnClickListener(this);
-//		ivLeave.setOnClickListener(this);
+		// ivLeave.setOnClickListener(this);
 		ivParam.setOnClickListener(this);
 		ivEnterMap.setOnClickListener(this);
 		if (entity.getTag().equals("level")) {
@@ -90,10 +94,37 @@ public class Detail extends Activity implements OnClickListener {
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				onBackPressed();
 			}
 		});
+
+		AppManager.getAppManager().addActivity(this);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		AppManager.getAppManager().finishActivity(this);
+	}
+
+	class Timer implements Runnable {
+
+		@Override
+		public void run() {
+			flagThreadIsStart = true;
+			if (flagThreadIsStart) {
+				try {
+					Thread.sleep(60 * 1000 * MINITE);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if (!flagIsSetSuccess) {
+					Toast.makeText(getApplicationContext(), "参数设置失败",
+							Toast.LENGTH_SHORT).show();
+				}
+			}
+			flagThreadIsStart = false;
+		}
 	}
 
 	public void setRepairBegin(Entity entity) {
@@ -153,9 +184,12 @@ public class Detail extends Activity implements OnClickListener {
 				break;
 			case 0x07:// begin repair
 				Toast.makeText(context, "开始维修命令上传成功", Toast.LENGTH_LONG).show();
+				// ivReparing.setClickable(false);
 				break;
 			case 0x08:// end repair
-				Toast.makeText(context, "设置结束维修成功 ", Toast.LENGTH_LONG).show();
+				Toast.makeText(context, "设置结束维修上传成功 ", Toast.LENGTH_LONG)
+						.show();
+				ivFinish.setClickable(false);
 				break;
 			}
 		}
@@ -208,30 +242,32 @@ public class Detail extends Activity implements OnClickListener {
 		switch (v.getId()) {
 		case R.id.iv_reparing:
 			if (entity.getStatus() != Status.NORMAL
-					&& entity.getStatus() != Status.REPAIR)
+					&& entity.getStatus() != Status.REPAIR
+					&& entity.getStatus() != Status.SETTING_FINISH
+					&& entity.getStatus() != Status.SETTING_PARAM)
 				setRepairBegin(entity);
 			else
-				Toast.makeText(getApplicationContext(), "不可点击维修",
+				Toast.makeText(getApplicationContext(), "当前状态下不可点击维修",
 						Toast.LENGTH_LONG).show();
 			break;
 		case R.id.iv_finish:
-			if (entity.getStatus() != Status.REPAIR)
-				Toast.makeText(getApplicationContext(), "不可点击完成",
+			if (entity.getStatus() == Status.REPAIR
+					|| entity.getStatus() == Status.NORMAL
+					|| entity.getStatus() == Status.SETTING_FINISH
+					|| entity.getStatus() == Status.SETTING_PARAM)
+				Toast.makeText(getApplicationContext(), "当前状态下不可点击完成",
 						Toast.LENGTH_LONG).show();
 			else {
-				setRepairEnd(entity);
+				if (!flagThreadIsStart) {
+					setRepairEnd(entity);
+					new Thread(new Timer()).start();
+				} else {
+					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+							Toast.LENGTH_SHORT).show();
+				}
+
 			}
 			break;
-//		case R.id.iv_leave:
-//			// if()
-//			if (entity.getStatus() != Status.NORMAL
-//					&& entity.getStatus() != Status.REPAIR) {
-//				setUnAlarm(entity);
-//			} else {
-//				Toast.makeText(getApplicationContext(), "不可点击撤防",
-//						Toast.LENGTH_LONG).show();
-//			}
-//			break;
 		case R.id.iv_param:
 			// 参数按钮的点击事件
 			Intent intent = new Intent(Detail.this, ParamSettingActivity.class);

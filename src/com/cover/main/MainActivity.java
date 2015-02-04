@@ -1,5 +1,6 @@
 package com.cover.main;
 
+import com.cover.app.AppManager;
 import com.cover.bean.Message;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
@@ -133,6 +134,7 @@ public class MainActivity extends Activity {
 				System.out.println("test");
 			}
 		});
+		AppManager.getAppManager().addActivity(this);
 	}
 
 	public void sendMessage(Message msg, String action) {
@@ -181,6 +183,7 @@ public class MainActivity extends Activity {
 		// unbindService(internetServiceConnection);
 		// unregisterReceiver(myBroadcast);
 		super.onDestroy();
+		AppManager.getAppManager().finishActivity(this);
 	}
 
 	public static class MainActivityReceiver extends BroadcastReceiver {

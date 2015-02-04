@@ -25,6 +25,7 @@ import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 
 import com.baidu.mapapi.SDKInitializer;
+import com.cover.app.AppManager;
 import com.cover.bean.Entity;
 import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
@@ -78,7 +79,7 @@ public class CoverList extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.cover_list);
-		getDatas();
+//		getDatas();
 		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
 		cbWater = (CheckBox) findViewById(R.id.cb_water);
 		cbCover = (CheckBox) findViewById(R.id.cb_cover);
@@ -105,7 +106,7 @@ public class CoverList extends Activity implements OnClickListener {
 			ft.replace(R.id.contain, listFragment).commit();
 //			listFragment.update(0);
 		}
-		mapFragment.firstData();listFragment.firstData();
+//		mapFragment.firstData();listFragment.firstData();
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
 		cbCover.setOnCheckedChangeListener(cbChangeListener);
 		rgBottom.setOnCheckedChangeListener(rgChangeListener);
@@ -121,6 +122,8 @@ public class CoverList extends Activity implements OnClickListener {
 //		if (entity == null)
 			new Thread(new sendAsk()).start();
 		rgBottom.check(R.id.rb_list);
+		
+		AppManager.getAppManager().addActivity(this);
 
 	}
 
@@ -295,10 +298,10 @@ public class CoverList extends Activity implements OnClickListener {
 				int tmp = 0;
 				for (int j = 0; j < numOfEntity; j++) {
 					Entity entity = new Entity();
-					idByte[0] = recv[i++ + 1];
 					idByte[1] = recv[i++ + 1];
+					idByte[0] = recv[i++ + 1];
 					entity.setId(CoverUtils.getShort(idByte));
-					entity.setTag(recv[i++ + 1] == (byte) 0x51 ? "cover"
+					entity.setTag(recv[i++ + 1] == (byte) 0x10 ? "cover"
 							: "level");
 					byte[] longTi = new byte[8];
 					for (int k = 0, t = i; i < t + 8; i++) {
@@ -326,6 +329,10 @@ public class CoverList extends Activity implements OnClickListener {
 					case 0x05:
 						entity.setStatus(Status.EXCEPTION_3);
 						break;
+					case 0x06:
+						entity.setStatus(Status.SETTING_FINISH);
+					case 0x07:
+						entity.setStatus(Status.SETTING_PARAM);
 					}
 					if (entity.getTag().equals("cover")) {
 						coverItems.add(entity);
@@ -337,8 +344,8 @@ public class CoverList extends Activity implements OnClickListener {
 				}
 			}
 			// ///////////////////
-			listFragment.firstData();
 			mapFragment.firstData();
+			listFragment.firstData();
 			handler.sendEmptyMessage(11);
 		}
 	}
@@ -382,5 +389,11 @@ public class CoverList extends Activity implements OnClickListener {
 				items.add(entity);
 			}
 		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		AppManager.getAppManager().finishActivity(this);
 	}
 }

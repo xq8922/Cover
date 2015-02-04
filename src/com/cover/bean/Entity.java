@@ -88,7 +88,7 @@ public class Entity implements Serializable {
 	 * 
 	 */
 	public enum Status {
-		NORMAL, REPAIR, EXCEPTION_1, EXCEPTION_2, EXCEPTION_3
+		NORMAL, REPAIR, EXCEPTION_1, EXCEPTION_2, EXCEPTION_3,SETTING_FINISH,SETTING_PARAM
 	}
 
 }

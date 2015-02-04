@@ -1,5 +1,6 @@
 package com.cover.ui;
 
+import com.cover.app.AppManager;
 import com.cover.main.MainActivity;
 import com.cover.service.InternetService;
 import com.wxq.covers.R;
@@ -55,9 +56,11 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 		welcomeView.startAnimation(welAnimation);
 		welAnimation.setAnimationListener(this);
 		Intent intent = new Intent();
-		 intent.setClass(WelcomeActivity.this, CoverList.class);
-//		intent.setClass(WelcomeActivity.this, MainActivity.class);
+		intent.setClass(WelcomeActivity.this, CoverList.class);
+		// intent.setClass(WelcomeActivity.this, MainActivity.class);
 		startActivity(intent);
+
+		AppManager.getAppManager().addActivity(this);
 	}
 
 	@Override
@@ -84,6 +87,12 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 
 	@Override
 	public void onAnimationRepeat(Animation animation) {
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		AppManager.getAppManager().finishActivity(this);
 	}
 
 	@Override

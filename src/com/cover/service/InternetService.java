@@ -12,8 +12,12 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
+import com.cover.bean.Entity;
 import com.cover.bean.Message;
+import com.cover.bean.Entity.Status;
 import com.cover.ui.CoverList;
+import com.cover.ui.Detail;
+import com.cover.ui.ParamSettingActivity;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -35,6 +39,7 @@ import android.widget.Toast;
 
 public class InternetService extends Service implements Runnable {
 	private final static String TAG = "COVER";
+	private final int INTERVAL = 10 * 60 * 1000;
 
 	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
 	private static final String ACTION_CoverList = "com.cover.coverlist";
@@ -66,7 +71,7 @@ public class InternetService extends Service implements Runnable {
 	boolean flagReaderThread = false;
 	Message message = new Message();
 
-	public void setNotify(String title, String content) {
+	public void setNotify(Entity entity) {
 		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
@@ -115,9 +120,11 @@ public class InternetService extends Service implements Runnable {
 		 */
 		// 设置通知的事件消息
 		Context context = getApplicationContext(); // 上下文
-		CharSequence contentTitle = title; // 通知栏标题
-		CharSequence contentText = content; // 通知栏内容
-		Intent notificationIntent = new Intent(this, CoverList.class); // 点击该通知后要跳转的Activity
+		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentText = entity.getLatitude() + ","
+				+ entity.getLongtitude(); // 通知栏内容
+		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+		notificationIntent.putExtra("entity", entity);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				notificationIntent, 0);
 		notification.setLatestEventInfo(context, contentTitle, contentText,
@@ -205,8 +212,8 @@ public class InternetService extends Service implements Runnable {
 					msg = null;
 				}
 			} catch (Exception e) {
-				Toast.makeText(getApplicationContext(), "output is shutdown",
-						Toast.LENGTH_LONG).show();
+				// Toast.makeText(getApplicationContext(), "output is shutdown",
+				// Toast.LENGTH_LONG).show();
 				Log.v(TAG, "is not connect");
 				e.printStackTrace();
 				workStatus = "Output err";
@@ -229,12 +236,12 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
-//			Toast.makeText(getApplicationContext(), "服务器已连接",
-//					Toast.LENGTH_SHORT).show();
+			// Toast.makeText(getApplicationContext(), "服务器已连接",
+			// Toast.LENGTH_SHORT).show();
 			Log.i(TAG, "socket is connectted");
 		} catch (SocketException e) {
-//			Toast.makeText(getApplicationContext(), "服务器连接超时",
-//					Toast.LENGTH_SHORT).show();
+			// Toast.makeText(getApplicationContext(), "服务器连接超时",
+			// Toast.LENGTH_SHORT).show();
 			Log.v(TAG, "time out");
 			e.printStackTrace();
 			workStatus = e.toString();
@@ -281,6 +288,7 @@ public class InternetService extends Service implements Runnable {
 	public void run() {
 		// try {
 		connectService();
+		int interval = 0;
 		while (true) {
 			try {
 				Thread.sleep(1000);
@@ -288,13 +296,17 @@ public class InternetService extends Service implements Runnable {
 				e.printStackTrace();
 			}
 			if (socket.isConnected()) {
+				interval++;
+				if (interval > INTERVAL) {
+					sendMessage("\n".getBytes());
+					interval = 0;
+				}
 				if (!socket.isInputShutdown()) {
 					// sendMessage("hello".getBytes());
-					if (!flagReaderThread){
+					if (!flagReaderThread) {
 						new Thread(new Reader()).start();
 						flagReaderThread = true;
 					}
-					// socket.
 				}
 				if (msg != null && flag_send) {
 					sendMessage(msg);
@@ -311,7 +323,7 @@ public class InternetService extends Service implements Runnable {
 
 		@Override
 		public void run() {
-//			flagReaderThread = true;
+			// flagReaderThread = true;
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
@@ -324,9 +336,10 @@ public class InternetService extends Service implements Runnable {
 				if (!((headerBuff[0] == (byte) 0xFA) && (headerBuff[1] == (byte) 0xF5))) {
 					flagReaderThread = false;
 					// bufferedReader;
-					 return;
-				}if(!flagReaderThread){
-					
+					return;
+				}
+				if (!flagReaderThread) {
+
 				}
 				byte[] length = new byte[2];
 				size = bufferedReader.read(length);
@@ -368,13 +381,12 @@ public class InternetService extends Service implements Runnable {
 				byte[] str_ = CRC16M.getSendBuf(CoverUtils
 						.bytes2HexString(checkMsg));
 				byte[] check_temp = new byte[2];
-				check_temp[0] = str_[str_.length - 2];
-				check_temp[1] = str_[str_.length - 1];
+				check_temp[0] = str_[str_.length - 1];
+				check_temp[1] = str_[str_.length - 2];
 				boolean f = CRC16M.checkBuf(CoverUtils
 						.msg2ByteArrayExceptHeader(msg));
-				// if ((check_temp[0] == msg.check[0])
-				// && (check_temp[1] == msg.check[1]))
-				{
+				if ((check_temp[0] == msg.check[0])
+						&& (check_temp[1] == msg.check[1])) {
 					Log.i(TAG, "check right");
 					// if
 					// (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg)))
@@ -382,33 +394,56 @@ public class InternetService extends Service implements Runnable {
 					switch (msgBuff[0]) {
 					case 0x01: {// 需要处理报警信息ack
 						// 获取软件设置是否响铃
+						Entity entity = new Entity();
 						byte[] b = new byte[2];
 						b[0] = msgBuff[1];
 						b[1] = msgBuff[2];
-						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
-								: "井盖 ID：") + CoverUtils.getShort(b);
+						String title = (msgBuff[3] == (byte) 0x1C ? "level"
+								: "cover");
+						// + CoverUtils.getShort(b);
+						entity.setTag(title);
+						entity.setId(CoverUtils.getShort(b));
 						String content = null;
 						switch (msgBuff[4]) {
 						case (byte) 0x01:
 							content = "正常状态";
+							entity.setStatus(Status.NORMAL);
 							break;
 						case (byte) 0x02:
 							content = "报警状态";
+							entity.setStatus(Status.EXCEPTION_1);
 							break;
 						case (byte) 0x03:
 							content = "维修状态";
+							entity.setStatus(Status.REPAIR);
 							break;
 						case (byte) 0x04:
 							content = "欠压状态";
+							entity.setStatus(Status.EXCEPTION_2);
 							break;
 						case (byte) 0x05:
 							content = "报警欠压状态";
+							entity.setStatus(Status.EXCEPTION_3);
+							break;
+						case (byte) 0x06:
+							content = "报警解除状态";
+							entity.setStatus(Status.SETTING_FINISH);
+							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
+							break;
+						case (byte) 0x07:
+							content = "设置状态";
+							entity.setStatus(Status.SETTING_PARAM);
+							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
 							break;
 						default:
+							entity.setStatus(Status.EXCEPTION_3);
 							content = "未知状态";
 						}
+						entity.setLatitude(0);
+						entity.setLongtitude(0);
+						// entity.setSta
 
-						setNotify(title, content);
+						setNotify(entity);
 						byte[] ackAlert = new byte[] { (byte) 0xFA,
 								(byte) 0xF5, (byte) 0x00, (byte) 0x07,
 								(byte) 0x0A };
@@ -418,11 +453,14 @@ public class InternetService extends Service implements Runnable {
 						break;
 					}
 					case 0x02: {
+						Entity entity = new Entity();
 						byte[] b = new byte[2];
 						b[0] = msgBuff[1];
 						b[1] = msgBuff[2];
 						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
-								: "井盖 ID：") + CoverUtils.getShort(b);
+								: "井盖 ID：");
+						entity.setId(CoverUtils.getShort(b));
+						entity.setTag(title);
 						String content = null;
 						byte[] lati = new byte[8];
 						int j1 = 4;
@@ -433,9 +471,12 @@ public class InternetService extends Service implements Runnable {
 						for (int i = 0; i < 8; i++) {
 							lonti[i] = msgBuff[j1++];
 						}
+						entity.setLatitude(CoverUtils.byte2Double(lati));
+						entity.setLatitude(CoverUtils.byte2Double(lonti));
+
 						content = "当前经纬度变化为：" + CoverUtils.byte2Double(lati)
 								+ "," + CoverUtils.byte2Double(lonti);
-						setNotify(title, content);
+						setNotify(entity);
 						break;
 					}
 					case 0x03: {
