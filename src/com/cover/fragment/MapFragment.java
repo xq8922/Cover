@@ -216,9 +216,9 @@ public class MapFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-//		((CoverList) getActivity()).setAllChecked();
+		// ((CoverList) getActivity()).setAllChecked();
 		SDKInitializer.initialize(getActivity().getApplicationContext());
-//		getDatas();
+		// getDatas();
 		View view = inflater.inflate(R.layout.cover_map_list, null);
 		// Entity entity = (Entity) getArguments().getSerializable("entity");
 

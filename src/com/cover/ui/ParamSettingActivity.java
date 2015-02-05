@@ -25,6 +25,8 @@ import com.cover.app.AppManager;
 import com.cover.bean.Entity;
 import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
+import com.cover.dbhelper.Douyatech;
+import com.cover.ui.Detail.Timer;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -55,14 +57,17 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	final static int MINITE = 30;
 	public static boolean flagIsSetSuccess = false;
 	private boolean flagThreadIsStart = false;
+	Douyatech douyadb = null;
+	private TextView tvFrequencyAlarm;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.paramsetting);
 
+		douyadb = new Douyatech(this);
 		entity = (Entity) getIntent().getExtras().getSerializable("entity");
+		tvFrequencyAlarm = (TextView) findViewById(R.id.tv_frequency_alarm);
 		back = (ImageView) findViewById(R.id.setting_param_back);
 		ivType = (ImageView) findViewById(R.id.iv_type_param);
 		tvName = (TextView) findViewById(R.id.tv_name_param);
@@ -91,6 +96,10 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 
 		back.setOnClickListener(this);
 
+		if (entity.getTag().equals("level")) {
+			rlAlarmAngle.setVisibility(View.GONE);
+			tvFrequencyAlarm.setText("二次报警");
+		}
 		// ask for result of settings
 		// int le+ngth = 7 + msg.length();
 		// askMsg.length
@@ -117,7 +126,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		public void run() {
 			flagThreadIsStart = true;
 			if (flagThreadIsStart) {
-				try {//60 * 1000 * MINITE
+				try {// 60 * 1000 * MINITE
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -212,12 +221,24 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			break;
 		case R.id.update:
 			if (!flagThreadIsStart) {
-				sendArgSettings(entity);
-				Toast.makeText(ParamSettingActivity.this, "上传中...", 0).show();
-				new Thread(new Timer()).start();
+
+				String nameID = entity.getTag() + "_" + entity.getId();
+				if (!douyadb.isExist("setting", nameID)) {
+					sendArgSettings(entity);
+					new Thread(new Timer()).start();
+					douyadb.add("setting", nameID);
+				} else {
+					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+							Toast.LENGTH_SHORT).show();
+				}
+
+				// sendArgSettings(entity);
+				// Toast.makeText(ParamSettingActivity.this, "上传中...",
+				// 0).show();
+				// new Thread(new Timer()).start();
 			} else {
-				Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
-						Toast.LENGTH_SHORT).show();
+				// Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+				// Toast.LENGTH_SHORT).show();
 			}
 			// flagThreadIsStart = !flagThreadIsStart;
 			break;

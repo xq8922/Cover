@@ -1,22 +1,30 @@
 package com.cover.main;
 
 import com.cover.app.AppManager;
+import com.cover.bean.Entity;
 import com.cover.bean.Message;
+import com.cover.bean.Entity.Status;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
+import com.cover.ui.Detail;
 import com.cover.ui.SoftwareSettings;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
@@ -45,6 +53,7 @@ public class MainActivity extends Activity {
 	private ImageView btn_test;
 	private SharedPreferences sp;
 	private TextView tvChangeIP;
+	private MainActivityReceiver receiver;
 	private static Editor editor;
 	private static CheckBox cbIsRemeber;
 
@@ -52,6 +61,12 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		receiver = new MainActivityReceiver();
+		IntentFilter filter = new IntentFilter();
+		filter.addAction("com.cover.main.mainactivity");
+		this.registerReceiver(receiver, filter);
+
 		et_username = (EditText) findViewById(R.id.et_login_user_name);
 		et_password = (EditText) findViewById(R.id.et_login_password);
 		tvChangeIP = (TextView) findViewById(R.id.tv_changeip);
@@ -107,6 +122,7 @@ public class MainActivity extends Activity {
 											serviceIntent.setClass(
 													MainActivity.this,
 													InternetService.class);
+											finish();
 											stopService(serviceIntent);
 											startService(serviceIntent);
 
@@ -195,9 +211,12 @@ public class MainActivity extends Activity {
 		// unregisterReceiver(myBroadcast);
 		super.onDestroy();
 		AppManager.getAppManager().finishActivity(this);
+		if (receiver != null)
+			this.unregisterReceiver(receiver);
+
 	}
 
-	public static class MainActivityReceiver extends BroadcastReceiver {
+	class MainActivityReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -218,6 +237,7 @@ public class MainActivity extends Activity {
 						editor.commit();
 					}
 					context.startActivity(i);
+					finish();
 					break;
 				case 0x02:
 					Toast.makeText(context, "用户名或密码错误", Toast.LENGTH_LONG)
@@ -225,6 +245,10 @@ public class MainActivity extends Activity {
 					break;
 				case 0x03:
 					Toast.makeText(context, "用户已登录", Toast.LENGTH_LONG).show();
+					// (InternetService)
+					Intent i1 = new Intent();
+					i1.setClass(context, CoverList.class);
+					startActivity(i1);
 					break;
 				default:
 					Log.w(TAG, "wrong code");

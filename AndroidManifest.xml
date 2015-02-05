@@ -84,11 +84,11 @@
                 <action android:name="com.cover.softwaresettings" />
             </intent-filter>
         </receiver>
-        <receiver android:name="com.cover.main.MainActivity$MainActivityReceiver" >
-            <intent-filter>
-                <action android:name="com.cover.main.mainactivity" />
-            </intent-filter>
-        </receiver>
+<!--         <receiver android:name="com.cover.main.MainActivity$MainActivityReceiver" > -->
+<!--             <intent-filter> -->
+<!--                 <action android:name="com.cover.main.mainactivity" /> -->
+<!--             </intent-filter> -->
+<!--         </receiver> -->
         <receiver android:name="com.cover.service.InternetService$ServiceReceiver" >
             <intent-filter>
                 <action android:name="com.cover.service.IntenetService" />

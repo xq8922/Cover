@@ -69,7 +69,7 @@ public class CoverAdapter extends BaseAdapter {
 					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 			ivName.setText(builder);
 			ivName.setText(string);
-		}else if(Status.SETTING_PARAM == entity.getStatus()){
+		} else if (Status.SETTING_PARAM == entity.getStatus()) {
 			String string = entity.getTag() + "-" + entity.getId() + "_参数设置中";
 			SpannableString builder = new SpannableString(string);
 			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
@@ -82,7 +82,7 @@ public class CoverAdapter extends BaseAdapter {
 			ivState.setImageResource(R.drawable.state_normal);
 		} else if (Status.REPAIR == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_reparing);
-		} else {
+		} else if (Status.EXCEPTION_1 == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_alarm);
 		}
 

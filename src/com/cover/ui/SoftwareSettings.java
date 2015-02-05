@@ -220,8 +220,9 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 									msg.check[0] = str_[str_.length - 1];
 									msg.check[1] = str_[str_.length - 2];
 									sendMessage(msg, ACTION);
-									
-									AppManager.getAppManager().finishAllActivity();
+
+									AppManager.getAppManager()
+											.finishAllActivity();
 									// stopService(serviceIntent);
 									// System.exit(0);
 								}

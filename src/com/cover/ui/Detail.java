@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
@@ -48,6 +49,12 @@ public class Detail extends Activity implements OnClickListener {
 	private boolean flagThreadIsStart = false;
 	public static boolean flagIsSetSuccess = false;
 	Douyatech douyadb = null;
+	private Handler hander = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			Toast.makeText(getApplicationContext(), "撤防失败", Toast.LENGTH_SHORT)
+					.show();
+		};
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -89,9 +96,13 @@ public class Detail extends Activity implements OnClickListener {
 			ivState.setImageResource(R.drawable.state_alarm);
 		} else if (Status.EXCEPTION_2 == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_less_pressure);
-		} else {
+		} else if (Status.EXCEPTION_3 == entity.getStatus()) {
 			// if(Status.EXCEPTION_3 == entity.getStatus())
 			ivState.setImageResource(R.drawable.state_alarm_less_pressure);
+		} else if ((Status.SETTING_FINISH == entity.getStatus())) {
+			ivState.setImageResource(R.drawable.state_setting);
+		} else if ((Status.SETTING_PARAM == entity.getStatus())) {
+			ivState.setImageResource(R.drawable.state_leaving);
 		}
 		tvLocation.setText(new java.text.DecimalFormat("#.000000")
 				.format(entity.getLatitude())
@@ -128,10 +139,15 @@ public class Detail extends Activity implements OnClickListener {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
+
 					Looper.prepare();
 					Toast.makeText(getApplicationContext(), "参数设置失败",
 							Toast.LENGTH_SHORT).show();
 				}
+				if (douyadb.isExist("leave",
+						entity.getTag() + "_" + entity.getId()))
+					;
+				// douyadb.delete("leave", entity.getTag()+"_"+entity.getId());
 			}
 			flagThreadIsStart = false;
 		}
@@ -142,7 +158,7 @@ public class Detail extends Activity implements OnClickListener {
 		byte[] t = new byte[3];
 		t[0] = b[0];
 		t[1] = b[1];
-		t[2] = entity.getName() == "cover" ? (byte) 0x10 : (byte) 0x2C;
+		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0E,
 				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
@@ -157,8 +173,8 @@ public class Detail extends Activity implements OnClickListener {
 		byte[] t = new byte[3];
 		t[0] = b[0];
 		t[1] = b[1];
-		t[2] = entity.getName() == "cover" ? (byte) 0x10 : (byte) 0x2C;
-		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0F,
+		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
 				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
 				.msg2ByteArrayExcepteCheck(msg)));
@@ -172,7 +188,7 @@ public class Detail extends Activity implements OnClickListener {
 		byte[] t = new byte[3];
 		t[0] = b[0];
 		t[1] = b[1];
-		t[2] = entity.getName() == "cover" ? (byte) 0x10 : (byte) 0x2C;
+		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
 				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
@@ -190,7 +206,7 @@ public class Detail extends Activity implements OnClickListener {
 			// final int length = 1;
 			switch (recv[0]) {
 			case 0x06:// 报警解除
-				Toast.makeText(context, "报警解除", Toast.LENGTH_LONG).show();
+				Toast.makeText(context, "撤防命令发送成功", Toast.LENGTH_LONG).show();
 				break;
 			case 0x07:// begin repair
 				Toast.makeText(context, "开始维修命令上传成功", Toast.LENGTH_LONG).show();

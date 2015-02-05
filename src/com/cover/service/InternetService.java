@@ -17,6 +17,7 @@ import com.cover.bean.Message;
 import com.cover.bean.Entity.Status;
 import com.cover.dbhelper.DouYaSqliteHelper;
 import com.cover.dbhelper.Douyatech;
+import com.cover.main.MainActivity;
 import com.cover.ui.CoverList;
 import com.cover.ui.Detail;
 import com.cover.ui.ParamSettingActivity;
@@ -33,7 +34,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.util.Log;
@@ -72,6 +75,16 @@ public class InternetService extends Service implements Runnable {
 	ServiceReceiver myReceiver;
 	boolean flagReaderThread = false;
 	Message message = new Message();
+
+	private Handler handler = new Handler() {
+
+		@Override
+		public void handleMessage(android.os.Message msg) {
+			Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
+					Toast.LENGTH_LONG).show();
+		}
+
+	};
 
 	public void setNotify(Entity entity) {
 		// 创建一个NotificationManager的引用
@@ -125,10 +138,12 @@ public class InternetService extends Service implements Runnable {
 		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
 		CharSequence contentText = entity.getLatitude() + ","
 				+ entity.getLongtitude(); // 通知栏内容
+
 		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
 		notificationIntent.putExtra("entity", entity);
+		// startActivity(notificationIntent);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, 0);
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		notification.setLatestEventInfo(context, contentTitle, contentText,
 				contentIntent);
 		// 把Notification传递给 NotificationManager
@@ -143,8 +158,7 @@ public class InternetService extends Service implements Runnable {
 
 			Log.i(TAG, msg.toString());
 			// sendMessage(msg);
-			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_LONG)
-					.show();
+			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_LONG).show();
 			flag_send = true;
 		}
 
@@ -291,6 +305,7 @@ public class InternetService extends Service implements Runnable {
 		// try {
 		connectService();
 		int interval = 0;
+		int count = 0;
 		while (true) {
 			try {
 				Thread.sleep(1000);
@@ -315,8 +330,21 @@ public class InternetService extends Service implements Runnable {
 					flag_send = false;
 					Log.i(TAG, "message send to server .");
 				}
+				count = 0;
 			} else {
+				count++;
 				connectService();
+				// Looper.prepare();
+				// Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
+				// Toast.LENGTH_LONG).show();
+				if (count > 10) {
+					handler.sendEmptyMessage(0x01);
+					Intent i = new Intent();
+					i.setClass(this, MainActivity.class);
+					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					startActivity(i);
+
+				}
 			}
 		}
 	}
@@ -385,8 +413,6 @@ public class InternetService extends Service implements Runnable {
 				byte[] check_temp = new byte[2];
 				check_temp[0] = str_[str_.length - 1];
 				check_temp[1] = str_[str_.length - 2];
-				boolean f = CRC16M.checkBuf(CoverUtils
-						.msg2ByteArrayExceptHeader(msg));
 				if ((check_temp[0] == msg.check[0])
 						&& (check_temp[1] == msg.check[1])) {
 					Log.i(TAG, "check right");
@@ -396,56 +422,81 @@ public class InternetService extends Service implements Runnable {
 					switch (msgBuff[0]) {
 					case 0x01: {// 需要处理报警信息ack
 						// 获取软件设置是否响铃
+						/*
+						 * Entity entity = new Entity(); byte[] b = new byte[2];
+						 * b[0] = msgBuff[1]; b[1] = msgBuff[2]; String title =
+						 * (msgBuff[3] == (byte) 0x1C ? "level" : "cover"); // +
+						 * CoverUtils.getShort(b); entity.setTag(title);
+						 * entity.setId(CoverUtils.getShort(b)); String content
+						 * = null; switch (msgBuff[4]) { case (byte) 0x01:
+						 * content = "正常状态"; entity.setStatus(Status.NORMAL);
+						 * break; case (byte) 0x02: content = "报警状态";
+						 * entity.setStatus(Status.EXCEPTION_1); break; case
+						 * (byte) 0x03: content = "维修状态";
+						 * entity.setStatus(Status.REPAIR); break; case (byte)
+						 * 0x04: content = "欠压状态";
+						 * entity.setStatus(Status.EXCEPTION_2); break; case
+						 * (byte) 0x05: content = "报警欠压状态";
+						 * entity.setStatus(Status.EXCEPTION_3); break; case
+						 * (byte) 0x06: content = "报警解除状态";
+						 * entity.setStatus(Status.SETTING_FINISH);
+						 * ParamSettingActivity.flagIsSetSuccess =
+						 * !ParamSettingActivity.flagIsSetSuccess; new
+						 * Douyatech(
+						 * InternetService.this.getApplication()).delete
+						 * ("leave", entity.getTag()+"_"+entity.getId()); break;
+						 * case (byte) 0x07: content = "设置状态";
+						 * entity.setStatus(Status.SETTING_PARAM);
+						 * ParamSettingActivity.flagIsSetSuccess =
+						 * !ParamSettingActivity.flagIsSetSuccess; new
+						 * Douyatech(
+						 * InternetService.this.getApplication()).delete
+						 * ("setting", entity.getTag()+"_"+entity.getId());
+						 * break; default: entity.setStatus(Status.EXCEPTION_3);
+						 * content = "未知状态"; }
+						 * 
+						 * entity.setLatitude(0); entity.setLongtitude(0); //
+						 * entity.setSta
+						 */
+						byte[] idByte = new byte[2];
 						Entity entity = new Entity();
-						byte[] b = new byte[2];
-						b[0] = msgBuff[1];
-						b[1] = msgBuff[2];
-						String title = (msgBuff[3] == (byte) 0x1C ? "level"
-								: "cover");
-						// + CoverUtils.getShort(b);
-						entity.setTag(title);
-						entity.setId(CoverUtils.getShort(b));
-						String content = null;
-						switch (msgBuff[4]) {
-						case (byte) 0x01:
-							content = "正常状态";
+						int i = 0;
+						idByte[1] = msgBuff[i++ + 1];
+						idByte[0] = msgBuff[i++ + 1];
+						entity.setId(CoverUtils.getShort(idByte));
+						entity.setTag(msgBuff[i++ + 1] == (byte) 0x10 ? "cover"
+								: "level");
+						byte[] longTi = new byte[8];
+						for (int k = 0, t = i; i < t + 8; i++) {
+							longTi[k++] = msgBuff[i + 1];
+						}
+						byte[] laTi = new byte[8];
+						for (int k = 0, t = i; i < t + 8; i++) {
+							laTi[k++] = msgBuff[i + 1];
+						}
+						entity.setLongtitude(CoverUtils.byte2Double(longTi));
+						entity.setLatitude(CoverUtils.byte2Double(laTi));
+						switch (msgBuff[i++ + 1]) {
+						case 0x01:
 							entity.setStatus(Status.NORMAL);
 							break;
-						case (byte) 0x02:
-							content = "报警状态";
+						case 0x02:
 							entity.setStatus(Status.EXCEPTION_1);
 							break;
-						case (byte) 0x03:
-							content = "维修状态";
+						case 0x03:
 							entity.setStatus(Status.REPAIR);
 							break;
-						case (byte) 0x04:
-							content = "欠压状态";
+						case 0x04:
 							entity.setStatus(Status.EXCEPTION_2);
 							break;
-						case (byte) 0x05:
-							content = "报警欠压状态";
+						case 0x05:
 							entity.setStatus(Status.EXCEPTION_3);
 							break;
-						case (byte) 0x06:
-							content = "报警解除状态";
+						case 0x06:
 							entity.setStatus(Status.SETTING_FINISH);
-							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
-							new Douyatech(InternetService.this.getApplication()).delete("leave", entity.getTag()+"_"+entity.getId());
-							break;
-						case (byte) 0x07:
-							content = "设置状态";
+						case 0x07:
 							entity.setStatus(Status.SETTING_PARAM);
-							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
-							new Douyatech(InternetService.this.getApplication()).delete("setting", entity.getTag()+"_"+entity.getId());
-							break;
-						default:
-							entity.setStatus(Status.EXCEPTION_3);
-							content = "未知状态";
 						}
-						entity.setLatitude(0);
-						entity.setLongtitude(0);
-						// entity.setSta
 
 						setNotify(entity);
 						byte[] ackAlert = new byte[] { (byte) 0xFA,

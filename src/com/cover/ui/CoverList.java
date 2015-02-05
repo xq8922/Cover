@@ -30,6 +30,7 @@ import com.cover.app.AppManager;
 import com.cover.bean.Entity;
 import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
+import com.cover.dbhelper.Douyatech;
 import com.cover.fragment.ListFragment;
 import com.cover.fragment.MapFragment;
 import com.cover.util.CRC16M;
@@ -53,34 +54,36 @@ public class CoverList extends Activity implements OnClickListener {
 	private static MapFragment mapFragment;
 	private RadioGroup rgBottom;
 	private RadioButton radioMap;
-	public static Entity entity;
+	public static Entity entity = null;
 	static FragmentTransaction ft;
 	int flagWhitchIsCurrent = 1;
+	static Douyatech douyadb = null;
+
 	static Handler handler = new Handler() {
 
 		@Override
 		public void handleMessage(android.os.Message msg) {
 			super.handleMessage(msg);
-			if (entity == null)
-				listFragment.update(0);
-			else {
-				// getFragmentManager().beginTransaction()
-				// Bundle b = new Bundle();
-				// b.putSerializable("entity", entity);
-				// mapFragment.setArguments(b);
-				// ft.replace(R.id.contain, mapFragment).commit();
-				// mapFragment.update(4);
-			}
+			// if (entity == null)
+			listFragment.update(0);
+			// else {
+			// getFragmentManager().beginTransaction()
+			// Bundle b = new Bundle();
+			// b.putSerializable("entity", entity);
+			// mapFragment.setArguments(b);
+			// ft.replace(R.id.contain, mapFragment).commit();
+			// mapFragment.update(4);
+			// }
 		}
 
 	};
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_BACK )  
-        {
-//			onBackPressed();
-        }
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			// onBackPressed();
+			finish();
+		}
 		return super.onKeyDown(keyCode, event);
 	}
 
@@ -95,6 +98,8 @@ public class CoverList extends Activity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.cover_list);
+
+		douyadb = new Douyatech(getApplicationContext());
 		// getDatas();
 		lv_coverlist = (ListView) findViewById(R.id.lv_coverlist_cover);
 		cbWater = (CheckBox) findViewById(R.id.cb_water);
@@ -138,7 +143,6 @@ public class CoverList extends Activity implements OnClickListener {
 		new Thread(new sendAsk()).start();
 		rgBottom.check(R.id.rb_list);
 		AppManager.getAppManager().addActivity(this);
-
 	}
 
 	private android.widget.CompoundButton.OnCheckedChangeListener cbChangeListener = new android.widget.CompoundButton.OnCheckedChangeListener() {
@@ -262,6 +266,7 @@ public class CoverList extends Activity implements OnClickListener {
 			items.clear();
 			waterItems.clear();
 			coverItems.clear();
+			// douyadb.deleteAll("coverlist");
 			byte[] recv = intent.getByteArrayExtra("msg");
 			if (recv[0] == 0x04) {
 				final int dataLength = 20;
@@ -314,11 +319,12 @@ public class CoverList extends Activity implements OnClickListener {
 						waterItems.add(entity);
 						items.add(entity);
 					}
+					// douyadb.add("coverlist", nameID);
 				}
 			}
 			// ///////////////////
-			mapFragment.firstData();
 			listFragment.firstData();
+			mapFragment.firstData();
 			handler.sendEmptyMessage(11);
 		}
 	}

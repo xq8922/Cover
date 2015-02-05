@@ -51,15 +51,15 @@ public class SingleMapDetail extends Activity {
 		BitmapDescriptor bitmap;
 		switch (entity.getStatus()) {
 		case REPAIR:
-			bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
+			bitmap = BitmapDescriptorFactory
+					.fromResource(R.drawable.map_yellow_small);
 			break;
 		case NORMAL:
 			bitmap = BitmapDescriptorFactory
 					.fromResource(R.drawable.map_green_small);
 			break;
 		default:
-			bitmap = BitmapDescriptorFactory
-					.fromResource(R.drawable.map_yellow_small);
+			bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
 		}
 		// 构建MarkerOption，用于在地图上添加Marker
 		OverlayOptions option = new MarkerOptions().position(cenpt)
