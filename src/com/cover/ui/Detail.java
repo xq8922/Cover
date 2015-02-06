@@ -1,6 +1,9 @@
 package com.cover.ui;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -30,7 +33,7 @@ import com.wxq.covers.R;
 
 public class Detail extends Activity implements OnClickListener {
 	private static final String TAG = "cover";
-	public static final int MINITE = 24 * 60;
+	public static final int MINITE = 60 * 1000 * 5;
 	private Entity entity;
 	private TextView tvId;
 	private ImageView ivState;
@@ -51,8 +54,7 @@ public class Detail extends Activity implements OnClickListener {
 	Douyatech douyadb = null;
 	private Handler hander = new Handler() {
 		public void handleMessage(android.os.Message msg) {
-			Toast.makeText(getApplicationContext(), "撤防失败", Toast.LENGTH_SHORT)
-					.show();
+			setNotify(entity);
 		};
 	};
 
@@ -134,19 +136,14 @@ public class Detail extends Activity implements OnClickListener {
 			flagThreadIsStart = true;
 			if (flagThreadIsStart) {
 				try {// 60 * 1000 * MINITE
-					Thread.sleep(1000);
+					Thread.sleep(MINITE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
-
-					Looper.prepare();
-					Toast.makeText(getApplicationContext(), "参数设置失败",
-							Toast.LENGTH_SHORT).show();
+					hander.sendEmptyMessage(11);
+					sendFailUnAlarm(entity);
 				}
-				if (douyadb.isExist("leave",
-						entity.getTag() + "_" + entity.getId()))
-					;
 				// douyadb.delete("leave", entity.getTag()+"_"+entity.getId());
 			}
 			flagThreadIsStart = false;
@@ -168,19 +165,19 @@ public class Detail extends Activity implements OnClickListener {
 		sendMessage(msg, ACTION);
 	}
 
-	public void setRepairEnd(Entity entity) {
+	public void sendFailUnAlarm(Entity entity) {
+		// 终端报警解除失败 0x13 App->Server ID 、设备类型
 		byte[] b = CoverUtils.short2ByteArray(entity.getId());
-		byte[] t = new byte[3];
-		t[0] = b[0];
-		t[1] = b[1];
-		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
-		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
-				CoverUtils.short2ByteArray((short) (7 + 3)), t);
-		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
-				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = check[check.length - 1];
-		msg.check[1] = check[check.length - 2];
-		sendMessage(msg, ACTION);
+		byte[] tmp = new byte[2];
+		tmp[0] = b[0];
+		tmp[1] = b[1];
+
+		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
+				(byte) 0x0A, (byte) 0x13, tmp[0], tmp[1],
+				(entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10)};
+		Intent serviceIntent = new Intent();
+		serviceIntent.putExtra("msg", CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
+		sendBroadcast(serviceIntent);		
 	}
 
 	public void setUnAlarm(Entity entity) {
@@ -257,7 +254,7 @@ public class Detail extends Activity implements OnClickListener {
 				if (!flagThreadIsStart) {
 					String nameID = entity.getTag() + "_" + entity.getId();
 					if (!douyadb.isExist("leave", nameID)) {
-						setRepairEnd(entity);
+						setUnAlarm(entity);
 						new Thread(new Timer()).start();
 						douyadb.add("leave", nameID);
 					} else {
@@ -285,6 +282,37 @@ public class Detail extends Activity implements OnClickListener {
 			startActivity(i);
 			break;
 		}
+	}
+	
+	public void setNotify(Entity entity) {
+		// 创建一个NotificationManager的引用
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+		// 定义Notification的各种属性
+		int icon = R.drawable.icon; // 通知图标
+		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
+		// 用上面的属性初始化 Nofification
+		Notification notification = new Notification(icon, tickerText, when);
+		// 添加声音
+		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
+			notification.defaults |= Notification.DEFAULT_ALL;
+		
+		notification.defaults |= Notification.DEFAULT_LIGHTS;
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		// 设置通知的事件消息
+		Context context = getApplicationContext(); // 上下文
+		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentText = "撤防失败"; // 通知栏内容
+		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+		notificationIntent.putExtra("entity", entity);
+		// startActivity(notificationIntent);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		notification.setLatestEventInfo(context, contentTitle, contentText,
+				contentIntent);
+		// 把Notification传递给 NotificationManager
+		mNotificationManager.notify(0, notification);
 	}
 
 }

@@ -75,6 +75,7 @@ public class InternetService extends Service implements Runnable {
 	ServiceReceiver myReceiver;
 	boolean flagReaderThread = false;
 	Message message = new Message();
+	int count = 0;
 
 	private Handler handler = new Handler() {
 
@@ -305,7 +306,7 @@ public class InternetService extends Service implements Runnable {
 		// try {
 		connectService();
 		int interval = 0;
-		int count = 0;
+		
 		while (true) {
 			try {
 				Thread.sleep(1000);
@@ -337,12 +338,12 @@ public class InternetService extends Service implements Runnable {
 				// Looper.prepare();
 				// Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
 				// Toast.LENGTH_LONG).show();
-				if (count > 10) {
+				if (count == 2) {
 					handler.sendEmptyMessage(0x01);
 					Intent i = new Intent();
 					i.setClass(this, MainActivity.class);
 					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					startActivity(i);
+//					startActivity(i);
 
 				}
 			}
@@ -494,8 +495,22 @@ public class InternetService extends Service implements Runnable {
 							break;
 						case 0x06:
 							entity.setStatus(Status.SETTING_FINISH);
+							ParamSettingActivity.flagIsSetSuccess = true;
+							Douyatech douyadb = new Douyatech(
+									getApplicationContext());
+							if (douyadb.isExist("leave", entity.getTag() + "_"
+									+ entity.getId()))
+								douyadb.delete("leave", entity.getTag() + "_"
+										+ entity.getId());
+							break;
 						case 0x07:
 							entity.setStatus(Status.SETTING_PARAM);
+							ParamSettingActivity.flagIsSetSuccess = true;
+
+							new Douyatech(InternetService.this.getApplication())
+									.delete("setting", entity.getTag() + "_"
+											+ entity.getId());
+							break;
 						}
 
 						setNotify(entity);

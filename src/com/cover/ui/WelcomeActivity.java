@@ -79,6 +79,7 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 		// startActivity(intent);
 		// finish();
 		// } else {
+//		Intent intent = new Intent(this, SoftwareSettings.class);
 		Intent intent = new Intent(this, MainActivity.class);
 		startActivity(intent);
 		finish();

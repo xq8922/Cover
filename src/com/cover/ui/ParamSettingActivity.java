@@ -2,6 +2,9 @@ package com.cover.ui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -255,12 +258,11 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 		data[j++] = entity.getTag() == "cover" ? (byte) 0x10 : (byte) 0x2C;
-		short jiaodu = 10;
+		short jiaodu = angle;
 		tmp = (entity.getTag() == "cover" ? CoverUtils.short2ByteArray(jiaodu)
 				: new byte[] { 0, 0 });
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		short time = 10;
 		tmp = CoverUtils.short2ByteArray(time);
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
@@ -269,9 +271,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				.short2ByteArray(alarmFrequency) : new byte[] { 0, 0 });
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		short secondAlarm = 10;
 		tmp = (entity.getTag() == "cover" ? new byte[] { 0, 0 } : CoverUtils
-				.short2ByteArray(secondAlarm));
+				.short2ByteArray(seconfAlarm));
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 
@@ -281,8 +282,18 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				.msg2ByteArrayExcepteCheck(msg)));
 		msg.check[0] = tmp1[tmp1.length - 1];
 		msg.check[1] = tmp1[tmp1.length - 2];
+		if(entity.getTag() == "level"){
+			if(alarmFrequency == 0 || seconfAlarm == 0){
+				Toast.makeText(getApplicationContext(), "输入不正确！", Toast.LENGTH_LONG).show();
+				return;
+			}
+		}else{
+			if(alarmFrequency == 0 || seconfAlarm == 0 || angle == 0){
+				Toast.makeText(getApplicationContext(), "输入不正确！", Toast.LENGTH_LONG).show();
+				return;
+			}
+		}
 		sendMessage(msg, ACTION);
-
 	}
 
 	public void sendMessage(Message msg, String action) {
@@ -304,7 +315,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			if (recv[0] == 0x05) {
 				int length = 4;
 				if (recv[3] == 0x01) {
-					Toast.makeText(context, "set success", Toast.LENGTH_LONG)
+					Toast.makeText(context, "命令设置成功", Toast.LENGTH_LONG)
 							.show();
 					Message msg = null;
 					msg.data = null;
@@ -326,4 +337,36 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		}
 
 	}
+	
+	public void setNotify(Entity entity) {
+		// 创建一个NotificationManager的引用
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+		// 定义Notification的各种属性
+		int icon = R.drawable.icon; // 通知图标
+		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
+		// 用上面的属性初始化 Nofification
+		Notification notification = new Notification(icon, tickerText, when);
+		// 添加声音
+		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
+			notification.defaults |= Notification.DEFAULT_ALL;
+		
+		notification.defaults |= Notification.DEFAULT_LIGHTS;
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		// 设置通知的事件消息
+		Context context = getApplicationContext(); // 上下文
+		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentText = "参数设置失败"; // 通知栏内容
+		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+		notificationIntent.putExtra("entity", entity);
+		// startActivity(notificationIntent);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		notification.setLatestEventInfo(context, contentTitle, contentText,
+				contentIntent);
+		// 把Notification传递给 NotificationManager
+		mNotificationManager.notify(0, notification);
+	}
+	
 }

@@ -1,5 +1,6 @@
 package com.cover.ui;
 
+import android.R.integer;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -37,6 +38,7 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 	private ImageView ivSwitch;
 	private ImageView exit;
 	private TextView tvIP;
+	private int setOrNot;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +56,16 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 		rlIp.setOnClickListener(this);
 		ivSwitch.setOnClickListener(this);
 		exit.setOnClickListener(this);
-
-		CoverUtils.putInt2SharedP(getApplicationContext(), "setAlarmOrNot", 1);
+		setOrNot = CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot");
+		if(setOrNot == 0){
+			
+		}
+		if(setOrNot == 1)
+			swAlarm.setChecked(true);
+		else {
+			swAlarm.setChecked(false);
+		}
+		
 
 		AppManager.getAppManager().addActivity(this);
 	}

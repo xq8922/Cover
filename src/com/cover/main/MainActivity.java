@@ -124,6 +124,11 @@ public class MainActivity extends Activity {
 													InternetService.class);
 											finish();
 											stopService(serviceIntent);
+											try {
+												Thread.sleep(1500);
+											} catch (InterruptedException e) {
+												e.printStackTrace();
+											}
 											startService(serviceIntent);
 
 										} else {
@@ -146,6 +151,12 @@ public class MainActivity extends Activity {
 				password = et_password.getText().toString();
 				userName = "13468833168";
 				password = "1234";
+				if(userName == null ){
+					Toast.makeText(getApplicationContext(), "请输入用户名", 1).show();
+				}
+				if(password == null ){
+					Toast.makeText(getApplicationContext(), "请输入密码", 1).show();
+				}
 				String msg = userName + password;
 				int length = 7 + msg.length();
 				msgAsk.data = msg.getBytes();
@@ -249,6 +260,7 @@ public class MainActivity extends Activity {
 					Intent i1 = new Intent();
 					i1.setClass(context, CoverList.class);
 					startActivity(i1);
+					finish();
 					break;
 				default:
 					Log.w(TAG, "wrong code");

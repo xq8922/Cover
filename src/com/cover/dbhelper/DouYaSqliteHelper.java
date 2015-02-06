@@ -15,7 +15,7 @@ public class DouYaSqliteHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL("create table if not exists leave(_id integer primary key autoincrement,name_id varchar(20))");
 		db.execSQL("create table if not exists setting(_id integer primary key autoincrement,name_id varchar(20))");
-		db.execSQL("create table if not exists coverlist(_id integer primary key autoincrement,name_id varchar(20),lat varchar(20),lon varchar(20))");
+		
 	}
 
 	@Override
