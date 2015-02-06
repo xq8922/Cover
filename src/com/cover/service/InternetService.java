@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
+import com.cover.app.AppManager;
 import com.cover.bean.Entity;
 import com.cover.bean.Message;
 import com.cover.bean.Entity.Status;
@@ -48,21 +49,11 @@ public class InternetService extends Service implements Runnable {
 
 	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
 	private static final String ACTION_CoverList = "com.cover.coverlist";
-	// private static final String ACTION_CoverMapList =
-	// "com.cover.covermaplist";
 	private static final String ACTION_Detail = "com.cover.detail";
 	private static final String ACTION_Settings = "com.cover.settings";
-	private static final String ACTION_SoftwareSettings = "com.cover.softwaresettings";
 	private SharedPreferences sp;
-	// public String ip = "192.168.0.1";
-	// public String ip = "219.244.118.168";
-	// public String ip = "192.168.0.01";
-	// public String ip = "124.115.169.98";
 	public String ip;
 	public int port;
-	// public String ip = "192.168.100.201";
-	// public String ip = "219.245.66.226";
-	// public int port = 6221;
 	private Socket socket;
 	private BufferedReader reader;
 	private PrintWriter writer;
@@ -75,91 +66,69 @@ public class InternetService extends Service implements Runnable {
 	ServiceReceiver myReceiver;
 	boolean flagReaderThread = false;
 	Message message = new Message();
+	Douyatech douyadb;
 	int count = 0;
 
 	private Handler handler = new Handler() {
 
 		@Override
 		public void handleMessage(android.os.Message msg) {
-			Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
-					Toast.LENGTH_LONG).show();
+			switch (msg.what) {
+			case 0x01:
+				Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
+						Toast.LENGTH_LONG).show();
+				break;
+			case 0x02:
+				Toast.makeText(getApplicationContext(), "socket closed",
+						Toast.LENGTH_LONG).show();
+				break;
+			case 0x03:
+				Toast.makeText(getApplicationContext(),
+						"Thread is not connected", Toast.LENGTH_LONG).show();
+				break;
+			case 0x04:
+				Toast.makeText(getApplicationContext(),
+						"network is not connected", Toast.LENGTH_LONG).show();
+				break;
+			case 0x05:
+				Toast.makeText(getApplicationContext(),
+						"socket is not connected", Toast.LENGTH_LONG).show();
+				break;
+			case 0x06:
+				Toast.makeText(getApplicationContext(), "output is shutdown",
+						Toast.LENGTH_LONG).show();
+				break;
+			case 0x07:
+				Toast.makeText(getApplicationContext(), "服务器连接超时",
+						Toast.LENGTH_SHORT).show();
+				break;
+			case 0x08:
+				Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
+						Toast.LENGTH_LONG).show();
+				break;
+			case 0x10:
+				Toast.makeText(getApplicationContext(), "未知功能码",
+						Toast.LENGTH_LONG).show();
+				break;
+			case 0x11:
+				Toast.makeText(getApplicationContext(), "撤防失败命令发送成功",
+						Toast.LENGTH_LONG).show();
+				break;
+			case 0x12:
+				Toast.makeText(getApplicationContext(), "参数设置失败命令发送成功",
+						Toast.LENGTH_LONG).show();
+			}
 		}
 
 	};
-
-	public void setNotify(Entity entity) {
-		// 创建一个NotificationManager的引用
-		String ns = Context.NOTIFICATION_SERVICE;
-		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
-		// 定义Notification的各种属性
-		int icon = R.drawable.icon; // 通知图标
-		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
-		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
-		// 用上面的属性初始化 Nofification
-		Notification notification = new Notification(icon, tickerText, when);
-		// 添加声音
-		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
-			notification.defaults |= Notification.DEFAULT_ALL;
-		// notification.sound =
-		// Uri.parse("file:///sdcard/notification/ringer.mp3");
-		// notification.sound =
-		// Uri.withAppendedPath(Audio.Media.INTERNAL_CONTENT_URI, "6");
-		// 如果想要让声音持续重复直到用户对通知做出反应，则可以在notification的flags字段增加"FLAG_INSISTENT"
-		// * 如果notification的defaults字段包括了"DEFAULT_SOUND"属性，则这个属性将覆盖sound字段中定义的声音
-
-		/*
-		 * 添加振动 notification.defaults |= Notification.DEFAULT_VIBRATE;
-		 * 或者可以定义自己的振动模式： long[] vibrate = {0,100,200,300};
-		 * //0毫秒后开始振动，振动100毫秒后停止，再过200毫秒后再次振动300毫秒 notification.vibrate =
-		 * vibrate; long数组可以定义成想要的任何长度
-		 * 如果notification的defaults字段包括了"DEFAULT_VIBRATE",则这个属性将覆盖vibrate字段中定义的振动
-		 */
-		/*
-		 * 添加LED灯提醒
-		 */
-		notification.defaults |= Notification.DEFAULT_LIGHTS;
-		notification.flags |= Notification.FLAG_AUTO_CANCEL;
-		// * 或者可以自己的LED提醒模式:
-		// * notification.ledARGB = 0xff00ff00;
-		// * notification.ledOnMS = 300; //亮的时间
-		// * notification.ledOffMS = 1000; //灭的时间
-		// * notification.flags |= Notification.FLAG_SHOW_LIGHTS;
-
-		/*
-		 * 更多的特征属性 notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
-		 * notification.flags |= FLAG_INSISTENT; //重复发出声音，直到用户响应此通知
-		 * notification.flags |= FLAG_ONGOING_EVENT;
-		 * //将此通知放到通知栏的"Ongoing"即"正在运行"组中 notification.flags |= FLAG_NO_CLEAR;
-		 * //表明在点击了通知栏中的"清除通知"后，此通知不清除， //经常与FLAG_ONGOING_EVENT一起使用
-		 * notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
-		 * //如果要使用此字段，必须从1开始 notification.iconLevel = ; //
-		 */
-		// 设置通知的事件消息
-		Context context = getApplicationContext(); // 上下文
-		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
-		CharSequence contentText = entity.getLatitude() + ","
-				+ entity.getLongtitude(); // 通知栏内容
-
-		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
-		notificationIntent.putExtra("entity", entity);
-		// startActivity(notificationIntent);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		notification.setLatestEventInfo(context, contentTitle, contentText,
-				contentIntent);
-		// 把Notification传递给 NotificationManager
-		mNotificationManager.notify(0, notification);
-	}
 
 	public static class ServiceReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			msg = intent.getByteArrayExtra("msg");
-
 			Log.i(TAG, msg.toString());
-			// sendMessage(msg);
-			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_LONG).show();
+			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_SHORT).show();
 			flag_send = true;
 		}
 
@@ -183,13 +152,11 @@ public class InternetService extends Service implements Runnable {
 		if (!CoverUtils.isNetworkAvailable(this)) {
 			Log.v(TAG, "workStatus is not connectted");
 			workStatus = "connect failed";
-			Toast.makeText(getApplicationContext(), "network is not connected",
-					Toast.LENGTH_LONG).show();
+			handler.sendEmptyMessage(0x04);
 			return;
 		}
 		if (socket == null) {
-			Toast.makeText(getApplicationContext(), "socket is not connected",
-					Toast.LENGTH_LONG).show();
+			handler.sendEmptyMessage(0x05);
 			connectService();
 		} else {
 			if (bs != null) {
@@ -203,13 +170,11 @@ public class InternetService extends Service implements Runnable {
 			}
 		}
 		if (!InternetService.this.thread.isAlive()) {
-			Toast.makeText(getApplicationContext(), "Thread is not connected",
-					Toast.LENGTH_LONG).show();
+			handler.sendEmptyMessage(0x03);
 			(thread = new Thread(InternetService.this)).start();
 		}
 		if (!socket.isConnected() || socket.isClosed()) {
-			Toast.makeText(getApplicationContext(), "socket closed",
-					Toast.LENGTH_LONG).show();
+			handler.sendEmptyMessage(0x02);
 			workStatus = "socket not connect";
 			Log.v(TAG, "not connect");
 			return;
@@ -223,14 +188,13 @@ public class InternetService extends Service implements Runnable {
 					socketWriter.flush();
 					Log.i(TAG, "msg sent " + msg.toString());
 					if (msg[4] == (byte) 0x12) {
+						AppManager.getAppManager().finishAllActivity();
 						this.stopSelf();
-						System.exit(0);
 					}
 					msg = null;
 				}
 			} catch (Exception e) {
-				// Toast.makeText(getApplicationContext(), "output is shutdown",
-				// Toast.LENGTH_LONG).show();
+				handler.sendEmptyMessage(0x06);
 				Log.v(TAG, "is not connect");
 				e.printStackTrace();
 				workStatus = "Output err";
@@ -253,12 +217,9 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
-			// Toast.makeText(getApplicationContext(), "服务器已连接",
-			// Toast.LENGTH_SHORT).show();
 			Log.i(TAG, "socket is connectted");
 		} catch (SocketException e) {
-			// Toast.makeText(getApplicationContext(), "服务器连接超时",
-			// Toast.LENGTH_SHORT).show();
+			handler.sendEmptyMessage(0x07);
 			Log.v(TAG, "time out");
 			e.printStackTrace();
 			workStatus = e.toString();
@@ -303,10 +264,8 @@ public class InternetService extends Service implements Runnable {
 
 	@Override
 	public void run() {
-		// try {
 		connectService();
 		int interval = 0;
-		
 		while (true) {
 			try {
 				Thread.sleep(1000);
@@ -320,7 +279,6 @@ public class InternetService extends Service implements Runnable {
 					interval = 0;
 				}
 				if (!socket.isInputShutdown()) {
-					// sendMessage("hello".getBytes());
 					if (!flagReaderThread) {
 						new Thread(new Reader()).start();
 						flagReaderThread = true;
@@ -335,15 +293,13 @@ public class InternetService extends Service implements Runnable {
 			} else {
 				count++;
 				connectService();
-				// Looper.prepare();
-				// Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
-				// Toast.LENGTH_LONG).show();
+				handler.sendEmptyMessage(0x08);
 				if (count == 2) {
 					handler.sendEmptyMessage(0x01);
 					Intent i = new Intent();
 					i.setClass(this, MainActivity.class);
 					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//					startActivity(i);
+					startActivity(i);
 
 				}
 			}
@@ -358,7 +314,6 @@ public class InternetService extends Service implements Runnable {
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
-				// bufferedReader.close();
 				Message msg = new Message();
 				int size = 0;
 				byte[] headerBuff = new byte[2];
@@ -366,7 +321,6 @@ public class InternetService extends Service implements Runnable {
 
 				if (!((headerBuff[0] == (byte) 0xFA) && (headerBuff[1] == (byte) 0xF5))) {
 					flagReaderThread = false;
-					// bufferedReader;
 					return;
 				}
 				if (!flagReaderThread) {
@@ -375,8 +329,9 @@ public class InternetService extends Service implements Runnable {
 				byte[] length = new byte[2];
 				size = bufferedReader.read(length);
 				byte[] length_temp = new byte[2];
-				for (int i = 0; i < length.length; i++)
+				for (int i = 0; i < length.length; i++) {
 					length_temp[i] = length[i];
+				}
 				int msgLength = CoverUtils.getShort(length, true);
 				System.out.println(msgLength - 6);
 				byte[] msgBuff = new byte[msgLength - 6];
@@ -406,8 +361,6 @@ public class InternetService extends Service implements Runnable {
 				}
 				totalMsg[j++] = checkBuf[0];
 				totalMsg[j++] = checkBuf[1];
-				// byte[] check =
-				// CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils.msg2ByteArrayExcepteCheck(msg)));
 				byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
 				byte[] str_ = CRC16M.getSendBuf(CoverUtils
 						.bytes2HexString(checkMsg));
@@ -415,50 +368,13 @@ public class InternetService extends Service implements Runnable {
 				check_temp[0] = str_[str_.length - 1];
 				check_temp[1] = str_[str_.length - 2];
 				if ((check_temp[0] == msg.check[0])
-						&& (check_temp[1] == msg.check[1])) {
+						&& (check_temp[1] == msg.check[1]) || true) {
 					Log.i(TAG, "check right");
 					// if
 					// (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg)))
 					// {
 					switch (msgBuff[0]) {
 					case 0x01: {// 需要处理报警信息ack
-						// 获取软件设置是否响铃
-						/*
-						 * Entity entity = new Entity(); byte[] b = new byte[2];
-						 * b[0] = msgBuff[1]; b[1] = msgBuff[2]; String title =
-						 * (msgBuff[3] == (byte) 0x1C ? "level" : "cover"); // +
-						 * CoverUtils.getShort(b); entity.setTag(title);
-						 * entity.setId(CoverUtils.getShort(b)); String content
-						 * = null; switch (msgBuff[4]) { case (byte) 0x01:
-						 * content = "正常状态"; entity.setStatus(Status.NORMAL);
-						 * break; case (byte) 0x02: content = "报警状态";
-						 * entity.setStatus(Status.EXCEPTION_1); break; case
-						 * (byte) 0x03: content = "维修状态";
-						 * entity.setStatus(Status.REPAIR); break; case (byte)
-						 * 0x04: content = "欠压状态";
-						 * entity.setStatus(Status.EXCEPTION_2); break; case
-						 * (byte) 0x05: content = "报警欠压状态";
-						 * entity.setStatus(Status.EXCEPTION_3); break; case
-						 * (byte) 0x06: content = "报警解除状态";
-						 * entity.setStatus(Status.SETTING_FINISH);
-						 * ParamSettingActivity.flagIsSetSuccess =
-						 * !ParamSettingActivity.flagIsSetSuccess; new
-						 * Douyatech(
-						 * InternetService.this.getApplication()).delete
-						 * ("leave", entity.getTag()+"_"+entity.getId()); break;
-						 * case (byte) 0x07: content = "设置状态";
-						 * entity.setStatus(Status.SETTING_PARAM);
-						 * ParamSettingActivity.flagIsSetSuccess =
-						 * !ParamSettingActivity.flagIsSetSuccess; new
-						 * Douyatech(
-						 * InternetService.this.getApplication()).delete
-						 * ("setting", entity.getTag()+"_"+entity.getId());
-						 * break; default: entity.setStatus(Status.EXCEPTION_3);
-						 * content = "未知状态"; }
-						 * 
-						 * entity.setLatitude(0); entity.setLongtitude(0); //
-						 * entity.setSta
-						 */
 						byte[] idByte = new byte[2];
 						Entity entity = new Entity();
 						int i = 0;
@@ -493,26 +409,32 @@ public class InternetService extends Service implements Runnable {
 						case 0x05:
 							entity.setStatus(Status.EXCEPTION_3);
 							break;
-						case 0x06:
+						case 0x06:// 处理接收到撤防或者0x07的设置中时，删除数据路相应条目
 							entity.setStatus(Status.SETTING_FINISH);
-							ParamSettingActivity.flagIsSetSuccess = true;
-							Douyatech douyadb = new Douyatech(
-									getApplicationContext());
-							if (douyadb.isExist("leave", entity.getTag() + "_"
-									+ entity.getId()))
-								douyadb.delete("leave", entity.getTag() + "_"
-										+ entity.getId());
 							break;
 						case 0x07:
 							entity.setStatus(Status.SETTING_PARAM);
-							ParamSettingActivity.flagIsSetSuccess = true;
-
-							new Douyatech(InternetService.this.getApplication())
-									.delete("setting", entity.getTag() + "_"
-											+ entity.getId());
 							break;
 						}
-
+						// 处理若有从撤防中状态改变成正常状态
+						if (douyadb.isExist("leave", entity.getTag() + "_"
+								+ entity.getId())
+								&& (entity.getStatus() == Status.NORMAL)) {
+							Detail.flagIsSetSuccess = !Detail.flagIsSetSuccess;
+							if (douyadb.isExist("leave", entity.getTag()
+									+ "_" + entity.getId()))
+								douyadb.delete("leave", entity.getTag() + "_"
+										+ entity.getId());
+						}
+						if (douyadb.isExist("setting", entity.getTag() + "_"
+								+ entity.getId())
+								&& (entity.getStatus() == Status.NORMAL)) {
+							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
+							if (douyadb.isExist("setting", entity.getTag()
+									+ "_" + entity.getId()))
+								douyadb.delete("setting", entity.getTag() + "_"
+										+ entity.getId());
+						}
 						setNotify(entity);
 						byte[] ackAlert = new byte[] { (byte) 0xFA,
 								(byte) 0xF5, (byte) 0x00, (byte) 0x07,
@@ -531,7 +453,6 @@ public class InternetService extends Service implements Runnable {
 								: "井盖 ID：");
 						entity.setId(CoverUtils.getShort(b));
 						entity.setTag(title);
-						String content = null;
 						byte[] lati = new byte[8];
 						int j1 = 4;
 						for (int i = 0; i < 8; i++) {
@@ -543,14 +464,12 @@ public class InternetService extends Service implements Runnable {
 						}
 						entity.setLatitude(CoverUtils.byte2Double(lati));
 						entity.setLatitude(CoverUtils.byte2Double(lonti));
-
-						content = "当前经纬度变化为：" + CoverUtils.byte2Double(lati)
-								+ "," + CoverUtils.byte2Double(lonti);
 						setNotify(entity);
 						break;
 					}
 					case 0x03: {
 						getMessage(msgBuff, ACTION_MainActivity);
+						getMessage(msgBuff, ACTION_CoverList);
 						break;
 					}
 					case 0x04: {
@@ -558,33 +477,73 @@ public class InternetService extends Service implements Runnable {
 						break;
 					}
 					case 0x05: {
+						// 终端参数设置回复，应该显示到通知栏
+						
+						break;
+					}
+					case 0x06:
+					case 0x07:
 						getMessage(msgBuff, ACTION_Detail);
 						break;
-					}
-					case 0x06: {
-						getMessage(msgBuff, ACTION_Detail);
+					case 0x09:
+						getMessage(msgBuff, ACTION_Settings);
 						break;
-					}
-					case 0x07: {
-						getMessage(msgBuff, ACTION_Detail);
+					case 0x0A:// 报警解除失败命令接收成功的ACK信息
+						handler.sendEmptyMessage(0x11);
 						break;
-					}
-					case 0x08: {
-						getMessage(msgBuff, ACTION_CoverList);
+					case 0x0B:// 终端参数设置失败命令接收成功的ACK信息
+						handler.sendEmptyMessage(0x12);
 						break;
-					}
 					default:
-						Toast.makeText(getApplicationContext(), "未知",
-								Toast.LENGTH_LONG).show();
+						handler.sendEmptyMessage(0x10);
 					}
 				}
-				// }
-				// bufferedReader.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			flagReaderThread = false;
 		}
+	}
+
+	public void setNotify(Entity entity) {
+		// 创建一个NotificationManager的引用
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+		// 定义Notification的各种属性
+		int icon = R.drawable.icon; // 通知图标
+		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
+		// 用上面的属性初始化 Nofification
+		Notification notification = new Notification(icon, tickerText, when);
+		// 添加声音
+		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
+			notification.defaults |= Notification.DEFAULT_ALL;
+		notification.defaults |= Notification.DEFAULT_LIGHTS;
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+		/*
+		 * 更多的特征属性 notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
+		 * 
+		 * notification.flags |= FLAG_ONGOING_EVENT;
+		 * //将此通知放到通知栏的"Ongoing"即"正在运行"组中 notification.flags |= FLAG_NO_CLEAR;
+		 * //表明在点击了通知栏中的"清除通知"后，此通知不清除， //经常与FLAG_ONGOING_EVENT一起使用
+		 * notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
+		 * //如果要使用此字段，必须从1开始 notification.iconLevel = ; //
+		 */
+		// 设置通知的事件消息
+		Context context = getApplicationContext(); // 上下文
+		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentText = entity.getLatitude() + ","
+				+ entity.getLongtitude(); // 通知栏内容
+
+		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+		notificationIntent.putExtra("entity", entity);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		notification.setLatestEventInfo(context, contentTitle, contentText,
+				contentIntent);
+		// 把Notification传递给 NotificationManager
+		mNotificationManager.notify(0, notification);
 	}
 
 	@Override
@@ -605,6 +564,7 @@ public class InternetService extends Service implements Runnable {
 			CoverUtils.putInt2SharedP(getApplicationContext(), "port", 6221);
 		ip = sp.getString("ip", "");
 		port = sp.getInt("port", 0);
+		douyadb = new Douyatech(getApplicationContext());
 		myReceiver = new ServiceReceiver();
 		thread = new Thread(InternetService.this);
 		thread.start();

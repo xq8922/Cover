@@ -56,16 +56,18 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 		rlIp.setOnClickListener(this);
 		ivSwitch.setOnClickListener(this);
 		exit.setOnClickListener(this);
-		setOrNot = CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot");
-		if(setOrNot == 0){
-			
+		setOrNot = CoverUtils.getIntSharedP(getApplicationContext(),
+				"setAlarmOrNot");
+		if (setOrNot == 0) {
+
 		}
-		if(setOrNot == 1)
+		if (setOrNot == 1)
 			swAlarm.setChecked(true);
 		else {
 			swAlarm.setChecked(false);
 		}
-		
+		tvIP.setText(CoverUtils.getStringSharedP(getApplicationContext(), "ip")+":"
+				+ CoverUtils.getIntSharedP(getApplicationContext(), "port"));
 
 		AppManager.getAppManager().addActivity(this);
 	}
@@ -112,7 +114,7 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 		totalMsg = CoverUtils.msg2ByteArray(msg, length);
 		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
-		Log.i(TAG, action + "sned broadcast " + action);
+		Log.i(TAG, action + "send broadcast " + action);
 	}
 
 	@Override
@@ -174,19 +176,19 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 												SoftwareSettings.this,
 												InternetService.class);
 										stopService(serviceIntent);
-										startService(serviceIntent);
 										try {
 											Thread.sleep(1000);
 										} catch (InterruptedException e) {
 											e.printStackTrace();
 										}
+										startService(serviceIntent);
 										Intent intent = new Intent();
 										intent.setClass(SoftwareSettings.this,
 												MainActivity.class);
 										startActivity(intent);
 									} else {
 										Toast.makeText(getApplicationContext(),
-												"格式不正确,请重新输入",
+												"格式不正确,请重新输入  IP：PORT",
 												Toast.LENGTH_SHORT).show();
 									}
 								}
@@ -231,8 +233,7 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 									msg.check[1] = str_[str_.length - 2];
 									sendMessage(msg, ACTION);
 
-									AppManager.getAppManager()
-											.finishAllActivity();
+									
 									// stopService(serviceIntent);
 									// System.exit(0);
 								}

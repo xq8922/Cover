@@ -8,6 +8,8 @@ import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -23,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 
 import com.baidu.mapapi.SDKInitializer;
@@ -33,6 +36,7 @@ import com.cover.bean.Message;
 import com.cover.dbhelper.Douyatech;
 import com.cover.fragment.ListFragment;
 import com.cover.fragment.MapFragment;
+import com.cover.main.MainActivity;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -58,34 +62,18 @@ public class CoverList extends Activity implements OnClickListener {
 	static FragmentTransaction ft;
 	int flagWhitchIsCurrent = 1;
 	static Douyatech douyadb = null;
+	private SharedPreferences sp;
+	private static Editor editor;
 
 	static Handler handler = new Handler() {
 
 		@Override
 		public void handleMessage(android.os.Message msg) {
 			super.handleMessage(msg);
-			// if (entity == null)
 			listFragment.update(0);
-			// else {
-			// getFragmentManager().beginTransaction()
-			// Bundle b = new Bundle();
-			// b.putSerializable("entity", entity);
-			// mapFragment.setArguments(b);
-			// ft.replace(R.id.contain, mapFragment).commit();
-			// mapFragment.update(4);
-			// }
 		}
 
 	};
-
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			// onBackPressed();
-			finish();
-		}
-		return super.onKeyDown(keyCode, event);
-	}
 
 	@Override
 	protected void onResume() {
@@ -118,14 +106,9 @@ public class CoverList extends Activity implements OnClickListener {
 		}
 		entity = (Entity) getIntent().getSerializableExtra("entity");
 		if (entity != null) {
-			// Bundle b = new Bundle();
-			// b.putSerializable("entity", entity);
-			// mapFragment.setArguments(b);
 			ft.replace(R.id.contain, mapFragment).commit();
-			// mapFragment.update(4);
 		} else {
 			ft.replace(R.id.contain, listFragment).commit();
-			// listFragment.update(0);
 		}
 		// mapFragment.firstData();listFragment.firstData();
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
@@ -141,6 +124,8 @@ public class CoverList extends Activity implements OnClickListener {
 		askMsg.check[0] = str_[str_.length - 1];
 		askMsg.check[1] = str_[str_.length - 2];
 		new Thread(new sendAsk()).start();
+		if (CoverUtils.getBooleanSharedP(getApplicationContext(), "isremem"))
+			new Thread(new sendValidate()).start();
 		rgBottom.check(R.id.rb_list);
 		AppManager.getAppManager().addActivity(this);
 	}
@@ -248,6 +233,30 @@ public class CoverList extends Activity implements OnClickListener {
 
 	}
 
+	private class sendValidate implements Runnable {
+
+		@Override
+		public void run() {
+			Message msgAsk = new Message();
+			sp = getSharedPreferences("douyatech", MODE_PRIVATE);
+			editor = sp.edit();
+			String userName = sp.getString("username", "");
+			String password = sp.getString("password", "");
+			String msg = userName + password;
+			int length = 7 + msg.length();
+			msgAsk.data = msg.getBytes();
+			msgAsk.function = Integer.valueOf("0C", 16).byteValue();
+			msgAsk.length = CoverUtils.short2ByteArray((short) length);
+			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msgAsk);
+			byte[] str_ = CRC16M.getSendBuf(CoverUtils
+					.bytes2HexString(checkMsg));
+			msgAsk.check[0] = str_[str_.length - 1];
+			msgAsk.check[1] = str_[str_.length - 2];
+			sendMessage(msgAsk, ACTION);
+		}
+
+	}
+
 	public void sendMessage(Message msg, String action) {
 		Intent serviceIntent = new Intent();
 		serviceIntent.setAction(action);
@@ -256,7 +265,7 @@ public class CoverList extends Activity implements OnClickListener {
 		totalMsg = CoverUtils.msg2ByteArray(msg, length);
 		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
-		Log.i(TAG, action + "sned broadcast " + action);
+		Log.i(TAG, action + "send broadcast " + action);
 	}
 
 	public static class CoverListReceiver extends BroadcastReceiver {
@@ -266,7 +275,6 @@ public class CoverList extends Activity implements OnClickListener {
 			items.clear();
 			waterItems.clear();
 			coverItems.clear();
-			// douyadb.deleteAll("coverlist");
 			byte[] recv = intent.getByteArrayExtra("msg");
 			if (recv[0] == 0x04) {
 				final int dataLength = 20;
@@ -319,13 +327,28 @@ public class CoverList extends Activity implements OnClickListener {
 						waterItems.add(entity);
 						items.add(entity);
 					}
-					// douyadb.add("coverlist", nameID);
+				}
+				// ///////////////////
+				listFragment.firstData();
+				mapFragment.firstData();
+				handler.sendEmptyMessage(11);
+			} else if (recv[0] == 0x03) {
+				switch (recv[1]) {
+				case 0x01:
+
+					break;
+				case 0x02:
+					Toast.makeText(context, "用户名或密码错误,请重新登录", Toast.LENGTH_LONG)
+							.show();
+					Intent loginIntent = new Intent();
+					loginIntent.setClass(context, MainActivity.class);
+					context.startActivity(loginIntent);
+					break;
+				case 0x03:
+
+					break;
 				}
 			}
-			// ///////////////////
-			listFragment.firstData();
-			mapFragment.firstData();
-			handler.sendEmptyMessage(11);
 		}
 	}
 

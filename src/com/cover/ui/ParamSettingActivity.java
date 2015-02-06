@@ -53,15 +53,20 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private TextView tvAlarmTime;
 	private TextView tvAlarmFreq;
 	private ImageView update;
-	private short angle = 0;
-	private short time = 0;
-	private short alarmFrequency = 0;
-	private short seconfAlarm = 0;
-	final static int MINITE = 30;
+	private short angle = 10;
+	private short time = 100;
+	private short alarmFrequency = 10;
+	private short seconfAlarm = 100;
+	final static int MINITE = 5 * 1000 * 60;
 	public static boolean flagIsSetSuccess = false;
 	private boolean flagThreadIsStart = false;
 	Douyatech douyadb = null;
 	private TextView tvFrequencyAlarm;
+	private Handler hander = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			setNotify(entity);
+		};
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -127,21 +132,39 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 
 		@Override
 		public void run() {
-			flagThreadIsStart = true;
 			if (flagThreadIsStart) {
-				try {// 60 * 1000 * MINITE
-					Thread.sleep(1000);
+				try {
+					Thread.sleep(MINITE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
-					Looper.prepare();
-					Toast.makeText(getApplicationContext(), "参数设置失败",
-							Toast.LENGTH_SHORT).show();
+					hander.sendEmptyMessage(11);
+					sendFailSetting(entity);
+					if (douyadb.isExist("leave",
+							entity.getTag() + "_" + entity.getId())) {
+						douyadb.delete("leave",
+								entity.getTag() + "_" + entity.getId());
+					}
 				}
 			}
-			flagThreadIsStart = false;
 		}
+	}
+
+	public void sendFailSetting(Entity entity) {
+		// 终端报警解除失败 0x13 App->Server ID 、设备类型
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] tmp = new byte[2];
+		tmp[0] = b[0];
+		tmp[1] = b[1];
+
+		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
+				(byte) 0x0A, (byte) 0x14, tmp[0], tmp[1],
+				(entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10) };
+		Intent serviceIntent = new Intent();
+		serviceIntent.putExtra("msg",
+				CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
+		sendBroadcast(serviceIntent);
 	}
 
 	@Override
@@ -192,7 +215,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 									// 修改显示
 									tvAlarmTime.setText(et_Ip2.getText()
 											.toString().trim()
-											+ "小时");
+											+ "分钟");
 									time = Short.valueOf(et_Ip2.getText()
 											.toString().trim());
 								}
@@ -223,8 +246,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 							}).setNegativeButton("取消", null).show();
 			break;
 		case R.id.update:
-			if (!flagThreadIsStart) {
-
+			if (entity.getStatus() == Status.NORMAL) {
 				String nameID = entity.getTag() + "_" + entity.getId();
 				if (!douyadb.isExist("setting", nameID)) {
 					sendArgSettings(entity);
@@ -234,16 +256,9 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
 							Toast.LENGTH_SHORT).show();
 				}
-
-				// sendArgSettings(entity);
-				// Toast.makeText(ParamSettingActivity.this, "上传中...",
-				// 0).show();
-				// new Thread(new Timer()).start();
-			} else {
-				// Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
-				// Toast.LENGTH_SHORT).show();
+			}else{
+				Toast.makeText(getApplicationContext(), "当前状态下不可点击设置", Toast.LENGTH_SHORT).show();
 			}
-			// flagThreadIsStart = !flagThreadIsStart;
 			break;
 		}
 	}
@@ -282,14 +297,16 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				.msg2ByteArrayExcepteCheck(msg)));
 		msg.check[0] = tmp1[tmp1.length - 1];
 		msg.check[1] = tmp1[tmp1.length - 2];
-		if(entity.getTag() == "level"){
-			if(alarmFrequency == 0 || seconfAlarm == 0){
-				Toast.makeText(getApplicationContext(), "输入不正确！", Toast.LENGTH_LONG).show();
+		if (entity.getTag() == "level") {
+			if (alarmFrequency == 0 || seconfAlarm == 0) {
+				Toast.makeText(getApplicationContext(), "输入不正确！",
+						Toast.LENGTH_LONG).show();
 				return;
 			}
-		}else{
-			if(alarmFrequency == 0 || seconfAlarm == 0 || angle == 0){
-				Toast.makeText(getApplicationContext(), "输入不正确！", Toast.LENGTH_LONG).show();
+		} else {
+			if (alarmFrequency == 0 || seconfAlarm == 0 || angle == 0) {
+				Toast.makeText(getApplicationContext(), "输入不正确！",
+						Toast.LENGTH_LONG).show();
 				return;
 			}
 		}
@@ -304,7 +321,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		totalMsg = CoverUtils.msg2ByteArray(msg, length);
 		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
-		Log.i(TAG, action + "sned broadcast " + action);
+		Log.i(TAG, action + "send broadcast " + action);
 	}
 
 	public static class SettingsReceiver extends BroadcastReceiver {
@@ -315,8 +332,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			if (recv[0] == 0x05) {
 				int length = 4;
 				if (recv[3] == 0x01) {
-					Toast.makeText(context, "命令设置成功", Toast.LENGTH_LONG)
-							.show();
+					Toast.makeText(context, "命令设置成功", Toast.LENGTH_LONG).show();
 					Message msg = null;
 					msg.data = null;
 					msg.function = (byte) 0x0B;
@@ -327,17 +343,19 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 					msg.check[0] = check[check.length - 2];
 					msg.check[1] = check[check.length - 1];
 					((ParamSettingActivity) context).sendMessage(msg, ACTION);
-
 				} else if (recv[3] == 0x02) {
 					Toast.makeText(context, "set failed", Toast.LENGTH_LONG)
 							.show();
 				}
 				// 需要在刷新列表的时候检测是否超限
+			} else if (recv[0] == 0x09) {
+				Toast.makeText(context, "终端参数设置命令发送成功", Toast.LENGTH_SHORT)
+						.show();
 			}
 		}
 
 	}
-	
+
 	public void setNotify(Entity entity) {
 		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
@@ -351,7 +369,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		// 添加声音
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
 			notification.defaults |= Notification.DEFAULT_ALL;
-		
+
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		// 设置通知的事件消息
@@ -368,5 +386,5 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		// 把Notification传递给 NotificationManager
 		mNotificationManager.notify(0, notification);
 	}
-	
+
 }

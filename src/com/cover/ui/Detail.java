@@ -74,13 +74,11 @@ public class Detail extends Activity implements OnClickListener {
 
 		ivReparing = (ImageView) findViewById(R.id.iv_reparing);
 		ivFinish = (ImageView) findViewById(R.id.iv_finish);
-		// ivLeave = (ImageView) findViewById(R.id.iv_leave);
 		ivParam = (ImageView) findViewById(R.id.iv_param);
 		ivEnterMap = (ImageView) findViewById(R.id.iv_entermap_detail);
 
 		ivReparing.setOnClickListener(this);
 		ivFinish.setOnClickListener(this);
-		// ivLeave.setOnClickListener(this);
 		ivParam.setOnClickListener(this);
 		ivEnterMap.setOnClickListener(this);
 		if (entity.getTag().equals("level")) {
@@ -133,9 +131,8 @@ public class Detail extends Activity implements OnClickListener {
 
 		@Override
 		public void run() {
-			flagThreadIsStart = true;
 			if (flagThreadIsStart) {
-				try {// 60 * 1000 * MINITE
+				try {
 					Thread.sleep(MINITE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -143,56 +140,11 @@ public class Detail extends Activity implements OnClickListener {
 				if (!flagIsSetSuccess) {
 					hander.sendEmptyMessage(11);
 					sendFailUnAlarm(entity);
+					if(douyadb.isExist("leave", entity.getTag()+"_"+entity.getId()))
+						douyadb.delete("leave", entity.getTag()+"_"+entity.getId());
 				}
-				// douyadb.delete("leave", entity.getTag()+"_"+entity.getId());
 			}
-			flagThreadIsStart = false;
 		}
-	}
-
-	public void setRepairBegin(Entity entity) {
-		byte[] b = CoverUtils.short2ByteArray(entity.getId());
-		byte[] t = new byte[3];
-		t[0] = b[0];
-		t[1] = b[1];
-		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
-		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0E,
-				CoverUtils.short2ByteArray((short) (7 + 3)), t);
-		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
-				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = check[check.length - 1];
-		msg.check[1] = check[check.length - 2];
-		sendMessage(msg, ACTION);
-	}
-
-	public void sendFailUnAlarm(Entity entity) {
-		// 终端报警解除失败 0x13 App->Server ID 、设备类型
-		byte[] b = CoverUtils.short2ByteArray(entity.getId());
-		byte[] tmp = new byte[2];
-		tmp[0] = b[0];
-		tmp[1] = b[1];
-
-		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
-				(byte) 0x0A, (byte) 0x13, tmp[0], tmp[1],
-				(entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10)};
-		Intent serviceIntent = new Intent();
-		serviceIntent.putExtra("msg", CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
-		sendBroadcast(serviceIntent);		
-	}
-
-	public void setUnAlarm(Entity entity) {
-		byte[] b = CoverUtils.short2ByteArray(entity.getId());
-		byte[] t = new byte[3];
-		t[0] = b[0];
-		t[1] = b[1];
-		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
-		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
-				CoverUtils.short2ByteArray((short) (7 + 3)), t);
-		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
-				.msg2ByteArrayExcepteCheck(msg)));
-		msg.check[0] = check[check.length - 1];
-		msg.check[1] = check[check.length - 2];
-		sendMessage(msg, ACTION);
 	}
 
 	public static class DetailReceiver extends BroadcastReceiver {
@@ -203,16 +155,11 @@ public class Detail extends Activity implements OnClickListener {
 			// final int length = 1;
 			switch (recv[0]) {
 			case 0x06:// 报警解除
-				Toast.makeText(context, "撤防命令发送成功", Toast.LENGTH_LONG).show();
+				Toast.makeText(context, "报警解除设置命令发送成功", Toast.LENGTH_LONG)
+						.show();
 				break;
 			case 0x07:// begin repair
-				Toast.makeText(context, "开始维修命令上传成功", Toast.LENGTH_LONG).show();
-				// ivReparing.setClickable(false);
-				break;
-			case 0x08:// end repair
-				Toast.makeText(context, "设置结束维修上传成功 ", Toast.LENGTH_LONG)
-						.show();
-				ivFinish.setClickable(false);
+				Toast.makeText(context, "开始维修命令发送成功", Toast.LENGTH_LONG).show();
 				break;
 			}
 		}
@@ -251,19 +198,14 @@ public class Detail extends Activity implements OnClickListener {
 				Toast.makeText(getApplicationContext(), "当前状态下不可点击完成",
 						Toast.LENGTH_LONG).show();
 			else {
-				if (!flagThreadIsStart) {
-					String nameID = entity.getTag() + "_" + entity.getId();
-					if (!douyadb.isExist("leave", nameID)) {
-						setUnAlarm(entity);
-						new Thread(new Timer()).start();
-						douyadb.add("leave", nameID);
-					} else {
-						Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
-								Toast.LENGTH_SHORT).show();
-					}
+				String nameID = entity.getTag() + "_" + entity.getId();
+				if (!douyadb.isExist("leave", nameID)) {
+					setUnAlarm(entity);
+					new Thread(new Timer()).start();
+					douyadb.add("leave", nameID);
 				} else {
-					// Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
-					// Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+							Toast.LENGTH_SHORT).show();
 				}
 
 			}
@@ -283,7 +225,53 @@ public class Detail extends Activity implements OnClickListener {
 			break;
 		}
 	}
-	
+
+	public void setRepairBegin(Entity entity) {
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0E,
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
+				.msg2ByteArrayExcepteCheck(msg)));
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
+		sendMessage(msg, ACTION);
+	}
+
+	public void sendFailUnAlarm(Entity entity) {
+		// 终端报警解除失败 0x13 App->Server ID 、设备类型
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] tmp = new byte[2];
+		tmp[0] = b[0];
+		tmp[1] = b[1];
+
+		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
+				(byte) 0x0A, (byte) 0x13, tmp[0], tmp[1],
+				(entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10) };
+		Intent serviceIntent = new Intent();
+		serviceIntent.putExtra("msg",
+				CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
+		sendBroadcast(serviceIntent);
+	}
+
+	public void setUnAlarm(Entity entity) {
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
+				.msg2ByteArrayExcepteCheck(msg)));
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
+		sendMessage(msg, ACTION);
+	}
+
 	public void setNotify(Entity entity) {
 		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
@@ -297,7 +285,7 @@ public class Detail extends Activity implements OnClickListener {
 		// 添加声音
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
 			notification.defaults |= Notification.DEFAULT_ALL;
-		
+
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		// 设置通知的事件消息

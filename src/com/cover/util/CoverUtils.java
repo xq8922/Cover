@@ -6,9 +6,15 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+import com.cover.bean.Entity;
 import com.cover.bean.Message;
+import com.cover.ui.Detail;
+import com.wxq.covers.R;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -18,21 +24,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 public class CoverUtils {
-	/**
-	 * sendExit
-	 */
-	// public static void sendExit(){
-	// Message msg = new Message();
-	// msg.data = "13468833168".getBytes();
-	// msg.function = (byte)0x12;
-	// msg.length = CoverUtils.short2ByteArray((short)(7+msg.data.length));
-	// byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
-	// byte[] str_ = CRC16M.getSendBuf(CoverUtils
-	// .bytes2HexString(checkMsg));
-	// msg.check[0] = str_[str_.length - 1];
-	// msg.check[1] = str_[str_.length - 2];
-	// sendMessage(msg,ACTION);
-	// }
+
 	/**
 	 * 
 	 * @param context
@@ -262,63 +254,6 @@ public class CoverUtils {
 	}
 
 	/**
-	 * gen CRCCHECK
-	 * 
-	 * @return byte[]
-	 */
-	public static byte[] genCRC(byte[] ucCRC_Buf, int ucBufLength) {
-		short uiX, uiY, uiCRC;
-		byte ucStart = 0;
-		uiCRC = (short) 0xFFFF; // set all 1
-		if (ucBufLength <= 0 || ucStart > ucBufLength)
-			uiCRC = 0;
-		else {
-			ucBufLength += ucStart;
-			for (uiX = (short) ucStart; uiX < ucBufLength; uiX++) {
-				uiCRC = (short) (uiCRC ^ ucCRC_Buf[uiX]);
-				for (uiY = 0; uiY <= 7; uiY++) {
-					if ((uiCRC & 1) != 0)
-						uiCRC = (short) ((uiCRC >> 1) ^ 0xA001);
-					else
-						uiCRC = (short) (uiCRC >> 1);
-				}
-			}
-		}
-		System.out.println(Integer.toHexString(uiCRC));
-		return short2ByteArray(uiCRC);
-
-	}
-
-	private short CreateCRC(byte[] Array, int Len) {
-		short IX, IY, CRC;
-		CRC = (short) 0xFFFF;// set all 1
-		if (Len <= 0)
-			CRC = 0;
-		else {
-			Len--;
-			for (IX = 0; IX <= Len; IX++) {
-				CRC = (short) (CRC ^ Array[IX]);
-				for (IY = 0; IY <= 7; IY++)
-					if ((CRC & 1) != 0)
-						CRC = (short) ((CRC >> 1) ^ 0xA001);
-					else
-						CRC = (short) (CRC >> 1);
-			}
-		}
-		return CRC;
-	}
-
-	/**
-	 * sendMessage throw broadcast
-	 */
-	// public static void sendMessage(String msg,String action){
-	// Intent serviceIntent = new Intent();
-	// serviceIntent.setAction(action);
-	// serviceIntent.putExtra("msg", msg);
-	// sendBroadcast(serviceIntent);
-	// Log.i(TAG, action + "sned broadcast "+ action);
-	// }
-	/**
 	 * ͨ��byte����ȡ��short
 	 * 
 	 * @param b
@@ -367,15 +302,6 @@ public class CoverUtils {
 	 */
 	public static byte[] short2ByteArray(short s) {
 		byte[] shortBuf = new byte[2];
-		// for (int i = 0; i < 2; i++) {
-		// int offset = (shortBuf.length - 1 - i) * 8;
-		// shortBuf[i] = (byte) ((s >>> offset) & 0xff);
-		// }
-		// ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		// DataOutputStream dos = new DataOutputStream(baos);
-
-		// ((String) baos).getBytes();
-
 		shortBuf[0] = (byte) ((s & 0xFF00) >> 8);
 		shortBuf[1] = (byte) (s & 0xFF);
 		System.out.println(shortBuf);
@@ -435,6 +361,50 @@ public class CoverUtils {
 			totalMsg[j++] = msg.check[i];
 		}
 		return totalMsg;
+	}
+	
+	/**
+	 * set notify
+	 */
+	public void setNotify(Entity entity) {
+//		// 创建一个NotificationManager的引用
+//		String ns = Context.NOTIFICATION_SERVICE;
+//		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+//		// 定义Notification的各种属性
+//		int icon = R.drawable.icon; // 通知图标
+//		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+//		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
+//		// 用上面的属性初始化 Nofification
+//		Notification notification = new Notification(icon, tickerText, when);
+//		// 添加声音
+//		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
+//			notification.defaults |= Notification.DEFAULT_ALL;
+//		notification.defaults |= Notification.DEFAULT_LIGHTS;
+//		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+//
+//		/*
+//		 * 更多的特征属性 notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
+//		 * 
+//		 * notification.flags |= FLAG_ONGOING_EVENT;
+//		 * //将此通知放到通知栏的"Ongoing"即"正在运行"组中 notification.flags |= FLAG_NO_CLEAR;
+//		 * //表明在点击了通知栏中的"清除通知"后，此通知不清除， //经常与FLAG_ONGOING_EVENT一起使用
+//		 * notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
+//		 * //如果要使用此字段，必须从1开始 notification.iconLevel = ; //
+//		 */
+//		// 设置通知的事件消息
+//		Context context = getApplicationContext(); // 上下文
+//		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+//		CharSequence contentText = entity.getLatitude() + ","
+//				+ entity.getLongtitude(); // 通知栏内容
+//
+//		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+//		notificationIntent.putExtra("entity", entity);
+//		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+//				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//		notification.setLatestEventInfo(context, contentTitle, contentText,
+//				contentIntent);
+//		// 把Notification传递给 NotificationManager
+//		mNotificationManager.notify(0, notification);
 	}
 
 }

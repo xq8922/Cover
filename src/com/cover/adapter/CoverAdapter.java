@@ -63,14 +63,14 @@ public class CoverAdapter extends BaseAdapter {
 		}
 		ivName.setText(entity.getTag() + "-" + entity.getId());
 		if (Status.SETTING_FINISH == entity.getStatus()) {
-			String string = entity.getTag() + "-" + entity.getId() + "_撤防中";
+			String string = entity.getTag() + "-" + entity.getId();
 			SpannableString builder = new SpannableString(string);
 			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
 					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 			ivName.setText(builder);
 			ivName.setText(string);
 		} else if (Status.SETTING_PARAM == entity.getStatus()) {
-			String string = entity.getTag() + "-" + entity.getId() + "_参数设置中";
+			String string = entity.getTag() + "-" + entity.getId();
 			SpannableString builder = new SpannableString(string);
 			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
 					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -78,12 +78,30 @@ public class CoverAdapter extends BaseAdapter {
 			ivName.setText(string);
 		}
 
-		if (Status.NORMAL == entity.getStatus()) {
+		switch (entity.getStatus()) {
+		case NORMAL:
 			ivState.setImageResource(R.drawable.state_normal);
-		} else if (Status.REPAIR == entity.getStatus()) {
+			break;
+		case REPAIR:
 			ivState.setImageResource(R.drawable.state_reparing);
-		} else if (Status.EXCEPTION_1 == entity.getStatus()) {
+			break;
+		case EXCEPTION_1:
 			ivState.setImageResource(R.drawable.state_alarm);
+			break;
+		case EXCEPTION_2:
+			ivState.setImageResource(R.drawable.state_less_pressure);
+			break;
+		case EXCEPTION_3:
+			ivState.setImageResource(R.drawable.state_alarm_less_pressure);
+			break;
+		case SETTING_FINISH:
+			ivState.setImageResource(R.drawable.state_leaving);
+			break;
+		case SETTING_PARAM:
+			ivState.setImageResource(R.drawable.state_setting);
+			break;
+		default:
+			break;
 		}
 
 		return view;

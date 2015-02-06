@@ -151,10 +151,10 @@ public class MainActivity extends Activity {
 				password = et_password.getText().toString();
 				userName = "13468833168";
 				password = "1234";
-				if(userName == null ){
+				if (userName == null) {
 					Toast.makeText(getApplicationContext(), "请输入用户名", 1).show();
 				}
-				if(password == null ){
+				if (password == null) {
 					Toast.makeText(getApplicationContext(), "请输入密码", 1).show();
 				}
 				String msg = userName + password;
@@ -169,7 +169,6 @@ public class MainActivity extends Activity {
 				msgAsk.check[1] = str_[str_.length - 2];
 				// setNotify();
 				sendMessage(msgAsk, ACTION);
-				System.out.println("test");
 			}
 		});
 		AppManager.getAppManager().addActivity(this);
@@ -239,14 +238,11 @@ public class MainActivity extends Activity {
 					i.setClass(context, CoverList.class);
 					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 					if (cbIsRemeber.isChecked()) {
-						editor.putString("username", userName);
 						editor.putString("password", password);
 						editor.putBoolean("isremem", true);
-						editor.commit();
-					} else {
-						editor.putString("username", userName);
-						editor.commit();
 					}
+					editor.putString("username", userName);
+					editor.commit();
 					context.startActivity(i);
 					finish();
 					break;
@@ -256,6 +252,8 @@ public class MainActivity extends Activity {
 					break;
 				case 0x03:
 					Toast.makeText(context, "用户已登录", Toast.LENGTH_LONG).show();
+					editor.putString("username", userName);
+					editor.commit();
 					// (InternetService)
 					Intent i1 = new Intent();
 					i1.setClass(context, CoverList.class);
