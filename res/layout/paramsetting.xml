@@ -99,7 +99,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="9度"
+                android:text="10度"
                 android:textColor="#ccc"
                 android:textSize="15sp" />
         </RelativeLayout>
@@ -147,7 +147,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="11分钟"
+                android:text="100分钟"
                 android:textColor="#ccc"
                 android:textSize="15sp" />
         </RelativeLayout>

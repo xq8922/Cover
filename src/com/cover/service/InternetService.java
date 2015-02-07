@@ -26,6 +26,7 @@ import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
+import android.R.integer;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -51,6 +52,7 @@ public class InternetService extends Service implements Runnable {
 	private static final String ACTION_CoverList = "com.cover.coverlist";
 	private static final String ACTION_Detail = "com.cover.detail";
 	private static final String ACTION_Settings = "com.cover.settings";
+	// private static final String ACTION_Paramsetting = "com.cover.settings";
 	private SharedPreferences sp;
 	public String ip;
 	public int port;
@@ -68,6 +70,7 @@ public class InternetService extends Service implements Runnable {
 	Message message = new Message();
 	Douyatech douyadb;
 	int count = 0;
+	int flag_notify = 0;
 
 	private Handler handler = new Handler() {
 
@@ -79,24 +82,24 @@ public class InternetService extends Service implements Runnable {
 						Toast.LENGTH_LONG).show();
 				break;
 			case 0x02:
-				Toast.makeText(getApplicationContext(), "socket closed",
+				Toast.makeText(getApplicationContext(), "连接中断",
 						Toast.LENGTH_LONG).show();
 				break;
 			case 0x03:
-				Toast.makeText(getApplicationContext(),
-						"Thread is not connected", Toast.LENGTH_LONG).show();
+//				Toast.makeText(getApplicationContext(),
+//						"Thread is not connected", Toast.LENGTH_LONG).show();
 				break;
 			case 0x04:
-				Toast.makeText(getApplicationContext(),
-						"network is not connected", Toast.LENGTH_LONG).show();
+//				Toast.makeText(getApplicationContext(),
+//						"network is not connected", Toast.LENGTH_LONG).show();
 				break;
 			case 0x05:
-				Toast.makeText(getApplicationContext(),
-						"socket is not connected", Toast.LENGTH_LONG).show();
+//				Toast.makeText(getApplicationContext(),
+//						"连接中断", Toast.LENGTH_LONG).show();
 				break;
 			case 0x06:
-				Toast.makeText(getApplicationContext(), "output is shutdown",
-						Toast.LENGTH_LONG).show();
+//				Toast.makeText(getApplicationContext(), "连接中断",
+//						Toast.LENGTH_LONG).show();
 				break;
 			case 0x07:
 				Toast.makeText(getApplicationContext(), "服务器连接超时",
@@ -128,7 +131,7 @@ public class InternetService extends Service implements Runnable {
 		public void onReceive(Context context, Intent intent) {
 			msg = intent.getByteArrayExtra("msg");
 			Log.i(TAG, msg.toString());
-			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_SHORT).show();
 			flag_send = true;
 		}
 
@@ -368,13 +371,14 @@ public class InternetService extends Service implements Runnable {
 				check_temp[0] = str_[str_.length - 1];
 				check_temp[1] = str_[str_.length - 2];
 				if ((check_temp[0] == msg.check[0])
-						&& (check_temp[1] == msg.check[1]) || true) {
+						&& (check_temp[1] == msg.check[1])) {
 					Log.i(TAG, "check right");
 					// if
 					// (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg)))
 					// {
 					switch (msgBuff[0]) {
 					case 0x01: {// 需要处理报警信息ack
+						flag_notify++;
 						byte[] idByte = new byte[2];
 						Entity entity = new Entity();
 						int i = 0;
@@ -420,16 +424,16 @@ public class InternetService extends Service implements Runnable {
 						if (douyadb.isExist("leave", entity.getTag() + "_"
 								+ entity.getId())
 								&& (entity.getStatus() == Status.NORMAL)) {
-							Detail.flagIsSetSuccess = !Detail.flagIsSetSuccess;
-							if (douyadb.isExist("leave", entity.getTag()
-									+ "_" + entity.getId()))
+							Detail.flagIsSetSuccess = true;
+							if (douyadb.isExist("leave", entity.getTag() + "_"
+									+ entity.getId()))
 								douyadb.delete("leave", entity.getTag() + "_"
 										+ entity.getId());
 						}
 						if (douyadb.isExist("setting", entity.getTag() + "_"
 								+ entity.getId())
 								&& (entity.getStatus() == Status.NORMAL)) {
-							ParamSettingActivity.flagIsSetSuccess = !ParamSettingActivity.flagIsSetSuccess;
+							ParamSettingActivity.flagIsSetSuccess = true;
 							if (douyadb.isExist("setting", entity.getTag()
 									+ "_" + entity.getId()))
 								douyadb.delete("setting", entity.getTag() + "_"
@@ -478,7 +482,27 @@ public class InternetService extends Service implements Runnable {
 					}
 					case 0x05: {
 						// 终端参数设置回复，应该显示到通知栏
+						// getMessage(msgBuff, ACTION_Paramsetting);
+						ParamSettingActivity.flagIsSetSuccess = true;
+						Entity entity = new Entity();
+						byte[] b = new byte[2];
+						b[0] = msgBuff[1];
+						b[1] = msgBuff[2];
+						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
+								: "井盖 ID：");
+						entity.setId(CoverUtils.getShort(b));
+						entity.setTag(title);
+						setNotify(entity.getTag() + "_" + entity.getId());
 						
+						if (douyadb.isExist("setting", entity.getTag() + "_"
+								+ entity.getId())
+								&& (entity.getStatus() == Status.NORMAL)) {
+							ParamSettingActivity.flagIsSetSuccess = true;
+							if (douyadb.isExist("setting", entity.getTag()
+									+ "_" + entity.getId()))
+								douyadb.delete("setting", entity.getTag() + "_"
+										+ entity.getId());
+						}
 						break;
 					}
 					case 0x06:
@@ -506,6 +530,32 @@ public class InternetService extends Service implements Runnable {
 	}
 
 	public void setNotify(Entity entity) {
+		String ns = Context.NOTIFICATION_SERVICE;
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
+		// 定义Notification的各种属性
+		int icon = R.drawable.icon; // 通知图标
+		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
+		Notification notification = new Notification(icon, tickerText, when);
+		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
+			notification.defaults |= Notification.DEFAULT_ALL;
+		notification.defaults |= Notification.DEFAULT_LIGHTS;
+		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		Context context = getApplicationContext(); // 上下文
+		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentText = entity.getLatitude() + ","
+				+ entity.getLongtitude(); // 通知栏内容
+		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+		notificationIntent.putExtra("entity", entity);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		notification.setLatestEventInfo(context, contentTitle, contentText,
+				contentIntent);
+		// 把Notification传递给 NotificationManager
+		mNotificationManager.notify(flag_notify, notification);
+	}
+
+	public void setNotify(String tagID) {
 		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
@@ -520,28 +570,13 @@ public class InternetService extends Service implements Runnable {
 			notification.defaults |= Notification.DEFAULT_ALL;
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
-
-		/*
-		 * 更多的特征属性 notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
-		 * 
-		 * notification.flags |= FLAG_ONGOING_EVENT;
-		 * //将此通知放到通知栏的"Ongoing"即"正在运行"组中 notification.flags |= FLAG_NO_CLEAR;
-		 * //表明在点击了通知栏中的"清除通知"后，此通知不清除， //经常与FLAG_ONGOING_EVENT一起使用
-		 * notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
-		 * //如果要使用此字段，必须从1开始 notification.iconLevel = ; //
-		 */
 		// 设置通知的事件消息
 		Context context = getApplicationContext(); // 上下文
-		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
-		CharSequence contentText = entity.getLatitude() + ","
-				+ entity.getLongtitude(); // 通知栏内容
+		CharSequence contentTitle = tagID; // 通知栏标题
+		CharSequence contentText = "参数设置成功"; // 通知栏内容
 
-		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
-		notificationIntent.putExtra("entity", entity);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		notification.setLatestEventInfo(context, contentTitle, contentText,
-				contentIntent);
+				null);
 		// 把Notification传递给 NotificationManager
 		mNotificationManager.notify(0, notification);
 	}
@@ -576,7 +611,6 @@ public class InternetService extends Service implements Runnable {
 		try {
 			socket.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		super.onDestroy();

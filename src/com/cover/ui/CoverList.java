@@ -317,8 +317,10 @@ public class CoverList extends Activity implements OnClickListener {
 						break;
 					case 0x06:
 						entity.setStatus(Status.SETTING_FINISH);
+						break;
 					case 0x07:
 						entity.setStatus(Status.SETTING_PARAM);
+						break;
 					}
 					if (entity.getTag().equals("cover")) {
 						coverItems.add(entity);

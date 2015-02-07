@@ -52,6 +52,7 @@ public class Detail extends Activity implements OnClickListener {
 	private boolean flagThreadIsStart = false;
 	public static boolean flagIsSetSuccess = false;
 	Douyatech douyadb = null;
+	int flag_notify = 0;
 	private Handler hander = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			setNotify(entity);
@@ -300,7 +301,7 @@ public class Detail extends Activity implements OnClickListener {
 		notification.setLatestEventInfo(context, contentTitle, contentText,
 				contentIntent);
 		// 把Notification传递给 NotificationManager
-		mNotificationManager.notify(0, notification);
+		mNotificationManager.notify(flag_notify++, notification);
 	}
 
 }

@@ -54,7 +54,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private TextView tvAlarmFreq;
 	private ImageView update;
 	private short angle = 10;
-	private short time = 100;
+	private short time = 20;
 	private short alarmFrequency = 10;
 	private short seconfAlarm = 100;
 	final static int MINITE = 5 * 1000 * 60;

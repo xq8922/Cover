@@ -61,7 +61,7 @@ public class Douyatech {
 	public void delete(String tableName, String nameID) {
 		SQLiteDatabase db = helper.getWritableDatabase();
 		// db.execSQL("delete from person where name=?", new Object[]{name});
-		db.delete(tableName, "nameID=?", new String[] { nameID });
+		db.delete(tableName, "name_id=?", new String[] { nameID });
 	}
 
 	public void deleteAll(String tableName) {
