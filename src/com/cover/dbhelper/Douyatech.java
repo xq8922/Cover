@@ -24,10 +24,11 @@ public class Douyatech {
 	 * @return
 	 */
 	public boolean exist(String name) {
-		SQLiteDatabase db = helper.getReadableDatabase();
-		Cursor cursor = db.query("deviceinfo", null, "devicename=?",
-				new String[] { name }, null, null, null);
-		return cursor.moveToNext();
+		// SQLiteDatabase db = helper.getReadableDatabase();
+		// Cursor cursor = db.query("deviceinfo", null, "devicename=?",
+		// new String[] { name }, null, null, null);
+		// return cursor.moveToNext();
+		return false;
 	}
 
 	/**
@@ -60,8 +61,9 @@ public class Douyatech {
 
 	public void delete(String tableName, String nameID) {
 		SQLiteDatabase db = helper.getWritableDatabase();
-		// db.execSQL("delete from person where name=?", new Object[]{name});
-		db.delete(tableName, "name_id=?", new String[] { nameID });
+		db.execSQL("delete from " + tableName + " where name_id=?",
+				new Object[] { nameID });
+		// db.delete(tableName, "name_id=?", new String[] { nameID });
 	}
 
 	public void deleteAll(String tableName) {

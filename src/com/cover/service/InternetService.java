@@ -86,28 +86,28 @@ public class InternetService extends Service implements Runnable {
 						Toast.LENGTH_LONG).show();
 				break;
 			case 0x03:
-//				Toast.makeText(getApplicationContext(),
-//						"Thread is not connected", Toast.LENGTH_LONG).show();
+				// Toast.makeText(getApplicationContext(),
+				// "Thread is not connected", Toast.LENGTH_LONG).show();
 				break;
 			case 0x04:
-//				Toast.makeText(getApplicationContext(),
-//						"network is not connected", Toast.LENGTH_LONG).show();
+				// Toast.makeText(getApplicationContext(),
+				// "network is not connected", Toast.LENGTH_LONG).show();
 				break;
 			case 0x05:
-//				Toast.makeText(getApplicationContext(),
-//						"连接中断", Toast.LENGTH_LONG).show();
+				// Toast.makeText(getApplicationContext(),
+				// "连接中断", Toast.LENGTH_LONG).show();
 				break;
 			case 0x06:
-//				Toast.makeText(getApplicationContext(), "连接中断",
-//						Toast.LENGTH_LONG).show();
+				// Toast.makeText(getApplicationContext(), "连接中断",
+				// Toast.LENGTH_LONG).show();
 				break;
 			case 0x07:
 				Toast.makeText(getApplicationContext(), "服务器连接超时",
 						Toast.LENGTH_SHORT).show();
 				break;
 			case 0x08:
-				Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
-						Toast.LENGTH_LONG).show();
+				// Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
+				// Toast.LENGTH_LONG).show();
 				break;
 			case 0x10:
 				Toast.makeText(getApplicationContext(), "未知功能码",
@@ -120,6 +120,7 @@ public class InternetService extends Service implements Runnable {
 			case 0x12:
 				Toast.makeText(getApplicationContext(), "参数设置失败命令发送成功",
 						Toast.LENGTH_LONG).show();
+				break;
 			}
 		}
 
@@ -131,7 +132,7 @@ public class InternetService extends Service implements Runnable {
 		public void onReceive(Context context, Intent intent) {
 			msg = intent.getByteArrayExtra("msg");
 			Log.i(TAG, msg.toString());
-//			Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_SHORT).show();
+			// Toast.makeText(context, "正在向服务器发送请求", Toast.LENGTH_SHORT).show();
 			flag_send = true;
 		}
 
@@ -297,7 +298,7 @@ public class InternetService extends Service implements Runnable {
 				count++;
 				connectService();
 				handler.sendEmptyMessage(0x08);
-				if (count == 2) {
+				if (count == 10) {
 					handler.sendEmptyMessage(0x01);
 					Intent i = new Intent();
 					i.setClass(this, MainActivity.class);
@@ -493,7 +494,7 @@ public class InternetService extends Service implements Runnable {
 						entity.setId(CoverUtils.getShort(b));
 						entity.setTag(title);
 						setNotify(entity.getTag() + "_" + entity.getId());
-						
+
 						if (douyadb.isExist("setting", entity.getTag() + "_"
 								+ entity.getId())
 								&& (entity.getStatus() == Status.NORMAL)) {

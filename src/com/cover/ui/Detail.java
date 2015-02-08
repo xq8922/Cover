@@ -87,7 +87,7 @@ public class Detail extends Activity implements OnClickListener {
 		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
-		tvName.setText(entity.getName());
+		tvName.setText(entity.getTag());
 		tvId.setText(entity.getId() + "");
 		if (Status.NORMAL == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_normal);
@@ -132,15 +132,15 @@ public class Detail extends Activity implements OnClickListener {
 
 		@Override
 		public void run() {
-			if (flagThreadIsStart) {
+			if (!flagThreadIsStart) {
 				try {
 					Thread.sleep(MINITE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
-					hander.sendEmptyMessage(11);
 					sendFailUnAlarm(entity);
+					hander.sendEmptyMessage(11);
 					if(douyadb.isExist("leave", entity.getTag()+"_"+entity.getId()))
 						douyadb.delete("leave", entity.getTag()+"_"+entity.getId());
 				}
@@ -175,7 +175,7 @@ public class Detail extends Activity implements OnClickListener {
 		totalMsg = CoverUtils.msg2ByteArray(msg, length);
 		serviceIntent.putExtra("msg", totalMsg);
 		sendBroadcast(serviceIntent);
-		Log.i(TAG, action + "sned broadcast " + action);
+		Log.i(TAG, action + "send broadcast " + action);
 	}
 
 	@Override
@@ -232,7 +232,7 @@ public class Detail extends Activity implements OnClickListener {
 		byte[] t = new byte[3];
 		t[0] = b[0];
 		t[1] = b[1];
-		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
+		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x0E,
 				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
@@ -251,7 +251,7 @@ public class Detail extends Activity implements OnClickListener {
 
 		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
 				(byte) 0x0A, (byte) 0x13, tmp[0], tmp[1],
-				(entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10) };
+				(entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10) };
 		Intent serviceIntent = new Intent();
 		serviceIntent.putExtra("msg",
 				CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
@@ -263,7 +263,7 @@ public class Detail extends Activity implements OnClickListener {
 		byte[] t = new byte[3];
 		t[0] = b[0];
 		t[1] = b[1];
-		t[2] = entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10;
+		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
 		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
 				CoverUtils.short2ByteArray((short) (7 + 3)), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
@@ -295,7 +295,6 @@ public class Detail extends Activity implements OnClickListener {
 		CharSequence contentText = "撤防失败"; // 通知栏内容
 		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
 		notificationIntent.putExtra("entity", entity);
-		// startActivity(notificationIntent);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		notification.setLatestEventInfo(context, contentTitle, contentText,

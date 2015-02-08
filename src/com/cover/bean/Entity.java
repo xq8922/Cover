@@ -11,17 +11,15 @@ public class Entity implements Serializable {
 
 	private static final long serialVersionUID = -6348868576723913291L;
 	short id = 0;
-	String name = null;
 	Status status = null;
 	String tag = null;
 	double longtitude = 0;
 	double latitude = 0;
 
-	public Entity(short id, String name, Status status, String tag,
+	public Entity(short id,Status status, String tag,
 			double latitude, double longtitude) {
 		super();
 		this.id = id;
-		this.name = name;
 		this.status = status;
 		this.tag = tag;
 		this.longtitude = longtitude;
@@ -44,10 +42,6 @@ public class Entity implements Serializable {
 		this.status = status;
 	}
 
-	public String getName() {
-		return name;
-	}
-
 	public String getTag() {
 		return tag;
 	}
@@ -63,11 +57,7 @@ public class Entity implements Serializable {
 	public void setId(short id) {
 		this.id = id;
 	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
+	
 	public void setTag(String tag) {
 		this.tag = tag;
 	}

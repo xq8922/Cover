@@ -57,7 +57,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private short time = 20;
 	private short alarmFrequency = 10;
 	private short seconfAlarm = 100;
-	final static int MINITE = 5 * 1000 * 60;
+	final static int MINITE =  1000*60*5;
 	public static boolean flagIsSetSuccess = false;
 	private boolean flagThreadIsStart = false;
 	Douyatech douyadb = null;
@@ -132,15 +132,15 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 
 		@Override
 		public void run() {
-			if (flagThreadIsStart) {
+			if (!flagThreadIsStart) {
 				try {
 					Thread.sleep(MINITE);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				if (!flagIsSetSuccess) {
-					hander.sendEmptyMessage(11);
 					sendFailSetting(entity);
+					hander.sendEmptyMessage(11);
 					if (douyadb.isExist("leave",
 							entity.getTag() + "_" + entity.getId())) {
 						douyadb.delete("leave",
@@ -160,7 +160,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 
 		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
 				(byte) 0x0A, (byte) 0x14, tmp[0], tmp[1],
-				(entity.getTag() == "level" ? (byte) 0x2C : (byte) 0x10) };
+				(entity.getTag().equals("cover") ? (byte) 0x10 : (byte) 0x2C) };
 		Intent serviceIntent = new Intent();
 		serviceIntent.putExtra("msg",
 				CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
@@ -272,22 +272,23 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		byte[] data = new byte[11];
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		data[j++] = entity.getTag() == "cover" ? (byte) 0x10 : (byte) 0x2C;
+		
+		data[j++] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
 		short jiaodu = angle;
-		tmp = (entity.getTag() == "cover" ? CoverUtils.short2ByteArray(jiaodu)
-				: new byte[] { 0, 0 });
+		tmp = (entity.getTag().equals("cover")) ? CoverUtils.short2ByteArray(jiaodu)
+				: new byte[] { 0, 0 };
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 		tmp = CoverUtils.short2ByteArray(time);
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 		short alarmFrequency = 10;
-		tmp = (entity.getTag() == "cover" ? CoverUtils
-				.short2ByteArray(alarmFrequency) : new byte[] { 0, 0 });
+		tmp = (entity.getTag().equals("cover")) ? CoverUtils
+				.short2ByteArray(alarmFrequency) : new byte[] { 0, 0 };
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		tmp = (entity.getTag() == "cover" ? new byte[] { 0, 0 } : CoverUtils
-				.short2ByteArray(seconfAlarm));
+		tmp = (entity.getTag().equals("cover")) ? new byte[] { 0, 0 } : CoverUtils
+				.short2ByteArray(seconfAlarm);
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 
@@ -297,7 +298,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				.msg2ByteArrayExcepteCheck(msg)));
 		msg.check[0] = tmp1[tmp1.length - 1];
 		msg.check[1] = tmp1[tmp1.length - 2];
-		if (entity.getTag() == "level") {
+		if (!entity.getTag().equals("level")) {
 			if (alarmFrequency == 0 || seconfAlarm == 0) {
 				Toast.makeText(getApplicationContext(), "输入不正确！",
 						Toast.LENGTH_LONG).show();

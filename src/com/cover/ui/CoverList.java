@@ -81,6 +81,8 @@ public class CoverList extends Activity implements OnClickListener {
 		super.onResume();
 	}
 
+	// 每个两分钟刷新一次
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -375,19 +377,18 @@ public class CoverList extends Activity implements OnClickListener {
 		coverItems.clear();
 		for (int i = 0; i < (100 - 1) / 5; i++) {
 			if (i <= 5) {
-				Entity entity = new Entity((short) 1, "65535", Status.REPAIR,
-						"水位", 34.26667, 108.95000);
+				Entity entity = new Entity((short) 1, Status.REPAIR, "水位",
+						34.26667, 108.95000);
 				waterItems.add(entity);
 				items.add(entity);
 			} else if (i <= 10) {
-				Entity entity = new Entity((short) 2, "65535", Status.NORMAL,
-						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
+				Entity entity = new Entity((short) 2, Status.NORMAL, "井盖",
+						34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);
 				items.add(entity);
 			} else {
-				Entity entity = new Entity((short) 2, "65535",
-						Status.EXCEPTION_1, "井盖",
+				Entity entity = new Entity((short) 2, Status.EXCEPTION_1, "井盖",
 						34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);

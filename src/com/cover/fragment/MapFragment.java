@@ -199,12 +199,12 @@ public class MapFragment extends Fragment {
 	private void getDatas() {
 		for (int i = 0; i < (16 - 1) / 5; i++) {
 			if (i <= 1) {
-				Entity entity = new Entity((short) 1, "65535", Status.REPAIR,
+				Entity entity = new Entity((short) 1, Status.REPAIR,
 						"水位", 34.26667, 108.95000);
 				waterItems.add(entity);
 				items.add(entity);
 			} else {
-				Entity entity = new Entity((short) 2, "65535", Status.NORMAL,
+				Entity entity = new Entity((short) 2, Status.NORMAL,
 						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);
