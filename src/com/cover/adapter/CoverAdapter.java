@@ -61,7 +61,7 @@ public class CoverAdapter extends BaseAdapter {
 		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
-		ivName.setText(entity.getTag() + "-" + entity.getId());
+		ivName.setText((entity.getTag().equals("level")?"水位":"井盖") + "-" + entity.getId());
 //		if (Status.SETTING_FINISH == entity.getStatus()) {
 //			String string = entity.getTag() + "-" + entity.getId();
 //			SpannableString builder = new SpannableString(string);

@@ -100,7 +100,7 @@ public class SingleMapDetail extends Activity {
 				break;
 			}
 		}
-		location.setText(entity.getTag() + "，" + entity.getId() + status);
+		location.setText((entity.getTag().equals("level")?"水位":"井盖") + "，" + entity.getId() + status);
 		location.setTextColor(Color.BLACK);
 		InfoWindow info = new InfoWindow(location, new LatLng(
 				entity.getLatitude(), entity.getLongtitude()), -40);

@@ -100,7 +100,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			status = "_撤防中";
 		else if (entity.getStatus() == Status.SETTING_PARAM)
 			status = "_参数设置中";
-		tvName.setText(entity.getTag() + status);
+		tvName.setText((entity.getTag().equals("level")?"水位":"井盖") + status);
 
 		back.setOnClickListener(this);
 
@@ -376,7 +376,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		// 设置通知的事件消息
 		Context context = getApplicationContext(); // 上下文
-		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentTitle = (entity.getTag().equals("level")?"水位":"井盖") + entity.getId(); // 通知栏标题
 		CharSequence contentText = "参数设置失败"; // 通知栏内容
 		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
 		notificationIntent.putExtra("entity", entity);

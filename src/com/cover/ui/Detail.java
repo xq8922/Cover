@@ -87,7 +87,8 @@ public class Detail extends Activity implements OnClickListener {
 		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
-		tvName.setText(entity.getTag());
+		tvName.setText(entity.getTag().equals("level")?"水位":"井盖");
+		
 		tvId.setText(entity.getId() + "");
 		if (Status.NORMAL == entity.getStatus()) {
 			ivState.setImageResource(R.drawable.state_normal);

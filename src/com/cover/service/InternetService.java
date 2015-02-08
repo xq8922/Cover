@@ -423,7 +423,7 @@ public class InternetService extends Service implements Runnable {
 							break;
 						}
 						// 处理若有从撤防中状态改变成正常状态
-						if (douyadb.isExist("leave", entity.getTag() + "_"
+						if (douyadb.isExist("leave", entity.getTag().equals("level")?"水位":"井盖" + "_"
 								+ entity.getId())
 								&& (entity.getStatus() == Status.NORMAL)) {
 							Detail.flagIsSetSuccess = true;
@@ -549,7 +549,7 @@ public class InternetService extends Service implements Runnable {
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		Context context = getApplicationContext(); // 上下文
-		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
+		CharSequence contentTitle = (entity.getTag().equals("level")?"水位":"井盖") + entity.getId(); // 通知栏标题
 		CharSequence contentText = entity.getLatitude() + ","
 				+ entity.getLongtitude(); // 通知栏内容
 		Intent notificationIntent = new Intent(this, SingleMapDetail.class); // 点击该通知后要跳转的Activity
