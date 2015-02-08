@@ -22,6 +22,7 @@ import com.cover.main.MainActivity;
 import com.cover.ui.CoverList;
 import com.cover.ui.Detail;
 import com.cover.ui.ParamSettingActivity;
+import com.cover.ui.SingleMapDetail;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -450,25 +451,26 @@ public class InternetService extends Service implements Runnable {
 						break;
 					}
 					case 0x02: {
+						flag_notify++;
 						Entity entity = new Entity();
 						byte[] b = new byte[2];
-						b[0] = msgBuff[1];
-						b[1] = msgBuff[2];
-						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
-								: "井盖 ID：");
+						b[1] = msgBuff[1];
+						b[0] = msgBuff[2];
+						String title = (msgBuff[3] == (byte) 0x1C ? "水位"
+								: "井盖");
 						entity.setId(CoverUtils.getShort(b));
 						entity.setTag(title);
 						byte[] lati = new byte[8];
-						int j1 = 4;
-						for (int i = 0; i < 8; i++) {
-							lati[i] = msgBuff[j1++];
-						}
 						byte[] lonti = new byte[8];
+						int j1 = 4;
 						for (int i = 0; i < 8; i++) {
 							lonti[i] = msgBuff[j1++];
 						}
+						for (int i = 0; i < 8; i++) {
+							lati[i] = msgBuff[j1++];
+						}
 						entity.setLatitude(CoverUtils.byte2Double(lati));
-						entity.setLatitude(CoverUtils.byte2Double(lonti));
+						entity.setLongtitude(CoverUtils.byte2Double(lonti));
 						setNotify(entity);
 						break;
 					}
@@ -489,12 +491,15 @@ public class InternetService extends Service implements Runnable {
 						byte[] b = new byte[2];
 						b[0] = msgBuff[1];
 						b[1] = msgBuff[2];
-						String title = (msgBuff[3] == (byte) 0x1C ? "水位 ID："
-								: "井盖 ID：");
+						String title = (msgBuff[3] == (byte) 0x10 ? "井盖 "
+								: "水位 ");
 						entity.setId(CoverUtils.getShort(b));
 						entity.setTag(title);
-						setNotify(entity.getTag() + "_" + entity.getId());
-
+						if(msgBuff[3] == (byte)0x02){
+							setNotify(entity.getTag() + "_" + entity.getId(),"设置失败");
+						}else{
+							setNotify(entity.getTag() + "_" + entity.getId(),"设置成功");
+						}
 						if (douyadb.isExist("setting", entity.getTag() + "_"
 								+ entity.getId())
 								&& (entity.getStatus() == Status.NORMAL)) {
@@ -530,6 +535,7 @@ public class InternetService extends Service implements Runnable {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public void setNotify(Entity entity) {
 		String ns = Context.NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
@@ -546,7 +552,7 @@ public class InternetService extends Service implements Runnable {
 		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
 		CharSequence contentText = entity.getLatitude() + ","
 				+ entity.getLongtitude(); // 通知栏内容
-		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
+		Intent notificationIntent = new Intent(this, SingleMapDetail.class); // 点击该通知后要跳转的Activity
 		notificationIntent.putExtra("entity", entity);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -556,13 +562,13 @@ public class InternetService extends Service implements Runnable {
 		mNotificationManager.notify(flag_notify, notification);
 	}
 
-	public void setNotify(String tagID) {
+	public void setNotify(String tagID,String arg) {
 		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 		// 定义Notification的各种属性
 		int icon = R.drawable.icon; // 通知图标
-		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		CharSequence tickerText = "信息"; // 状态栏显示的通知文本提示
 		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
 		// 用上面的属性初始化 Nofification
 		Notification notification = new Notification(icon, tickerText, when);
@@ -574,7 +580,7 @@ public class InternetService extends Service implements Runnable {
 		// 设置通知的事件消息
 		Context context = getApplicationContext(); // 上下文
 		CharSequence contentTitle = tagID; // 通知栏标题
-		CharSequence contentText = "参数设置成功"; // 通知栏内容
+		CharSequence contentText = arg; // 通知栏内容
 
 		notification.setLatestEventInfo(context, contentTitle, contentText,
 				null);

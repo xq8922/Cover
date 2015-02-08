@@ -267,7 +267,7 @@ public class MapFragment extends Fragment {
 					switch (tempEntity.getStatus()) {
 					case REPAIR:
 						bitmap = BitmapDescriptorFactory
-								.fromResource(R.drawable.red_small);
+								.fromResource(R.drawable.map_yellow_small);
 						break;
 					case NORMAL:
 						bitmap = BitmapDescriptorFactory
@@ -275,7 +275,7 @@ public class MapFragment extends Fragment {
 						break;
 					default:
 						bitmap = BitmapDescriptorFactory
-								.fromResource(R.drawable.map_yellow_small);
+								.fromResource(R.drawable.red_small);
 					}
 				} catch (NullPointerException e1) {
 					e1.printStackTrace();

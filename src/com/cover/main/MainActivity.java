@@ -149,8 +149,8 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				userName = et_username.getText().toString().trim();
 				password = et_password.getText().toString();
-				userName = "13468833168";
-				password = "1234";
+//				userName = "13468833168";
+//				password = "1234";
 				if (userName == null) {
 					Toast.makeText(getApplicationContext(), "请输入用户名", 1).show();
 				}

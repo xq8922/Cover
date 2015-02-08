@@ -24,6 +24,7 @@ import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.cover.app.AppManager;
 import com.cover.bean.Entity;
+import com.cover.bean.Entity.Status;
 import com.cover.fragment.MapFragment;
 import com.wxq.covers.R;
 
@@ -33,6 +34,7 @@ public class SingleMapDetail extends Activity {
 	private MapView mMapView;
 	private BaiduMap mBaiduMap;
 	private static MapFragment mapFragment;
+	int flag_status = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +51,10 @@ public class SingleMapDetail extends Activity {
 		LatLng cenpt = new LatLng(entity.getLatitude(), entity.getLongtitude());
 		// 构建Marker图标
 		BitmapDescriptor bitmap;
+		if (entity.getStatus() == null) {
+			entity.setStatus(Status.NORMAL);
+			flag_status = 1;
+		}
 		switch (entity.getStatus()) {
 		case REPAIR:
 			bitmap = BitmapDescriptorFactory
@@ -68,29 +74,31 @@ public class SingleMapDetail extends Activity {
 		mBaiduMap.addOverlay(option);
 
 		TextView location = new TextView(getApplicationContext());
-		String status = null;
-		switch (entity.getStatus()) {
-		case NORMAL:
-			status = "正常状态";
-			break;
-		case EXCEPTION_1:
-			status = "报警状态";
-			break;
-		case REPAIR:
-			status = "维修状态";
-			break;
-		case EXCEPTION_2:
-			status = "欠压状态";
-			break;
-		case EXCEPTION_3:
-			status = "报警欠压状态";
-			break;
-		case SETTING_FINISH:
-			status = "上传撤防状态";
-			break;
-		case SETTING_PARAM:
-			status = "上传设置参数状态";
-			break;
+		String status = "";
+		if (flag_status == 0) {
+			switch (entity.getStatus()) {
+			case NORMAL:
+				status = "正常状态";
+				break;
+			case EXCEPTION_1:
+				status = "报警状态";
+				break;
+			case REPAIR:
+				status = "维修状态";
+				break;
+			case EXCEPTION_2:
+				status = "欠压状态";
+				break;
+			case EXCEPTION_3:
+				status = "报警欠压状态";
+				break;
+			case SETTING_FINISH:
+				status = "上传撤防状态";
+				break;
+			case SETTING_PARAM:
+				status = "上传设置参数状态";
+				break;
+			}
 		}
 		location.setText(entity.getTag() + "，" + entity.getId() + status);
 		location.setTextColor(Color.BLACK);

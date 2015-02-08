@@ -77,7 +77,7 @@ public class CoverAdapter extends BaseAdapter {
 //			ivName.setText(builder);
 //			ivName.setText(string);
 //		}
-
+//if(entity)
 		switch (entity.getStatus()) {
 		case NORMAL:
 			ivState.setImageResource(R.drawable.state_normal);

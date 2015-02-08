@@ -141,9 +141,9 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				if (!flagIsSetSuccess) {
 					sendFailSetting(entity);
 					hander.sendEmptyMessage(11);
-					if (douyadb.isExist("leave",
+					if (douyadb.isExist("setting",
 							entity.getTag() + "_" + entity.getId())) {
-						douyadb.delete("leave",
+						douyadb.delete("setting",
 								entity.getTag() + "_" + entity.getId());
 					}
 				}
@@ -153,18 +153,19 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 
 	public void sendFailSetting(Entity entity) {
 		// 终端报警解除失败 0x13 App->Server ID 、设备类型
+		Message msg = new Message();
 		byte[] b = CoverUtils.short2ByteArray(entity.getId());
-		byte[] tmp = new byte[2];
-		tmp[0] = b[0];
-		tmp[1] = b[1];
-
-		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
-				(byte) 0x0A, (byte) 0x14, tmp[0], tmp[1],
-				(entity.getTag().equals("cover") ? (byte) 0x10 : (byte) 0x2C) };
-		Intent serviceIntent = new Intent();
-		serviceIntent.putExtra("msg",
-				CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
-		sendBroadcast(serviceIntent);
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x14,
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
+				.msg2ByteArrayExcepteCheck(msg)));
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
+		sendMessage(msg, ACTION);
 	}
 
 	@Override

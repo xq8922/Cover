@@ -101,9 +101,9 @@ public class Detail extends Activity implements OnClickListener {
 			// if(Status.EXCEPTION_3 == entity.getStatus())
 			ivState.setImageResource(R.drawable.state_alarm_less_pressure);
 		} else if ((Status.SETTING_FINISH == entity.getStatus())) {
-			ivState.setImageResource(R.drawable.state_setting);
-		} else if ((Status.SETTING_PARAM == entity.getStatus())) {
 			ivState.setImageResource(R.drawable.state_leaving);
+		} else if ((Status.SETTING_PARAM == entity.getStatus())) {
+			ivState.setImageResource(R.drawable.state_setting);
 		}
 		tvLocation.setText(new java.text.DecimalFormat("#.000000")
 				.format(entity.getLatitude())
@@ -118,6 +118,7 @@ public class Detail extends Activity implements OnClickListener {
 				onBackPressed();
 			}
 		});
+		// sendFailUnAlarm(entity);
 
 		AppManager.getAppManager().addActivity(this);
 	}
@@ -141,8 +142,10 @@ public class Detail extends Activity implements OnClickListener {
 				if (!flagIsSetSuccess) {
 					sendFailUnAlarm(entity);
 					hander.sendEmptyMessage(11);
-					if(douyadb.isExist("leave", entity.getTag()+"_"+entity.getId()))
-						douyadb.delete("leave", entity.getTag()+"_"+entity.getId());
+					if (douyadb.isExist("leave",
+							entity.getTag() + "_" + entity.getId()))
+						douyadb.delete("leave",
+								entity.getTag() + "_" + entity.getId());
 				}
 			}
 		}
@@ -185,18 +188,19 @@ public class Detail extends Activity implements OnClickListener {
 			if (entity.getStatus() != Status.NORMAL
 					&& entity.getStatus() != Status.REPAIR
 					&& entity.getStatus() != Status.SETTING_FINISH
-					&& entity.getStatus() != Status.SETTING_PARAM)
+					&& entity.getStatus() != Status.SETTING_PARAM
+					&& entity.getTag() != "level")
 				setRepairBegin(entity);
 			else
 				Toast.makeText(getApplicationContext(), "当前状态下不可点击维修",
 						Toast.LENGTH_LONG).show();
 			break;
 		case R.id.iv_finish:
-			if (entity.getStatus() == Status.REPAIR
-					|| entity.getStatus() == Status.NORMAL
+			if (entity.getStatus() == Status.NORMAL
 					|| entity.getStatus() == Status.SETTING_FINISH
-					|| entity.getStatus() == Status.SETTING_PARAM)
-				Toast.makeText(getApplicationContext(), "当前状态下不可点击完成",
+					|| entity.getStatus() == Status.SETTING_PARAM
+					|| entity.getTag().equals("level"))
+				Toast.makeText(getApplicationContext(), "当前状态下不可点击撤防",
 						Toast.LENGTH_LONG).show();
 			else {
 				String nameID = entity.getTag() + "_" + entity.getId();
@@ -208,7 +212,6 @@ public class Detail extends Activity implements OnClickListener {
 					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
 							Toast.LENGTH_SHORT).show();
 				}
-
 			}
 			break;
 		case R.id.iv_param:
@@ -219,8 +222,6 @@ public class Detail extends Activity implements OnClickListener {
 			break;
 		case R.id.iv_entermap_detail:
 			Intent i = new Intent(Detail.this, SingleMapDetail.class);
-			// Bundle b = new Bundle();
-			// b.putSerializable("entity", entity);
 			i.putExtra("entity", entity);
 			startActivity(i);
 			break;
@@ -245,17 +246,17 @@ public class Detail extends Activity implements OnClickListener {
 	public void sendFailUnAlarm(Entity entity) {
 		// 终端报警解除失败 0x13 App->Server ID 、设备类型
 		byte[] b = CoverUtils.short2ByteArray(entity.getId());
-		byte[] tmp = new byte[2];
-		tmp[0] = b[0];
-		tmp[1] = b[1];
-
-		byte[] msg = new byte[] { (byte) 0xFA, (byte) 0xF5, (byte) 0x00,
-				(byte) 0x0A, (byte) 0x13, tmp[0], tmp[1],
-				(entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10) };
-		Intent serviceIntent = new Intent();
-		serviceIntent.putExtra("msg",
-				CRC16M.getSendBuf(CoverUtils.bytes2HexString(msg)));
-		sendBroadcast(serviceIntent);
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x13,
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
+				.msg2ByteArrayExcepteCheck(msg)));
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
+		sendMessage(msg, ACTION);
 	}
 
 	public void setUnAlarm(Entity entity) {
@@ -273,6 +274,7 @@ public class Detail extends Activity implements OnClickListener {
 		sendMessage(msg, ACTION);
 	}
 
+	@SuppressWarnings("deprecation")
 	public void setNotify(Entity entity) {
 		// 创建一个NotificationManager的引用
 		String ns = Context.NOTIFICATION_SERVICE;
@@ -286,7 +288,6 @@ public class Detail extends Activity implements OnClickListener {
 		// 添加声音
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
 			notification.defaults |= Notification.DEFAULT_ALL;
-
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		// 设置通知的事件消息
