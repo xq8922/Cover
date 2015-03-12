@@ -2,6 +2,8 @@ package com.cover.ui;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
@@ -43,7 +45,7 @@ import com.wxq.covers.R;
 
 public class CoverList extends Activity implements OnClickListener {
 	private final String TAG = "cover";
-	private final String ACTION = "com.cover.service.IntenetService";
+	private final static String ACTION = "com.cover.service.IntenetService";
 	private static ListView lv_coverlist;
 	private ImageView setting;
 	private byte flag = 0x11; // 0x10 表示水位 0x01表示井盖
@@ -77,7 +79,7 @@ public class CoverList extends Activity implements OnClickListener {
 
 	@Override
 	protected void onResume() {
-		new Thread(new sendAsk()).start();
+		sendAsk();
 		super.onResume();
 	}
 
@@ -117,20 +119,48 @@ public class CoverList extends Activity implements OnClickListener {
 		cbCover.setOnCheckedChangeListener(cbChangeListener);
 		rgBottom.setOnCheckedChangeListener(rgChangeListener);
 
-		askMsg.function = (byte) 0x0D;
-		askMsg.data = null;
-		askMsg.length = CoverUtils.short2ByteArray((short) 7);
-
-		byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
-		byte[] str_ = CRC16M.getSendBuf(CoverUtils.bytes2HexString(checkMsg));
-		askMsg.check[0] = str_[str_.length - 1];
-		askMsg.check[1] = str_[str_.length - 2];
-		new Thread(new sendAsk()).start();
+		sendAsk();
 		if (CoverUtils.getBooleanSharedP(getApplicationContext(), "isremem"))
 			new Thread(new sendValidate()).start();
 		rgBottom.check(R.id.rb_list);
 		AppManager.getAppManager().addActivity(this);
 	}
+	
+	/** 
+	 * 菜单、返回键响应 
+	 */  
+	@Override  
+	public boolean onKeyDown(int keyCode, KeyEvent event) {  
+	    // TODO Auto-generated method stub  
+	    if(keyCode == KeyEvent.KEYCODE_BACK)  
+	       {    
+	           exitBy2Click();      //调用双击退出函数  
+	       }  
+	    return false;  
+	}  
+	/** 
+	 * 双击退出函数 
+	 */  
+	private static Boolean isExit = false;  
+	  
+	private void exitBy2Click() {  
+	    Timer tExit = null;  
+	    if (isExit == false) {  
+	        isExit = true; // 准备退出  
+	        Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();  
+	        tExit = new Timer();  
+	        tExit.schedule(new TimerTask() {  
+	            @Override  
+	            public void run() {  
+	                isExit = false; // 取消退出  
+	            }  
+	        }, 2000); // 如果2秒钟内没有按下返回键，则启动定时器取消掉刚才执行的任务  
+	  
+	    } else {  
+	        //exit
+	    	AppManager.getAppManager().finishAllActivity();
+	    }  
+	}  
 
 	private android.widget.CompoundButton.OnCheckedChangeListener cbChangeListener = new android.widget.CompoundButton.OnCheckedChangeListener() {
 
@@ -218,43 +248,37 @@ public class CoverList extends Activity implements OnClickListener {
 
 	};
 
-	private class sendAsk implements Runnable {
-
-		@Override
-		public void run() {
-			askMsg.function = (byte) 0x0D;
-			askMsg.data = null;
-			askMsg.length = CoverUtils.short2ByteArray((short) 7);
-			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
-			byte[] str_ = CRC16M.getSendBuf(CoverUtils
-					.bytes2HexString(checkMsg));
-			askMsg.check[0] = str_[str_.length - 1];
-			askMsg.check[1] = str_[str_.length - 2];
-			sendMessage(askMsg, ACTION);
-		}
-
+	private void sendAsk() {
+		askMsg.function = (byte) 0x0D;
+		askMsg.data = null;
+		askMsg.length = CoverUtils.short2ByteArray((short) 7);
+		byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
+		byte[] str_ = CRC16M.getSendBuf(CoverUtils.bytes2HexString(checkMsg));
+		askMsg.check[0] = str_[str_.length - 1];
+		askMsg.check[1] = str_[str_.length - 2];
+		sendMessage(askMsg, ACTION);
 	}
 
 	private class sendValidate implements Runnable {
 
 		@Override
 		public void run() {
-			Message msgAsk = new Message();
-			sp = getSharedPreferences("douyatech", MODE_PRIVATE);
-			editor = sp.edit();
-			String userName = sp.getString("username", "");
-			String password = sp.getString("password", "");
-			String msg = userName + password;
-			int length = 7 + msg.length();
-			msgAsk.data = msg.getBytes();
-			msgAsk.function = Integer.valueOf("0C", 16).byteValue();
-			msgAsk.length = CoverUtils.short2ByteArray((short) length);
-			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msgAsk);
-			byte[] str_ = CRC16M.getSendBuf(CoverUtils
-					.bytes2HexString(checkMsg));
-			msgAsk.check[0] = str_[str_.length - 1];
-			msgAsk.check[1] = str_[str_.length - 2];
-			sendMessage(msgAsk, ACTION);
+			// Message msgAsk = new Message();
+			// sp = getSharedPreferences("douyatech", MODE_PRIVATE);
+			// editor = sp.edit();
+			// String userName = sp.getString("username", "");
+			// String password = sp.getString("password", "");
+			// String msg = userName + password;
+			// int length = 7 + msg.length();
+			// msgAsk.data = msg.getBytes();
+			// msgAsk.function = Integer.valueOf("0C", 16).byteValue();
+			// msgAsk.length = CoverUtils.short2ByteArray((short) length);
+			// byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msgAsk);
+			// byte[] str_ = CRC16M.getSendBuf(CoverUtils
+			// .bytes2HexString(checkMsg));
+			// msgAsk.check[0] = str_[str_.length - 1];
+			// msgAsk.check[1] = str_[str_.length - 2];
+			// sendMessage(msgAsk, ACTION);
 		}
 
 	}

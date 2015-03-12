@@ -87,25 +87,48 @@ public class Detail extends Activity implements OnClickListener {
 		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
-		tvName.setText(entity.getTag().equals("level")?"水位":"井盖");
-		
+		tvName.setText(entity.getTag().equals("level") ? "水位" : "井盖");
 		tvId.setText(entity.getId() + "");
-		if (Status.NORMAL == entity.getStatus()) {
+
+		switch (entity.getStatus()) {
+		case NORMAL:
 			ivState.setImageResource(R.drawable.state_normal);
-		} else if (Status.REPAIR == entity.getStatus()) {
-			ivState.setImageResource(R.drawable.state_reparing);
-		} else if (Status.EXCEPTION_1 == entity.getStatus()) {
+			break;
+		case EXCEPTION_1:
 			ivState.setImageResource(R.drawable.state_alarm);
-		} else if (Status.EXCEPTION_2 == entity.getStatus()) {
+			break;
+		case EXCEPTION_2:
 			ivState.setImageResource(R.drawable.state_less_pressure);
-		} else if (Status.EXCEPTION_3 == entity.getStatus()) {
-			// if(Status.EXCEPTION_3 == entity.getStatus())
+			break;
+		case EXCEPTION_3:
 			ivState.setImageResource(R.drawable.state_alarm_less_pressure);
-		} else if ((Status.SETTING_FINISH == entity.getStatus())) {
+			break;
+		case SETTING_FINISH:
 			ivState.setImageResource(R.drawable.state_leaving);
-		} else if ((Status.SETTING_PARAM == entity.getStatus())) {
+			break;
+		case SETTING_PARAM:
 			ivState.setImageResource(R.drawable.state_setting);
+			break;
+		case REPAIR:
+			ivState.setImageResource(R.drawable.state_reparing);
+			break;
 		}
+		// if (Status.NORMAL == entity.getStatus()) {
+		// ivState.setImageResource(R.drawable.state_normal);
+		// } else if (Status.REPAIR == entity.getStatus()) {
+		// ivState.setImageResource(R.drawable.state_reparing);
+		// } else if (Status.EXCEPTION_1 == entity.getStatus()) {
+		// ivState.setImageResource(R.drawable.state_alarm);
+		// } else if (Status.EXCEPTION_2 == entity.getStatus()) {
+		// ivState.setImageResource(R.drawable.state_less_pressure);
+		// } else if (Status.EXCEPTION_3 == entity.getStatus()) {
+		// // if(Status.EXCEPTION_3 == entity.getStatus())
+		// ivState.setImageResource(R.drawable.state_alarm_less_pressure);
+		// } else if ((Status.SETTING_FINISH == entity.getStatus())) {
+		// ivState.setImageResource(R.drawable.state_leaving);
+		// } else if ((Status.SETTING_PARAM == entity.getStatus())) {
+		// ivState.setImageResource(R.drawable.state_setting);
+		// }
 		tvLocation.setText(new java.text.DecimalFormat("#.000000")
 				.format(entity.getLatitude())
 				+ " "
@@ -144,9 +167,10 @@ public class Detail extends Activity implements OnClickListener {
 					sendFailUnAlarm(entity);
 					hander.sendEmptyMessage(11);
 					if (douyadb.isExist("leave",
-							entity.getTag() + "_" + entity.getId()))
+							entity.getTag() + "_" + entity.getId())) {
 						douyadb.delete("leave",
 								entity.getTag() + "_" + entity.getId());
+					}
 				}
 			}
 		}
@@ -282,7 +306,7 @@ public class Detail extends Activity implements OnClickListener {
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 		// 定义Notification的各种属性
 		int icon = R.drawable.icon; // 通知图标
-		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		CharSequence tickerText = "信息"; // 状态栏显示的通知文本提示
 		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
 		// 用上面的属性初始化 Nofification
 		Notification notification = new Notification(icon, tickerText, when);

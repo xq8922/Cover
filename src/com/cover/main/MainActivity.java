@@ -79,11 +79,11 @@ public class MainActivity extends Activity {
 		et_password.setText(password);
 		cbIsRemeber.setChecked(sp.getBoolean("isremem", false));
 
-		if (!CoverUtils.isNetworkAvailable(MainActivity.this)) {
-			Toast.makeText(getApplicationContext(), "Network is offline",
-					Toast.LENGTH_SHORT).show();
-			return;
-		}
+		// if (!CoverUtils.isNetworkAvailable(MainActivity.this)) {
+		// Toast.makeText(getApplicationContext(), "Network is offline",
+		// Toast.LENGTH_SHORT).show();
+		// return;
+		// }
 
 		tvChangeIP.setOnClickListener(new OnClickListener() {
 
@@ -149,13 +149,11 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				userName = et_username.getText().toString().trim();
 				password = et_password.getText().toString();
-//				userName = "13468833168";
-//				password = "1234";
-				if (userName == null) {
-					Toast.makeText(getApplicationContext(), "请输入用户名", 1).show();
-				}
-				if (password == null) {
-					Toast.makeText(getApplicationContext(), "请输入密码", 1).show();
+				// userName = "13468833168";
+				// password = "1234";
+				if (userName == null || password == null) {
+					Toast.makeText(getApplicationContext(), "用户名或密码不能为空",
+							Toast.LENGTH_SHORT).show();
 				}
 				String msg = userName + password;
 				int length = 7 + msg.length();
@@ -184,36 +182,37 @@ public class MainActivity extends Activity {
 		sendBroadcast(serviceIntent);
 		Log.i(TAG, action + "send broadcast " + action);
 	}
-//
-//	@Override
-//	public boolean onCreateOptionsMenu(Menu menu) {
-//		super.onCreateOptionsMenu(menu);
-//		// 通过MenuInflater将XML 实例化为 Menu Object
-//		MenuInflater inflater = getMenuInflater();
-//		inflater.inflate(R.layout.menu, menu);
-//		return true;
-//	}
-//
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//		switch (item.getItemId()) {
-//		case R.id.item_exit_settings:
-//			// System.exit(0);
-//			Message msg = new Message();
-//			msg.data = CoverUtils.getStringSharedP(getApplicationContext(),
-//					"username").getBytes();
-//			msg.function = (byte) 0x12;
-//			msg.length = CoverUtils
-//					.short2ByteArray((short) (7 + msg.data.length));
-//			byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
-//			byte[] str_ = CRC16M.getSendBuf(CoverUtils
-//					.bytes2HexString(checkMsg));
-//			msg.check[0] = str_[str_.length - 1];
-//			msg.check[1] = str_[str_.length - 2];
-//			sendMessage(msg, ACTION);
-//		}
-//		return super.onOptionsItemSelected(item);
-//	}
+
+	//
+	// @Override
+	// public boolean onCreateOptionsMenu(Menu menu) {
+	// super.onCreateOptionsMenu(menu);
+	// // 通过MenuInflater将XML 实例化为 Menu Object
+	// MenuInflater inflater = getMenuInflater();
+	// inflater.inflate(R.layout.menu, menu);
+	// return true;
+	// }
+	//
+	// @Override
+	// public boolean onOptionsItemSelected(MenuItem item) {
+	// switch (item.getItemId()) {
+	// case R.id.item_exit_settings:
+	// // System.exit(0);
+	// Message msg = new Message();
+	// msg.data = CoverUtils.getStringSharedP(getApplicationContext(),
+	// "username").getBytes();
+	// msg.function = (byte) 0x12;
+	// msg.length = CoverUtils
+	// .short2ByteArray((short) (7 + msg.data.length));
+	// byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
+	// byte[] str_ = CRC16M.getSendBuf(CoverUtils
+	// .bytes2HexString(checkMsg));
+	// msg.check[0] = str_[str_.length - 1];
+	// msg.check[1] = str_[str_.length - 2];
+	// sendMessage(msg, ACTION);
+	// }
+	// return super.onOptionsItemSelected(item);
+	// }
 
 	@Override
 	protected void onDestroy() {
@@ -251,7 +250,8 @@ public class MainActivity extends Activity {
 							.show();
 					break;
 				case 0x03:
-//					Toast.makeText(context, "用户已登录", Toast.LENGTH_LONG).show();
+					// Toast.makeText(context, "用户已登录",
+					// Toast.LENGTH_LONG).show();
 					editor.putString("username", userName);
 					editor.commit();
 					Intent i1 = new Intent();

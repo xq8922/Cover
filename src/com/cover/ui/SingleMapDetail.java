@@ -93,14 +93,15 @@ public class SingleMapDetail extends Activity {
 				status = "报警欠压状态";
 				break;
 			case SETTING_FINISH:
-				status = "上传撤防状态";
+				status = "撤防中";
 				break;
 			case SETTING_PARAM:
-				status = "上传设置参数状态";
+				status = "参数设置中";
 				break;
 			}
 		}
-		location.setText((entity.getTag().equals("level")?"水位":"井盖") + "，" + entity.getId() + status);
+		location.setText((entity.getTag().equals("level") ? "水位-" : "井盖-")
+				+ entity.getId() + status);
 		location.setTextColor(Color.BLACK);
 		InfoWindow info = new InfoWindow(location, new LatLng(
 				entity.getLatitude(), entity.getLongtitude()), -40);
@@ -120,7 +121,8 @@ public class SingleMapDetail extends Activity {
 				TextView location = new TextView(getApplicationContext());
 				// location.setBackgroundResource(R.drawable.cover);
 				// location.setPadding(30, 20, 30, 50);
-				location.setText(entity.getTag() + "，" + entity.getId());
+				location.setText((entity.getTag().equals("level") ? "水位-"
+						: "井盖-") + entity.getId());
 				location.setTextColor(Color.BLACK);
 				// location.setBackgroundColor(255);
 				// location.setBackgroundDrawable(R.drawable.bg_password_normal);

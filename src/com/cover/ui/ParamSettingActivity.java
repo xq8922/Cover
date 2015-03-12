@@ -57,7 +57,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private short time = 20;
 	private short alarmFrequency = 10;
 	private short seconfAlarm = 100;
-	final static int MINITE =  1000*60*5;
+	final static int MINITE = 1000 * 60 * 5;
 	public static boolean flagIsSetSuccess = false;
 	private boolean flagThreadIsStart = false;
 	Douyatech douyadb = null;
@@ -100,7 +100,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			status = "_撤防中";
 		else if (entity.getStatus() == Status.SETTING_PARAM)
 			status = "_参数设置中";
-		tvName.setText((entity.getTag().equals("level")?"水位":"井盖") + status);
+		tvName.setText((entity.getTag().equals("level") ? "水位:" : "井盖:")
+				+ entity.getId() + status);
 
 		back.setOnClickListener(this);
 
@@ -141,10 +142,10 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				if (!flagIsSetSuccess) {
 					sendFailSetting(entity);
 					hander.sendEmptyMessage(11);
-					if (douyadb.isExist("setting",
-							entity.getTag() + "_" + entity.getId())) {
-						douyadb.delete("setting",
-								entity.getTag() + "_" + entity.getId());
+					if (douyadb.isExist("setting", entity.getTag() + "_"
+							+ entity.getId())) {
+						douyadb.delete("setting", entity.getTag() + "_"
+								+ entity.getId());
 					}
 				}
 			}
@@ -257,8 +258,9 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
 							Toast.LENGTH_SHORT).show();
 				}
-			}else{
-				Toast.makeText(getApplicationContext(), "当前状态下不可点击设置", Toast.LENGTH_SHORT).show();
+			} else {
+				Toast.makeText(getApplicationContext(), "当前状态下不可点击设置",
+						Toast.LENGTH_SHORT).show();
 			}
 			break;
 		}
@@ -273,11 +275,11 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		byte[] data = new byte[11];
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		
+
 		data[j++] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
 		short jiaodu = angle;
-		tmp = (entity.getTag().equals("cover")) ? CoverUtils.short2ByteArray(jiaodu)
-				: new byte[] { 0, 0 };
+		tmp = (entity.getTag().equals("cover")) ? CoverUtils
+				.short2ByteArray(jiaodu) : new byte[] { 0, 0 };
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 		tmp = CoverUtils.short2ByteArray(time);
@@ -288,8 +290,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				.short2ByteArray(alarmFrequency) : new byte[] { 0, 0 };
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
-		tmp = (entity.getTag().equals("cover")) ? new byte[] { 0, 0 } : CoverUtils
-				.short2ByteArray(seconfAlarm);
+		tmp = (entity.getTag().equals("cover")) ? new byte[] { 0, 0 }
+				: CoverUtils.short2ByteArray(seconfAlarm);
 		data[j++] = tmp[0];
 		data[j++] = tmp[1];
 
@@ -364,7 +366,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 		// 定义Notification的各种属性
 		int icon = R.drawable.icon; // 通知图标
-		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
+		CharSequence tickerText = "信息"; // 状态栏显示的通知文本提示
 		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
 		// 用上面的属性初始化 Nofification
 		Notification notification = new Notification(icon, tickerText, when);
@@ -376,7 +378,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
 		// 设置通知的事件消息
 		Context context = getApplicationContext(); // 上下文
-		CharSequence contentTitle = (entity.getTag().equals("level")?"水位":"井盖") + entity.getId(); // 通知栏标题
+		CharSequence contentTitle = (entity.getTag().equals("level") ? "水位"
+				: "井盖") + entity.getId(); // 通知栏标题
 		CharSequence contentText = "参数设置失败"; // 通知栏内容
 		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
 		notificationIntent.putExtra("entity", entity);
