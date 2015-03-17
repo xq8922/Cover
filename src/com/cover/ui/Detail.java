@@ -33,7 +33,7 @@ import com.wxq.covers.R;
 
 public class Detail extends Activity implements OnClickListener {
 	private static final String TAG = "cover";
-	public static final int MINITE = 1 * 1000 * 5;
+	public static final int MINITE = 60 * 1000 * 5;
 	private Entity entity;
 	private TextView tvId;
 	private ImageView ivState;
