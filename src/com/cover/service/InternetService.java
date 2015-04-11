@@ -1,33 +1,15 @@
 package com.cover.service;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
-import com.cover.app.AppManager;
-import com.cover.bean.Entity;
-import com.cover.bean.Message;
-import com.cover.bean.Entity.Status;
-import com.cover.dbhelper.DouYaSqliteHelper;
-import com.cover.dbhelper.Douyatech;
-import com.cover.main.MainActivity;
-import com.cover.ui.CoverList;
-import com.cover.ui.Detail;
-import com.cover.ui.ParamSettingActivity;
-import com.cover.ui.SingleMapDetail;
-import com.cover.util.CRC16M;
-import com.cover.util.CoverUtils;
-import com.wxq.covers.R;
-
-import android.R.integer;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -39,15 +21,25 @@ import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Parcel;
-import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.cover.app.AppManager;
+import com.cover.bean.Entity;
+import com.cover.bean.Entity.Status;
+import com.cover.bean.Message;
+import com.cover.dbhelper.Douyatech;
+import com.cover.ui.Detail;
+import com.cover.ui.ParamSettingActivity;
+import com.cover.ui.SingleMapDetail;
+import com.cover.util.CRC16M;
+import com.cover.util.CoverUtils;
+import com.wxq.covers.R;
+
 public class InternetService extends Service implements Runnable {
 	private final static String TAG = "COVER";
-	private final int INTERVAL = 2 * 60 * 1000;
+	// private final int INTERVAL = 2 * 60 * 1000;
+	private final int INTERVAL = 2 * 60;
 
 	private static final String ACTION_MainActivity = "com.cover.main.mainactivity";
 	private static final String ACTION_CoverList = "com.cover.coverlist";
@@ -71,6 +63,7 @@ public class InternetService extends Service implements Runnable {
 	Message message = new Message();
 	Douyatech douyadb;
 	int count = 0;
+	int count2 = 0;
 	int flag_notify = 0;
 
 	private Handler handler = new Handler() {
@@ -88,7 +81,7 @@ public class InternetService extends Service implements Runnable {
 				break;
 			case 0x03:
 				// Toast.makeText(getApplicationContext(),
-				// "Thread is not connected", Toast.LENGTH_LONG).show();
+				// "连接中断请重新登陆", Toast.LENGTH_LONG).show();
 				break;
 			case 0x04:
 				// Toast.makeText(getApplicationContext(),
@@ -103,8 +96,8 @@ public class InternetService extends Service implements Runnable {
 				// Toast.LENGTH_LONG).show();
 				break;
 			case 0x07:
-				Toast.makeText(getApplicationContext(), "服务器连接超时",
-						Toast.LENGTH_SHORT).show();
+				// Toast.makeText(getApplicationContext(), "服务器连接超时",
+				// Toast.LENGTH_SHORT).show();
 				break;
 			case 0x08:
 				// Toast.makeText(getApplicationContext(), "连接中断请重新登陆",
@@ -122,11 +115,19 @@ public class InternetService extends Service implements Runnable {
 				Toast.makeText(getApplicationContext(), "参数设置失败命令发送成功",
 						Toast.LENGTH_LONG).show();
 				break;
+			case 0x20:
+				Toast.makeText(getApplicationContext(), "网络异常",
+						Toast.LENGTH_LONG).show();
+				break;
 			}
 		}
 
 	};
-	private boolean flagConnectionOutOnce = true;
+	private int flagConnectionOutOnce = 0;
+	private int countNetUnavail = 0;
+	private boolean flagKillThread = false;
+	private boolean flagOnCreate = false;
+	private boolean flagSocketSuccess = false;
 
 	public static class ServiceReceiver extends BroadcastReceiver {
 
@@ -155,6 +156,40 @@ public class InternetService extends Service implements Runnable {
 	}
 
 	private void sendMessage(byte[] bs) {
+		if (!socket.isOutputShutdown()) {
+			try {
+				if (msg != null) {
+					if (msg[4] == (byte) 0x12) {
+						flagKillThread = true;
+						AppManager.getAppManager().AppExit(
+								getApplicationContext());
+						this.stopSelf();
+					}
+					OutputStream socketWriter = socket.getOutputStream();
+					socketWriter.write(msg);
+					socketWriter.flush();
+					Log.i(TAG, "message send success");
+					Log.i(TAG, "msg sent " + msg.toString());
+					msg = null;
+				}
+			} catch (Exception e) {
+
+				handler.sendEmptyMessage(0x06);
+				Log.v(TAG, "is not connect");
+				e.printStackTrace();
+				workStatus = "Output err";
+			}
+		} else {
+			if (msg != null) {
+				if (msg[4] == (byte) 0x12) {
+					flagKillThread = true;
+					AppManager.getAppManager().AppExit(getApplicationContext());
+					this.stopSelf();
+					msg = null;
+				}
+			}
+			workStatus = "OutputShutdown";
+		}
 		if (!CoverUtils.isNetworkAvailable(this)) {
 			Log.v(TAG, "workStatus is not connectted");
 			workStatus = "connect failed";
@@ -166,46 +201,19 @@ public class InternetService extends Service implements Runnable {
 			connectService();
 		} else {
 			if (bs != null) {
-				try {
-					writer = new PrintWriter(new BufferedWriter(
-							new OutputStreamWriter(socket.getOutputStream())),
-							true);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+				//
 			}
 		}
 		if (!InternetService.this.thread.isAlive()) {
 			handler.sendEmptyMessage(0x03);
 			(thread = new Thread(InternetService.this)).start();
 		}
-		if (!socket.isConnected() || socket.isClosed()) {
+		if (!(socket.isConnected() && !socket.isClosed())) {
 			handler.sendEmptyMessage(0x02);
+			connectService();
 			workStatus = "socket not connect";
-			Log.v(TAG, "not connect");
+			Log.i(TAG, "not connect");
 			return;
-		}
-		if (!socket.isOutputShutdown()) {
-			try {
-				if (msg != null) {
-					OutputStream socketWriter = socket.getOutputStream();
-					socketWriter.write(msg);
-					socketWriter.flush();
-					Log.i(TAG, "msg sent " + msg.toString());
-					if (msg[4] == (byte) 0x12) {
-						AppManager.getAppManager().finishAllActivity();
-						this.stopSelf();
-					}
-					msg = null;
-				}
-			} catch (Exception e) {
-				handler.sendEmptyMessage(0x06);
-				Log.v(TAG, "is not connect");
-				e.printStackTrace();
-				workStatus = "Output err";
-			}
-		} else {
-			workStatus = "OutputShutdown";
 		}
 	}
 
@@ -218,16 +226,17 @@ public class InternetService extends Service implements Runnable {
 			socket = new Socket();
 			SocketAddress socAddress = new InetSocketAddress(ip, port);
 			socket.connect(socAddress, 3000);
+			flagSocketSuccess = true;
 			Log.i(TAG, "socket is connectted");
-			
 		} catch (SocketException e) {
-			if(flagConnectionOutOnce )
-				handler.sendEmptyMessage(0x07);
-			flagConnectionOutOnce = false;
+			flagConnectionOutOnce++;
+			// if (flagConnectionOutOnce == 5)
+			// handler.sendEmptyMessage(0x07);
+			// flagConnectionOutOnce = false;
 			Log.v(TAG, "time out");
 			e.printStackTrace();
 			workStatus = e.toString();
-			return;
+			// return;
 		} catch (IOException e) {
 			Log.v(TAG, "time out");
 			e.printStackTrace();
@@ -247,39 +256,100 @@ public class InternetService extends Service implements Runnable {
 		}
 	}
 
-	public class InterBinder extends Binder {
-		public InternetService getService() {
-			return InternetService.this;
-		}
-
-		/**
-		 * this is for Activity send messages to service
-		 * 
-		 * @data object when send to service
-		 * @reply object that service returns
-		 */
-		@Override
-		protected boolean onTransact(int code, Parcel data, Parcel reply,
-				int flags) throws RemoteException {
-			return super.onTransact(code, data, reply, flags);
-		}
-
-	}
-
 	@Override
 	public void run() {
 		connectService();
 		int interval = 0;
 		while (true) {
+			if (flagKillThread == true) {
+				// flagKill
+				break;
+			}
+
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			// 检测网络是否异常
+			if (!CoverUtils.isNetworkAvailable(getApplication())) {
+				Log.i("test", "测试网络异常");
+				// handler.sendEmptyMessage(0x20);
+				countNetUnavail++;
+				if (countNetUnavail == 8) {
+					flagSocketSuccess = false;
+					// 判断当前页面是否登录页面，
+					// handler.sendEmptyMessage(0x20);
+					// setNotify("服务器连接中断", "网络异常");
+					try {
+						socket.getInputStream().close();
+						// socket.getOutputStream().close();
+						// socket.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					try {
+						// socket.getInputStream().close();
+						socket.getOutputStream().close();
+						// socket.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					try {
+						// socket.getInputStream().close();
+						// socket.getOutputStream().close();
+						socket.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					stopSelf();
+					flagKillThread = true;
+					// handler.sendEmptyMessage(0x20);
+				}
+			} else {// 有异常超过三次连接不上
+				Log.i("test", "测试网络");
+				if (countNetUnavail != 0) {
+					connectService();
+					if (flagSocketSuccess = true) {
+						// 发送请求全部数据
+						sendAskList();
+					}
+				}
+				countNetUnavail = 0;
+			}
+
 			if (socket.isConnected()) {
 				interval++;
 				if (interval > INTERVAL) {
-					sendMessage("\n".getBytes());
+					msg = "appheartbeat!".getBytes();
+					sendMessage(msg);
+					Log.i("chaoshi", "心跳包");
+					try {
+						socket.sendUrgentData(0x01);
+					} catch (IOException e) {
+						connectService();
+						count2++;
+						if (count2 == 3) {
+							// setNotify("服务器连接中断", "网络异常");
+							try {
+								socket.getInputStream().close();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+							try {
+								socket.getOutputStream().close();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+							try {
+								socket.close();
+							} catch (IOException e1) {
+								e1.printStackTrace();
+							}
+							stopSelf();
+							flagKillThread = true;
+						}
+					}
 					interval = 0;
 				}
 				if (!socket.isInputShutdown() && socket.isConnected()
@@ -292,20 +362,47 @@ public class InternetService extends Service implements Runnable {
 				if (msg != null && flag_send) {
 					sendMessage(msg);
 					flag_send = false;
-					Log.i(TAG, "message send to server .");
+					// Log.i(TAG, "message send to server .");
 				}
 				count = 0;
+				count2 = 0;
 			} else {
 				count++;
+				if (msg != null) {
+					if (msg[4] == (byte) 0x12) {
+						flagKillThread = true;
+						AppManager.getAppManager().AppExit(
+								getApplicationContext());
+						this.stopSelf();
+					}
+				}
+				try {
+					socket.getInputStream().close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+					socket.getOutputStream().close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				try {
+					socket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				connectService();
 				handler.sendEmptyMessage(0x08);
 				if (count == 10) {
-					handler.sendEmptyMessage(0x01);
-					Intent i = new Intent();
-					i.setClass(this, MainActivity.class);
-					i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					startActivity(i);
-
+					// handler.sendEmptyMessage(0x01);
+					// Intent i = new Intent();
+					// i.setClass(this, MainActivity.class);
+					// i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					// startActivity(i);
+					handler.sendEmptyMessage(0x07);
+					// setNotify("网络连接异常", "网络连接中断");
+					// stopSelf();
+					// break;
 				}
 			}
 		}
@@ -380,8 +477,7 @@ public class InternetService extends Service implements Runnable {
 					// {
 					switch (msgBuff[0]) {
 					case 0x01: {// 需要处理报警信息ack
-						//
-						sendAskList();
+						// sendAskList();
 						flag_notify++;
 						byte[] idByte = new byte[2];
 						Entity entity = new Entity();
@@ -425,10 +521,8 @@ public class InternetService extends Service implements Runnable {
 							break;
 						}
 						// 处理若有从撤防中状态改变成正常状态
-						if (douyadb.isExist("leave",
-								entity.getTag().equals("level") ? "水位" : "井盖"
-										+ "_" + entity.getId())
-								&& (entity.getStatus() == Status.NORMAL)) {
+						if (douyadb.isExist("leave", entity.getTag() + "_"
+								+ entity.getId())) {
 							Detail.flagIsSetSuccess = true;
 							if (douyadb.isExist("leave", entity.getTag() + "_"
 									+ entity.getId()))
@@ -436,25 +530,28 @@ public class InternetService extends Service implements Runnable {
 										+ entity.getId());
 						}
 						if (douyadb.isExist("setting", entity.getTag() + "_"
-								+ entity.getId())
-								&& (entity.getStatus() == Status.NORMAL)) {
+								+ entity.getId())) {
 							ParamSettingActivity.flagIsSetSuccess = true;
 							if (douyadb.isExist("setting", entity.getTag()
 									+ "_" + entity.getId()))
 								douyadb.delete("setting", entity.getTag() + "_"
 										+ entity.getId());
 						}
-						setNotify(entity,"报警信息");
-						byte[] ackAlert = new byte[] { (byte) 0xFA,
-								(byte) 0xF5, (byte) 0x00, (byte) 0x07,
-								(byte) 0x0A };
-						byte[] checkAck = CRC16M.getSendBuf(CoverUtils
-								.bytes2HexString(ackAlert));
-						sendMessage(checkAck);
+						setNotify(entity, "报警信息");
+						// byte[] ackAlert = new byte[] { (byte) 0xFA,
+						// (byte) 0xF5, (byte) 0x00, (byte) 0x07,
+						// (byte) 0x0A };
+						// byte[] checkAck = CRC16M.getSendBuf(CoverUtils
+						// .bytes2HexString(ackAlert));
+						// sendMessage(checkAck);
+						if (douyadb.exist(entity.getTag(), entity.getId() + "")) {
+							douyadb.updateStatus(entity.getId(),
+									entity.getTag(), entity.getStatus());
+						}
 						break;
 					}
 					case 0x02: {
-						sendAskList();
+						// sendAskList();
 						flag_notify++;
 						Entity entity = new Entity();
 						byte[] b = new byte[2];
@@ -474,7 +571,12 @@ public class InternetService extends Service implements Runnable {
 						}
 						entity.setLatitude(CoverUtils.byte2Double(lati));
 						entity.setLongtitude(CoverUtils.byte2Double(lonti));
-						setNotify(entity,"终端信息改变");
+						setNotify(entity, "终端信息改变");
+						if (douyadb.exist(entity.getTag(), entity.getId() + "")) {
+							douyadb.updateLatLon(entity.getTag(),
+									entity.getId(), entity.getLongtitude(),
+									entity.getLatitude());
+						}
 						break;
 					}
 					case 0x03: {
@@ -489,7 +591,7 @@ public class InternetService extends Service implements Runnable {
 					case 0x05: {
 						// 终端参数设置回复，应该显示到通知栏
 						// getMessage(msgBuff, ACTION_Paramsetting);
-						sendAskList();
+						// sendAskList();
 						ParamSettingActivity.flagIsSetSuccess = true;
 						Entity entity = new Entity();
 						byte[] b = new byte[2];
@@ -530,8 +632,15 @@ public class InternetService extends Service implements Runnable {
 					case 0x0B:// 终端参数设置失败命令接收成功的ACK信息
 						handler.sendEmptyMessage(0x12);
 						break;
+					case 0x16:
+						getMessage(msgBuff, ACTION_Settings);
+						break;
+					case 0x18:
+						getMessage(msgBuff, ACTION_Detail);
+						break;
 					default:
 						handler.sendEmptyMessage(0x10);
+						break;
 					}
 				}
 			} catch (IOException e) {
@@ -542,18 +651,23 @@ public class InternetService extends Service implements Runnable {
 	}
 
 	@SuppressWarnings("deprecation")
-	public void setNotify(Entity entity,String title) {
+	public void setNotify(Entity entity, String title) {
 		String ns = Context.NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 		// 定义Notification的各种属性
 		int icon = R.drawable.icon; // 通知图标
+		// CharSequence tickerText = title+"("+flag_notify+"条未读)"; //
+		// 状态栏显示的通知文本提示
 		CharSequence tickerText = title; // 状态栏显示的通知文本提示
 		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
-		Notification notification = new Notification(icon, tickerText, when);
+		Notification notification = null;
+		if (notification == null)
+			notification = new Notification(icon, tickerText, when);
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
 			notification.defaults |= Notification.DEFAULT_ALL;
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		// notification.number += flag_notify;
 		Context context = getApplicationContext(); // 上下文
 		CharSequence contentTitle = (entity.getTag().equals("level") ? "水位"
 				: "井盖") + entity.getId(); // 通知栏标题
@@ -566,7 +680,7 @@ public class InternetService extends Service implements Runnable {
 		notification.setLatestEventInfo(context, contentTitle, contentText,
 				contentIntent);
 		// 把Notification传递给 NotificationManager
-		mNotificationManager.notify(flag_notify, notification);
+		mNotificationManager.notify(1, notification);
 	}
 
 	public void sendAskList() {
@@ -574,10 +688,9 @@ public class InternetService extends Service implements Runnable {
 		askMsg.function = (byte) 0x0D;
 		askMsg.data = null;
 		askMsg.length = CoverUtils.short2ByteArray((short) 7);
-		byte[] checkAsk = CoverUtils
-				.msg2ByteArrayExcepteCheck(askMsg);
-		byte[] tmp_str = CRC16M.getSendBuf(CoverUtils
-				.bytes2HexString(checkAsk));
+		byte[] checkAsk = CoverUtils.msg2ByteArrayExcepteCheck(askMsg);
+		byte[] tmp_str = CRC16M
+				.getSendBuf(CoverUtils.bytes2HexString(checkAsk));
 		askMsg.check[0] = tmp_str[tmp_str.length - 1];
 		askMsg.check[1] = tmp_str[tmp_str.length - 2];
 		int lengthAsk = askMsg.getLength();
@@ -595,29 +708,25 @@ public class InternetService extends Service implements Runnable {
 		CharSequence tickerText = "信息"; // 状态栏显示的通知文本提示
 		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
 		// 用上面的属性初始化 Nofification
-		Notification notification = new Notification(icon, tickerText, when);
+		Notification notification = null;
+		if (notification == null)
+			notification = new Notification(icon, tickerText, when);
 		// 添加声音
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
 			notification.defaults |= Notification.DEFAULT_ALL;
 		notification.defaults |= Notification.DEFAULT_LIGHTS;
 		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		// notification.number += 2;
 		// 设置通知的事件消息
 		Context context = getApplicationContext(); // 上下文
 		CharSequence contentTitle = tagID; // 通知栏标题
 		CharSequence contentText = arg; // 通知栏内容
-
+		// notification.
 		notification.setLatestEventInfo(context, contentTitle, contentText,
 				null);
 		// 把Notification传递给 NotificationManager
 		mNotificationManager.notify(0, notification);
-	}
-
-	@Override
-	public IBinder onBind(Intent arg0) {
-		binder = new InterBinder();
-		// thread = new Thread(InternetService.this);
-		// thread.start();
-		return binder;
+		// mNotificationManager.cancel(0);
 	}
 
 	@Override
@@ -625,13 +734,26 @@ public class InternetService extends Service implements Runnable {
 		sp = getSharedPreferences("douyatech", MODE_PRIVATE);
 		if (CoverUtils.getStringSharedP(getApplicationContext(), "ip") == "")
 			CoverUtils.putString2SharedP(getApplicationContext(), "ip",
-					"124.115.169.98");
+					"61.185.220.74");
 		if (CoverUtils.getIntSharedP(getApplicationContext(), "port") == 0)
-			CoverUtils.putInt2SharedP(getApplicationContext(), "port", 6221);
+			CoverUtils.putInt2SharedP(getApplicationContext(), "port", 9999);
+		// if (CoverUtils.getStringSharedP(getApplicationContext(), "ip") ==
+		// "")
+		// CoverUtils.putString2SharedP(getApplicationContext(), "ip",
+		// "124.115.169.98");
+		// if (CoverUtils.getIntSharedP(getApplicationContext(), "port") ==
+		// 0)
+		// CoverUtils.putInt2SharedP(getApplicationContext(), "port", 6221);
 		ip = sp.getString("ip", "");
 		port = sp.getInt("port", 0);
 		douyadb = new Douyatech(getApplicationContext());
+		flagOnCreate = true;
 		myReceiver = new ServiceReceiver();
+		if (flagKillThread == true) {
+			flagKillThread = false;
+			// thread = new Thread(InternetService.this);
+			// thread.start();
+		}
 		thread = new Thread(InternetService.this);
 		thread.start();
 		super.onCreate();
@@ -653,17 +775,23 @@ public class InternetService extends Service implements Runnable {
 	@Override
 	@Deprecated
 	public void onStart(Intent intent, int startId) {
-
-		// String ip = intent.getStringExtra("ip");
-		// if (ip != null) {
-		// this.ip = ip;
-		// }
+		if (flagKillThread == true) {
+			flagKillThread = false;
+			thread = new Thread(InternetService.this);
+			thread.start();
+		}
 		super.onStart(intent, startId);
 	}
 
 	@Override
 	public boolean onUnbind(Intent intent) {
 		return super.onUnbind(intent);
+	}
+
+	@Override
+	public IBinder onBind(Intent arg0) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

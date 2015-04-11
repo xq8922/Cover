@@ -4,6 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_welcome"
-    android:orientation="vertical" >
-    
+    android:orientation="vertical"
+    android:src="@drawable/welcome_logo" >
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        >
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="70dp"
+            android:src="@drawable/welcome_logo" />
+    </RelativeLayout>
+
 </LinearLayout>

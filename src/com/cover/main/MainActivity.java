@@ -1,25 +1,8 @@
 package com.cover.main;
 
-import com.cover.app.AppManager;
-import com.cover.bean.Entity;
-import com.cover.bean.Message;
-import com.cover.bean.Entity.Status;
-import com.cover.service.InternetService;
-import com.cover.ui.CoverList;
-import com.cover.ui.Detail;
-import com.cover.ui.SoftwareSettings;
-import com.cover.util.CRC16M;
-import com.cover.util.CoverUtils;
-import com.wxq.covers.R;
-
-import android.os.Bundle;
-import android.os.Handler;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,10 +10,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.CheckBox;
@@ -39,9 +21,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cover.app.AppManager;
+import com.cover.bean.Message;
+import com.cover.service.InternetService;
+import com.cover.ui.CoverList;
+import com.cover.util.CRC16M;
+import com.cover.util.CoverUtils;
+import com.wxq.covers.R;
+
 @SuppressLint("NewApi")
 public class MainActivity extends Activity {
 	final static String TAG = "MainActivity";
+	public static boolean flagIsReceivedMsg = false;
 	private final String ACTION = "com.cover.service.IntenetService";
 	String msg = null;
 	static byte[] recv;
@@ -56,11 +47,23 @@ public class MainActivity extends Activity {
 	private MainActivityReceiver receiver;
 	private static Editor editor;
 	private static CheckBox cbIsRemeber;
+	public Handler handler = new Handler() {
+		@Override
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case 0x01:
+				Toast.makeText(getApplicationContext(), "与服务器连接中断！",
+						Toast.LENGTH_LONG).show();
+				break;
+			}
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		AppManager.getAppManager().addActivity(this);
 
 		receiver = new MainActivityReceiver();
 		IntentFilter filter = new IntentFilter();
@@ -106,23 +109,45 @@ public class MainActivity extends Activity {
 										String ip_port = et_Ip.getText()
 												.toString().trim();
 
-										if (et_Ip.getText().toString().trim()
-												.contains(":")) {
-											editor.putString("ip", ip_port
-													.substring(0, ip_port
-															.indexOf(":")));
-											editor.putInt(
-													"port",
-													Integer.valueOf(ip_port.substring(
-															ip_port.indexOf(":") + 1,
-															ip_port.length())));
+										if (ip_port.contains(":")) {
+											String ip = ip_port.substring(0,
+													ip_port.indexOf(":"));
+											String port = ip_port.substring(
+													ip_port.indexOf(":") + 1,
+													ip_port.length());
+											if (CoverUtils.isIp(ip) == true) {
+												editor.putString("ip", ip);
+											} else {
+												Toast.makeText(
+														getApplicationContext(),
+														"ip地址有误请重新输入。",
+														Toast.LENGTH_SHORT)
+														.show();
+												return;
+											}
+											if (CoverUtils.isNumeric(port)) {
+												editor.putInt("port",
+														Integer.valueOf(port));
+											} else {
+												Toast.makeText(
+														getApplicationContext(),
+														"端口有误请重新输入。",
+														Toast.LENGTH_SHORT)
+														.show();
+												return;
+											}
+											// editor.putInt(
+											// "port",
+											// Integer.valueOf(ip_port.substring(
+											// ip_port.indexOf(":") + 1,
+											// ip_port.length())));
 											// 本地化 下次从文件读取一下 getString
 											editor.commit();
 											Intent serviceIntent = new Intent();
 											serviceIntent.setClass(
 													MainActivity.this,
 													InternetService.class);
-											finish();
+											// finish();
 											stopService(serviceIntent);
 											try {
 												Thread.sleep(1500);
@@ -149,11 +174,15 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				userName = et_username.getText().toString().trim();
 				password = et_password.getText().toString();
-				// userName = "13468833168";
-				// password = "1234";
-				if (userName == null || password == null) {
+
+				// test
+				// Intent intentCoverList = new Intent();
+				// intentCoverList.setClass(MainActivity.this, CoverList.class);
+				// startActivity(intentCoverList);
+				if (userName.equals("") || password.equals("")) {
 					Toast.makeText(getApplicationContext(), "用户名或密码不能为空",
 							Toast.LENGTH_SHORT).show();
+					return;
 				}
 				String msg = userName + password;
 				int length = 7 + msg.length();
@@ -165,11 +194,39 @@ public class MainActivity extends Activity {
 						.bytes2HexString(checkMsg));
 				msgAsk.check[0] = str_[str_.length - 1];
 				msgAsk.check[1] = str_[str_.length - 2];
-				// setNotify();
+				// 判断服务是否在运行
+				if (!CoverUtils.isServiceRunning(getApplicationContext(),
+						"com.cover.service.InternetService")) {
+					Intent i = new Intent();
+					i.setClass(MainActivity.this, InternetService.class);
+					startService(i);
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 				sendMessage(msgAsk, ACTION);
+				new Thread(new ThreeSecond()).start();
 			}
 		});
-		AppManager.getAppManager().addActivity(this);
+	}
+
+	private class ThreeSecond implements Runnable {
+
+		@Override
+		public void run() {
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (flagIsReceivedMsg == false) {
+				// setNotify("网络连接异常", "与服务器链接异常中断");
+				handler.sendEmptyMessage(0x01);
+			}
+		}
+
 	}
 
 	public void sendMessage(Message msg, String action) {
@@ -230,6 +287,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			recv = intent.getByteArrayExtra("msg");
+			flagIsReceivedMsg = true;
 			if (recv[0] == 0x03) {
 				switch (recv[1]) {
 				case 0x01:
@@ -242,8 +300,8 @@ public class MainActivity extends Activity {
 					}
 					editor.putString("username", userName);
 					editor.commit();
-					context.startActivity(i);
 					finish();
+					context.startActivity(i);
 					break;
 				case 0x02:
 					Toast.makeText(context, "用户名或密码错误", Toast.LENGTH_LONG)
@@ -256,8 +314,9 @@ public class MainActivity extends Activity {
 					editor.commit();
 					Intent i1 = new Intent();
 					i1.setClass(context, CoverList.class);
-					startActivity(i1);
+					i1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 					finish();
+					startActivity(i1);
 					break;
 				default:
 					Log.w(TAG, "wrong code");

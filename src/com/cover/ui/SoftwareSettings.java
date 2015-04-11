@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -32,7 +33,7 @@ import com.wxq.covers.R;
 public class SoftwareSettings extends Activity implements OnClickListener {
 	private static final String TAG = "cover";
 	private final String ACTION = "com.cover.service.IntenetService";
-	private RelativeLayout rlIp;
+	private LinearLayout rlIp;
 	private ImageView back;
 	private Switch swAlarm;
 	private ImageView ivSwitch;
@@ -44,8 +45,9 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.software_settings);
+		AppManager.getAppManager().addActivity(this);
 
-		rlIp = (RelativeLayout) findViewById(R.id.rl_ip);
+		rlIp = (LinearLayout) findViewById(R.id.rl_ip);
 		back = (ImageView) findViewById(R.id.setting_back);
 		swAlarm = (Switch) findViewById(R.id.alarm_switch);
 		ivSwitch = (ImageView) findViewById(R.id.iv_switch);
@@ -66,10 +68,10 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 		else {
 			swAlarm.setChecked(false);
 		}
-		tvIP.setText(CoverUtils.getStringSharedP(getApplicationContext(), "ip")+":"
+		tvIP.setText(CoverUtils.getStringSharedP(getApplicationContext(), "ip")
+				+ ":"
 				+ CoverUtils.getIntSharedP(getApplicationContext(), "port"));
 
-		AppManager.getAppManager().addActivity(this);
 	}
 
 	public static class SoftwareSettingsReceiver extends BroadcastReceiver {
@@ -161,16 +163,38 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 											.trim();
 									if (et_Ip.getText().toString().trim()
 											.contains(":")) {
-										CoverUtils.putString2SharedP(
-												getApplicationContext(), "ip",
-												tvIP.getText().toString()
-														.trim());
-										CoverUtils.putInt2SharedP(
-												getApplicationContext(),
-												"port",
-												Integer.valueOf(ip_port.substring(
-														ip_port.indexOf(":") + 1,
-														ip_port.length())));
+										// 验证ip
+										String ip = ip_port.substring(0,
+												ip_port.indexOf(":"));
+										String port = ip_port.substring(
+												ip_port.indexOf(":") + 1,
+												ip_port.length());
+										if (CoverUtils.isIp(ip) == true) {
+											CoverUtils.putString2SharedP(
+													getApplicationContext(),
+													"ip", ip);
+
+										} else {
+											Toast.makeText(
+													getApplicationContext(),
+													"ip地址不正确请重新输入。",
+													Toast.LENGTH_SHORT).show();
+											return;
+										}
+										if (CoverUtils.isNumeric(port)) {
+											// 验证端口
+											CoverUtils.putInt2SharedP(
+													getApplicationContext(),
+													"port",
+													Integer.valueOf(port));
+										} else {
+											Toast.makeText(
+													getApplicationContext(),
+													"端口有误请重新输入。",
+													Toast.LENGTH_SHORT).show();
+											return;
+										}
+
 										Intent serviceIntent = new Intent();
 										serviceIntent.setClass(
 												SoftwareSettings.this,
@@ -182,14 +206,15 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 											e.printStackTrace();
 										}
 										startService(serviceIntent);
-										Intent intent = new Intent();
-										intent.setClass(SoftwareSettings.this,
-												MainActivity.class);
-										startActivity(intent);
+										// Intent intent = new Intent();
+										// intent.setClass(SoftwareSettings.this,
+										// MainActivity.class);
+										// startActivity(intent);
 									} else {
 										Toast.makeText(getApplicationContext(),
 												"格式不正确,请重新输入  IP：PORT",
 												Toast.LENGTH_SHORT).show();
+										return;
 									}
 								}
 
@@ -204,6 +229,7 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 			Intent intent = new Intent();
 			intent.setClass(SoftwareSettings.this, MainActivity.class);
 			startActivity(intent);
+			finish();
 			break;
 		case R.id.iv_exit:
 			// Toast.makeText(this, "退出", 0).show();
@@ -217,6 +243,8 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 								@Override
 								public void onClick(DialogInterface dialog,
 										int which) {
+									// AppManager.getAppManager().AppExit(
+									// getApplicationContext());
 									Message msg = new Message();
 									msg.data = CoverUtils
 											.getStringSharedP(
@@ -231,7 +259,10 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 											.bytes2HexString(checkMsg));
 									msg.check[0] = str_[str_.length - 1];
 									msg.check[1] = str_[str_.length - 2];
+									AppManager.getAppManager().AppExit(
+											SoftwareSettings.this);
 									sendMessage(msg, ACTION);
+									// finish();
 								}
 
 							}).setNegativeButton("取消", null).show();

@@ -129,6 +129,30 @@
                 android:textColor="#8a8a8a"
                 android:textSize="15sp" />
         </RelativeLayout>
+        
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:id="@+id/rl_alarm_time" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:text="报警时间："
+                android:textColor="#3e3e3e"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tv_datetime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text=""
+                android:textColor="#8a8a8a"
+                android:textSize="15sp" />
+        </RelativeLayout>
 
         <ImageView
             android:clickable="true"
@@ -152,6 +176,7 @@
         android:layout_width="match_parent"
         android:layout_gravity="bottom"
         android:layout_marginBottom="4dp"
+        android:orientation="horizontal"
         >
         <ImageView 
             android:clickable="true"

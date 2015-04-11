@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
@@ -44,7 +45,10 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);// 去掉信息栏
 		setContentView(R.layout.welcome);
+		AppManager.getAppManager().addActivity(this);
 
 		startService(new Intent(WelcomeActivity.this, InternetService.class));
 		Log.i("cover", "start service");
@@ -53,7 +57,6 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 				R.anim.welcome_animation);
 		welcomeView.startAnimation(welAnimation);
 		welAnimation.setAnimationListener(this);
-		AppManager.getAppManager().addActivity(this);
 	}
 
 	@Override
@@ -69,18 +72,18 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 		if ((cbIsRemeber == true) && (userName != "") && (password != "")) {
 			Intent intent = new Intent();
 			intent.setClass(WelcomeActivity.this, CoverList.class);
-			startActivity(intent);
 			finish();
+			startActivity(intent);
 		} else {
 			Intent intent = new Intent(this, MainActivity.class);
-			startActivity(intent);
 			finish();
+			startActivity(intent);
 		}
 	}
 
 	@Override
 	public void onAnimationRepeat(Animation animation) {
-		
+
 	}
 
 	@Override

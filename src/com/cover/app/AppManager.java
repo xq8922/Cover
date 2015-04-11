@@ -62,7 +62,7 @@ public class AppManager {
 	 */
 	public void finishActivity(Activity activity) {
 		if (activity != null) {
-			activityStack.remove(activity);
+//			activityStack.remove(activity);
 			activity.finish();
 			activity = null;
 		}
@@ -85,7 +85,8 @@ public class AppManager {
 	public void finishAllActivity() {
 		for (int i = 0, size = activityStack.size(); i < size; i++) {
 			if (null != activityStack.get(i)) {
-				activityStack.get(i).finish();
+//				activityStack.get(i).finish();
+				finishActivity(activityStack.get(i));
 			}
 		}
 		activityStack.clear();
@@ -94,6 +95,7 @@ public class AppManager {
 	/**
 	 * 退出应用程序
 	 */
+	@SuppressWarnings("deprecation")
 	public void AppExit(Context context) {
 		try {
 			finishAllActivity();

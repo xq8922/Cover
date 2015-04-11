@@ -10,13 +10,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,14 +26,13 @@ import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
 import com.cover.dbhelper.Douyatech;
 import com.cover.fragment.MapFragment;
-import com.cover.ui.ParamSettingActivity.Timer;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
 
 public class Detail extends Activity implements OnClickListener {
 	private static final String TAG = "cover";
-	public static final int MINITE = 60 * 1000 * 5;
+	public static final int MINITE = 60 * 1000 * 30;
 	private Entity entity;
 	private TextView tvId;
 	private ImageView ivState;
@@ -43,9 +42,11 @@ public class Detail extends Activity implements OnClickListener {
 	private ImageView back;
 	static ImageView ivReparing;
 	static ImageView ivFinish;
+	static TextView tvDatetime;
 	// private ImageView ivLeave;
 	private ImageView ivParam;
 	private ImageView ivEnterMap;
+	private RelativeLayout rlAlarmTime;
 	private static MapFragment mapFragment;
 	private final String ACTION = "com.cover.service.IntenetService";
 	Message msg = new Message();
@@ -63,6 +64,7 @@ public class Detail extends Activity implements OnClickListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.detail);
+		AppManager.getAppManager().addActivity(this);
 
 		douyadb = new Douyatech(this);
 		entity = (Entity) getIntent().getExtras().getSerializable("entity");
@@ -72,11 +74,13 @@ public class Detail extends Activity implements OnClickListener {
 		tvId = (TextView) findViewById(R.id.tv_id_detail);
 		ivState = (ImageView) findViewById(R.id.iv_state_detail);
 		tvLocation = (TextView) findViewById(R.id.tv_location_detail);
+		rlAlarmTime = (RelativeLayout) findViewById(R.id.rl_alarm_time);
 
 		ivReparing = (ImageView) findViewById(R.id.iv_reparing);
 		ivFinish = (ImageView) findViewById(R.id.iv_finish);
 		ivParam = (ImageView) findViewById(R.id.iv_param);
 		ivEnterMap = (ImageView) findViewById(R.id.iv_entermap_detail);
+		tvDatetime = (TextView) findViewById(R.id.tv_datetime);
 
 		ivReparing.setOnClickListener(this);
 		ivFinish.setOnClickListener(this);
@@ -95,7 +99,10 @@ public class Detail extends Activity implements OnClickListener {
 			ivState.setImageResource(R.drawable.state_normal);
 			break;
 		case EXCEPTION_1:
-			ivState.setImageResource(R.drawable.state_alarm);
+			if (entity.getTag().equals("cover")) {
+				ivState.setImageResource(R.drawable.cover_exception_move);
+			} else
+				ivState.setImageResource(R.drawable.water_exception_move);
 			break;
 		case EXCEPTION_2:
 			ivState.setImageResource(R.drawable.state_less_pressure);
@@ -113,22 +120,6 @@ public class Detail extends Activity implements OnClickListener {
 			ivState.setImageResource(R.drawable.state_reparing);
 			break;
 		}
-		// if (Status.NORMAL == entity.getStatus()) {
-		// ivState.setImageResource(R.drawable.state_normal);
-		// } else if (Status.REPAIR == entity.getStatus()) {
-		// ivState.setImageResource(R.drawable.state_reparing);
-		// } else if (Status.EXCEPTION_1 == entity.getStatus()) {
-		// ivState.setImageResource(R.drawable.state_alarm);
-		// } else if (Status.EXCEPTION_2 == entity.getStatus()) {
-		// ivState.setImageResource(R.drawable.state_less_pressure);
-		// } else if (Status.EXCEPTION_3 == entity.getStatus()) {
-		// // if(Status.EXCEPTION_3 == entity.getStatus())
-		// ivState.setImageResource(R.drawable.state_alarm_less_pressure);
-		// } else if ((Status.SETTING_FINISH == entity.getStatus())) {
-		// ivState.setImageResource(R.drawable.state_leaving);
-		// } else if ((Status.SETTING_PARAM == entity.getStatus())) {
-		// ivState.setImageResource(R.drawable.state_setting);
-		// }
 		tvLocation.setText(new java.text.DecimalFormat("#.000000")
 				.format(entity.getLatitude())
 				+ " "
@@ -140,11 +131,24 @@ public class Detail extends Activity implements OnClickListener {
 			@Override
 			public void onClick(View v) {
 				onBackPressed();
+				// startActivity(new Intent(Detail.this,CoverList.class));
 			}
 		});
-		// sendFailUnAlarm(entity);
-
-		AppManager.getAppManager().addActivity(this);
+		if (entity.getStatus() == Status.NORMAL
+				|| entity.getStatus() == Status.SETTING_FINISH
+				|| entity.getStatus() == Status.SETTING_PARAM
+				|| entity.getTag().equals("level")) {
+			ivFinish.setImageResource(R.drawable.iv_leave_normal_2);
+		}
+		if (entity.getStatus() == Status.EXCEPTION_1
+				|| entity.getStatus() == Status.EXCEPTION_2
+				|| entity.getStatus() == Status.EXCEPTION_3) {
+			sendAskForTime(entity);
+			// 定时器到点未显示则提示未设置
+		} else {
+			rlAlarmTime.setVisibility(View.GONE);
+		}
+		// setUnAlarm(entity);
 	}
 
 	@Override
@@ -163,16 +167,16 @@ public class Detail extends Activity implements OnClickListener {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				if (!flagIsSetSuccess) {
-					sendFailUnAlarm(entity);
-					Looper.prepare();
-					hander.sendEmptyMessage(11);
-					if (douyadb.isExist("leave",
-							entity.getTag() + "_" + entity.getId())) {
-						douyadb.delete("leave",
-								entity.getTag() + "_" + entity.getId());
-					}
+				// if (!flagIsSetSuccess) {
+				// sendFailUnAlarm(entity);
+				// Looper.prepare();
+				// hander.sendEmptyMessage(11);
+				if (douyadb.isExist("leave",
+						entity.getTag() + "_" + entity.getId())) {
+					douyadb.delete("leave",
+							entity.getTag() + "_" + entity.getId());
 				}
+				// }
 			}
 		}
 	}
@@ -190,6 +194,22 @@ public class Detail extends Activity implements OnClickListener {
 				break;
 			case 0x07:// begin repair
 				Toast.makeText(context, "开始维修命令发送成功", Toast.LENGTH_LONG).show();
+				break;
+			case 0x18:
+				if (recv.length != 23) {
+					Toast.makeText(context, "接收时间格式有误", Toast.LENGTH_SHORT)
+							.show();
+					return;
+				} else {
+					byte[] datetime = new byte[19];
+					for (int i = 4, j = 0; i < recv.length; i++) {
+						datetime[j++] = recv[i];
+					}
+					String dt = new String(datetime);
+					// 显示时间
+					tvDatetime.setText(dt);
+				}
+
 				break;
 			}
 		}
@@ -285,14 +305,42 @@ public class Detail extends Activity implements OnClickListener {
 		sendMessage(msg, ACTION);
 	}
 
-	public void setUnAlarm(Entity entity) {
+	public void sendAskForTime(Entity entity) {
+		// 终端报警解除失败 0x13 App->Server ID 、设备类型
 		byte[] b = CoverUtils.short2ByteArray(entity.getId());
 		byte[] t = new byte[3];
 		t[0] = b[0];
 		t[1] = b[1];
 		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
-		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10,
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x17,
 				CoverUtils.short2ByteArray((short) (7 + 3)), t);
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
+				.msg2ByteArrayExcepteCheck(msg)));
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
+		sendMessage(msg, ACTION);
+	}
+
+	public void setUnAlarm(Entity entity) {
+
+		TelephonyManager phoneMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		// String localTelNum = CoverUtils.getTelNum(getApplicationContext());
+		String localTelNum = phoneMgr.getLine1Number();
+		String username = CoverUtils.getStringSharedP(getApplicationContext(),
+				"username");
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3 + username.length() + username.length()];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
+		byte[] temp = (username + username).getBytes();
+		int k = 3;
+		for (byte b1 : temp) {
+			t[k++] = b1;
+		}
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x10, CoverUtils
+				.short2ByteArray((short) (7 + 3 + username.length() + username
+						.length())), t);
 		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
 				.msg2ByteArrayExcepteCheck(msg)));
 		msg.check[0] = check[check.length - 1];

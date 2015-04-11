@@ -1,27 +1,23 @@
 package com.cover.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
-
-import com.cover.bean.Entity;
-import com.cover.bean.Message;
-import com.cover.ui.Detail;
-import com.wxq.covers.R;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
+
+import com.cover.bean.Message;
 
 public class CoverUtils {
 
@@ -179,6 +175,32 @@ public class CoverUtils {
 			return false;
 		}
 
+	}
+
+	/**
+	 * 用来判断服务是否运行.
+	 * 
+	 * @param context
+	 * @param className
+	 *            判断的服务名字
+	 * @return true 在运行 false 不在运行
+	 */
+	public static boolean isServiceRunning(Context mContext, String className) {
+		boolean isRunning = false;
+		ActivityManager activityManager = (ActivityManager) mContext
+				.getSystemService(Context.ACTIVITY_SERVICE);
+		List<ActivityManager.RunningServiceInfo> serviceList = activityManager
+				.getRunningServices(100);
+		if (!(serviceList.size() > 0)) {
+			return false;
+		}
+		for (int i = 0; i < serviceList.size(); i++) {
+			if (serviceList.get(i).service.getClassName().equals(className) == true) {
+				isRunning = true;
+				break;
+			}
+		}
+		return isRunning;
 	}
 
 	/**
@@ -364,47 +386,31 @@ public class CoverUtils {
 	}
 	
 	/**
-	 * set notify
+	 * get telephone number
+	 * @param context
+	 * @return
 	 */
-	public void setNotify(Entity entity) {
-//		// 创建一个NotificationManager的引用
-//		String ns = Context.NOTIFICATION_SERVICE;
-//		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
-//		// 定义Notification的各种属性
-//		int icon = R.drawable.icon; // 通知图标
-//		CharSequence tickerText = "报警信息"; // 状态栏显示的通知文本提示
-//		long when = System.currentTimeMillis(); // 通知产生的时间，会在通知信息里显示
-//		// 用上面的属性初始化 Nofification
-//		Notification notification = new Notification(icon, tickerText, when);
-//		// 添加声音
-//		if (CoverUtils.getIntSharedP(getApplicationContext(), "setAlarmOrNot") == 1)
-//			notification.defaults |= Notification.DEFAULT_ALL;
-//		notification.defaults |= Notification.DEFAULT_LIGHTS;
-//		notification.flags |= Notification.FLAG_AUTO_CANCEL;
-//
-//		/*
-//		 * 更多的特征属性 notification.flags |= FLAG_AUTO_CANCEL; //在通知栏上点击此通知后自动清除此通知
-//		 * 
-//		 * notification.flags |= FLAG_ONGOING_EVENT;
-//		 * //将此通知放到通知栏的"Ongoing"即"正在运行"组中 notification.flags |= FLAG_NO_CLEAR;
-//		 * //表明在点击了通知栏中的"清除通知"后，此通知不清除， //经常与FLAG_ONGOING_EVENT一起使用
-//		 * notification.number = 1; //number字段表示此通知代表的当前事件数量，它将覆盖在状态栏图标的顶部
-//		 * //如果要使用此字段，必须从1开始 notification.iconLevel = ; //
-//		 */
-//		// 设置通知的事件消息
-//		Context context = getApplicationContext(); // 上下文
-//		CharSequence contentTitle = entity.getTag() + entity.getId(); // 通知栏标题
-//		CharSequence contentText = entity.getLatitude() + ","
-//				+ entity.getLongtitude(); // 通知栏内容
-//
-//		Intent notificationIntent = new Intent(this, Detail.class); // 点击该通知后要跳转的Activity
-//		notificationIntent.putExtra("entity", entity);
-//		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-//				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-//		notification.setLatestEventInfo(context, contentTitle, contentText,
-//				contentIntent);
-//		// 把Notification传递给 NotificationManager
-//		mNotificationManager.notify(0, notification);
+	public static String getTelNum(Context context){
+		TelephonyManager phoneMgr=(TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+		return phoneMgr.getLine1Number();
 	}
 
+	public static boolean isIp(String addr) {
+		String ip = "([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}";
+		Pattern pattern = Pattern.compile(ip);
+		Matcher matcher = pattern.matcher(addr);
+		return matcher.matches();
+	}
+	
+	public static boolean isNumeric(String str) {
+        String regEx = "^-?[0-9]+$";
+        Pattern pat = Pattern.compile(regEx);
+        Matcher mat = pat.matcher(str);
+        if (mat.find()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
 }

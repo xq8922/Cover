@@ -3,18 +3,17 @@ package com.cover.fragment;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import android.app.Fragment;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.baidu.location.LocationClient;
 import com.baidu.mapapi.SDKInitializer;
@@ -22,7 +21,6 @@ import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.BaiduMap.OnMarkerClickListener;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
-import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
@@ -72,20 +70,7 @@ public class MapFragment extends Fragment {
 				LatLng point = new LatLng(tempEntity.getLatitude(),
 						tempEntity.getLongtitude());
 				// 构建Marker图标
-				BitmapDescriptor bitmap;
-				switch (tempEntity.getStatus()) {
-				case REPAIR:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.red_small);
-					break;
-				case NORMAL:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_green_small);
-					break;
-				default:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_yellow_small);
-				}
+				BitmapDescriptor bitmap = getBitmap(tempEntity);
 				// 构建MarkerOption，用于在地图上添加Marker
 				OverlayOptions option = new MarkerOptions().position(point)
 						.icon(bitmap);
@@ -106,21 +91,7 @@ public class MapFragment extends Fragment {
 				Entity tempEntity2 = it2.next();
 				LatLng point = new LatLng(tempEntity2.getLatitude(),
 						tempEntity2.getLongtitude());
-				// 构建Marker图标
-				BitmapDescriptor bitmap;
-				switch (tempEntity2.getStatus()) {
-				case REPAIR:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.red_small);
-					break;
-				case NORMAL:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_green_small);
-					break;
-				default:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_yellow_small);
-				}
+				BitmapDescriptor bitmap = getBitmap(tempEntity2);
 				OverlayOptions option = new MarkerOptions().position(point)
 						.icon(bitmap);
 				mBaiduMap.addOverlay(option);
@@ -137,21 +108,7 @@ public class MapFragment extends Fragment {
 				Entity tempEntity3 = it3.next();
 				LatLng point = new LatLng(tempEntity3.getLatitude(),
 						tempEntity3.getLongtitude());
-				// 构建Marker图标
-				BitmapDescriptor bitmap;
-				switch (tempEntity3.getStatus()) {
-				case REPAIR:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.red_small);
-					break;
-				case NORMAL:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_green_small);
-					break;
-				default:
-					bitmap = BitmapDescriptorFactory
-							.fromResource(R.drawable.map_yellow_small);
-				}
+				BitmapDescriptor bitmap = getBitmap(tempEntity3);
 				// 构建MarkerOption，用于在地图上添加Marker
 				OverlayOptions option = new MarkerOptions().position(point)
 						.icon(bitmap).title("cover");
@@ -192,20 +149,53 @@ public class MapFragment extends Fragment {
 			mBaiduMap.addOverlay(option);
 			// 改变地图状态
 			mBaiduMap.setMapStatus(mMapStatusUpdate);
-
+			break;
 		}
+	}
+
+	private BitmapDescriptor getBitmap(Entity tempEntity) {
+		BitmapDescriptor bitmap;
+		switch (tempEntity.getStatus()) {
+		case REPAIR:
+			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover")) {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_yellow_small);
+			} else {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_repair);
+			}
+			break;
+		case NORMAL:
+			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover")) {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_green_small);
+			}else if(tempEntity.getId() > 15 && tempEntity.getTag().equals("cover")){
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.cover2_normal);
+			}else{
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.water2_normal);
+			}
+			break;
+		default:
+			if(tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover"))
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
+			else{
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.map_warn);
+			}
+			break;
+		}
+		return bitmap;
 	}
 
 	private void getDatas() {
 		for (int i = 0; i < (16 - 1) / 5; i++) {
 			if (i <= 1) {
-				Entity entity = new Entity((short) 1, Status.REPAIR,
-						"水位", 34.26667, 108.95000);
+				Entity entity = new Entity((short) 1, Status.REPAIR, "水位",
+						34.26667, 108.95000);
 				waterItems.add(entity);
 				items.add(entity);
 			} else {
-				Entity entity = new Entity((short) 2, Status.NORMAL,
-						"井盖", 34.26667 + 0.1 * new Random().nextFloat(),
+				Entity entity = new Entity((short) 2, Status.NORMAL, "井盖",
+						34.26667 + 0.1 * new Random().nextFloat(),
 						108.95000 + 0.1 * new Random().nextFloat());
 				coverItems.add(entity);
 				items.add(entity);
@@ -225,9 +215,9 @@ public class MapFragment extends Fragment {
 		mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);// normal view
 
 		// 设定中心点坐标
-		LatLng cenpt = new LatLng(34.26667, 108.95000);
+		LatLng cenpt = new LatLng(34.217625, 108.883721);
 		// 定义地图状态
-		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
+		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(13)
 				.build();
 		// 定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
 		MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory
@@ -245,78 +235,67 @@ public class MapFragment extends Fragment {
 		items = CoverList.items;
 		waterItems = CoverList.waterItems;
 		coverItems = CoverList.coverItems;
+		// this.update(CoverList.flagChecked);
+		// ((CoverList) getActivity()).setChecked(CoverList.flagChecked);
 	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		((CoverList) getActivity()).setAllChecked();
-		// 全部显示
-		Entity e = CoverList.entity;
-		if (e == null) {
-			Log.i(TAG, "test entity is null");
-			Iterator<Entity> it = items.iterator();
-			while (it.hasNext()) {
-				Entity tempEntity = it.next();
-				LatLng point = new LatLng(tempEntity.getLatitude(),
-						tempEntity.getLongtitude());
-				// 构建Marker图标
-				BitmapDescriptor bitmap = BitmapDescriptorFactory
-						.fromResource(R.drawable.red_small);
-				try {
-					switch (tempEntity.getStatus()) {
-					case REPAIR:
-						bitmap = BitmapDescriptorFactory
-								.fromResource(R.drawable.map_yellow_small);
-						break;
-					case NORMAL:
-						bitmap = BitmapDescriptorFactory
-								.fromResource(R.drawable.map_green_small);
-						break;
-					default:
-						bitmap = BitmapDescriptorFactory
-								.fromResource(R.drawable.red_small);
-					}
-				} catch (NullPointerException e1) {
-					e1.printStackTrace();
-				}
-				// 构建MarkerOption，用于在地图上添加Marker
-				OverlayOptions option = new MarkerOptions().position(point)
-						.icon(bitmap);
-				// 在地图上添加Marker，并显示
-				mBaiduMap.addOverlay(option);
-
-				// TextView location = new TextView(getActivity());
-				// location.setText(tempEntity.getTag() + "，" +
-				// tempEntity.getId());
-				// location.setTextColor(Color.BLACK);
-				// InfoWindow info = new InfoWindow(location, new LatLng(
-				// tempEntity.getLatitude(), tempEntity.getLongtitude()), -40);
-				// mBaiduMap.showInfoWindow(info);
-				// Marker m = Marker.
-				markerEntity1.put(point, tempEntity);
-				mBaiduMap.setMyLocationEnabled(true);
-				// for (Entity element : items) {
-				// TextView location = new TextView(getActivity());
-				// location.setText(element.getTag() + "，" + element.getId());
-				// location.setTextColor(Color.BLACK);
-				// InfoWindow info = new InfoWindow(location, new LatLng(
-				// element.getLatitude(), element.getLongtitude()), -40);
-				// mBaiduMap.showInfoWindow(info);
-				// }
-			}
-		} else {
-			Log.i(TAG, "test entity is not null" + e);
-			LatLng point = new LatLng(e.getLatitude(), e.getLongtitude());
+		// ((CoverList) getActivity()).setChecked(CoverList.flagChecked);
+		CoverList.setChecked(CoverList.flagChecked);
+		this.update(CoverList.flagChecked);
+		List<Entity> tempItems = new ArrayList<Entity>();
+		switch (CoverList.flagChecked) {
+		case 0:
+			tempItems = items;
+			break;
+		case 1:
+			tempItems = waterItems;
+			break;
+		case 2:
+			tempItems = coverItems;
+			break;
+		case 3:
+			tempItems = nullItems;
+			break;
+		}
+		Iterator<Entity> it = tempItems.iterator();
+		while (it.hasNext()) {
+			Entity tempEntity = it.next();
+			LatLng point = new LatLng(tempEntity.getLatitude(),
+					tempEntity.getLongtitude());
 			// 构建Marker图标
-			BitmapDescriptor bitmap = BitmapDescriptorFactory
-					.fromResource(R.drawable.red_small);
+			BitmapDescriptor bitmap = null;
+			try {
+				bitmap = getBitmap(tempEntity);
+			} catch (NullPointerException e1) {
+				e1.printStackTrace();
+			}
 			// 构建MarkerOption，用于在地图上添加Marker
 			OverlayOptions option = new MarkerOptions().position(point).icon(
 					bitmap);
 			// 在地图上添加Marker，并显示
 			mBaiduMap.addOverlay(option);
-			CoverList.entity = null;
+
+			// TextView location = new TextView(getActivity());
+			// location.setText(tempEntity.getTag() + "，" +
+			// tempEntity.getId());
+			// location.setTextColor(Color.BLACK);
+			// InfoWindow info = new InfoWindow(location, new LatLng(
+			// tempEntity.getLatitude(), tempEntity.getLongtitude()), -40);
+			// mBaiduMap.showInfoWindow(info);
+			// Marker m = Marker.
+			markerEntity1.put(point, tempEntity);
+			mBaiduMap.setMyLocationEnabled(true);
+			// for (Entity element : items) {
+			// TextView location = new TextView(getActivity());
+			// location.setText(element.getTag() + "，" + element.getId());
+			// location.setTextColor(Color.BLACK);
+			// InfoWindow info = new InfoWindow(location, new LatLng(
+			// element.getLatitude(), element.getLongtitude()), -40);
+			// mBaiduMap.showInfoWindow(info);
+			// }
 		}
 		mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
 

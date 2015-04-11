@@ -11,11 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
@@ -29,7 +25,6 @@ import com.cover.bean.Entity;
 import com.cover.bean.Entity.Status;
 import com.cover.bean.Message;
 import com.cover.dbhelper.Douyatech;
-import com.cover.ui.Detail.Timer;
 import com.cover.util.CRC16M;
 import com.cover.util.CoverUtils;
 import com.wxq.covers.R;
@@ -49,15 +44,15 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private RelativeLayout rlAlarmTime;
 	private RelativeLayout rlAlarmAngle;
 
-	private TextView tvAlarmAngle;
-	private TextView tvAlarmTime;
-	private TextView tvAlarmFreq;
+	private static TextView tvAlarmAngle;
+	private static TextView tvAlarmTime;
+	private static TextView tvAlarmFreq;
 	private ImageView update;
 	private short angle = 10;
 	private short time = 20;
 	private short alarmFrequency = 10;
 	private short seconfAlarm = 100;
-	final static int MINITE = 1000 * 60 * 5;
+	final static int MINITE = 1000 * 60 * 100;
 	public static boolean flagIsSetSuccess = false;
 	private boolean flagThreadIsStart = false;
 	Douyatech douyadb = null;
@@ -67,14 +62,30 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			setNotify(entity);
 		};
 	};
+	public static Entity staticEntity = null;
+	public static Context myContext;
+
+	private static Handler handlerStatic = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case 0x20:
+				Toast.makeText(myContext, "接收参数有误！", Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.paramsetting);
+		AppManager.getAppManager().addActivity(this);
 
+		myContext = getApplicationContext();
 		douyadb = new Douyatech(this);
 		entity = (Entity) getIntent().getExtras().getSerializable("entity");
+		staticEntity = entity;
+		// 请求参数信息
+		sendAskForParams(entity);
 		tvFrequencyAlarm = (TextView) findViewById(R.id.tv_frequency_alarm);
 		back = (ImageView) findViewById(R.id.setting_param_back);
 		ivType = (ImageView) findViewById(R.id.iv_type_param);
@@ -118,9 +129,6 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		// byte[] checkMsg = new byte[3 + msg.length()];
 		// msgAsk.check = CoverUtils.genCRC(checkMsg, checkMsg.length);
 		// sendMessage()
-
-		AppManager.getAppManager().addActivity(this);
-
 	}
 
 	@Override
@@ -139,15 +147,15 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				if (!flagIsSetSuccess) {
-					sendFailSetting(entity);
-					hander.sendEmptyMessage(11);
-					if (douyadb.isExist("setting", entity.getTag() + "_"
-							+ entity.getId())) {
-						douyadb.delete("setting", entity.getTag() + "_"
-								+ entity.getId());
-					}
+				// if (!flagIsSetSuccess) {
+				// // sendFailSetting(entity);
+				// hander.sendEmptyMessage(11);
+				if (douyadb.isExist("setting",
+						entity.getTag() + "_" + entity.getId())) {
+					douyadb.delete("setting",
+							entity.getTag() + "_" + entity.getId());
 				}
+				// }
 			}
 		}
 	}
@@ -169,12 +177,30 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		sendMessage(msg, ACTION);
 	}
 
+	public void sendAskForParams(Entity entity) {
+		// 终端报警解除失败 0x13 App->Server ID 、设备类型
+		Message msg = new Message();
+		byte[] b = CoverUtils.short2ByteArray(entity.getId());
+		byte[] t = new byte[3];
+		t[0] = b[0];
+		t[1] = b[1];
+		t[2] = entity.getTag().equals("level") ? (byte) 0x2C : (byte) 0x10;
+		msg = CoverUtils.makeMessageExceptCheck((byte) 0x15,
+				CoverUtils.short2ByteArray((short) (7 + 3)), t);
+		byte[] check = CRC16M.getSendBuf(CoverUtils.bytes2HexString(CoverUtils
+				.msg2ByteArrayExcepteCheck(msg)));
+		msg.check[0] = check[check.length - 1];
+		msg.check[1] = check[check.length - 2];
+		sendMessage(msg, ACTION);
+	}
+
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.setting_param_back:
 			// 1.保存所做的修改
 			onBackPressed();
+			finish();
 			break;
 		case R.id.rl_alarm_angle:
 			final EditText et_Ip1 = new EditText(this);
@@ -333,7 +359,8 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			byte[] recv = intent.getByteArrayExtra("msg");
-			if (recv[0] == 0x05) {
+			switch (recv[0]) {
+			case 0x05:
 				int length = 4;
 				if (recv[3] == 0x01) {
 					Toast.makeText(context, "命令设置成功", Toast.LENGTH_LONG).show();
@@ -352,12 +379,33 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 							.show();
 				}
 				// 需要在刷新列表的时候检测是否超限
-			} else if (recv[0] == 0x09) {
+			case 0x09:
 				Toast.makeText(context, "终端参数设置命令发送成功", Toast.LENGTH_SHORT)
 						.show();
+				break;
+			case 0x16:
+				if (recv.length != 9) {
+					handlerStatic.sendEmptyMessage(0x02);
+					return;
+				}
+				int alarmAngle = recv[4];
+				byte[] tmp = new byte[2];
+				tmp[0] = recv[5];
+				tmp[1] = recv[6];
+				int timing = CoverUtils.getShort(tmp);
+				tmp[0] = recv[7];
+				tmp[1] = recv[8];
+				int frequency = CoverUtils.getShort(tmp);
+				if (staticEntity.getTag().equals("cover")) {
+					tvAlarmAngle.setText(alarmAngle + "度");
+					tvAlarmTime.setText(timing + "小时");
+					tvAlarmFreq.setText(frequency + "分钟");
+				} else {
+					tvAlarmTime.setText(timing + "小时");
+					tvAlarmFreq.setText(frequency + "分钟");
+				}
 			}
 		}
-
 	}
 
 	public void setNotify(Entity entity) {

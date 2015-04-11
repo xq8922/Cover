@@ -7,101 +7,105 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_coverhead"
-         >
+        android:layout_height="60dp"
+        android:background="@drawable/bg_coverhead" >
+        
+        <ImageView
+            android:id="@+id/iv_reload"
+            android:layout_width="70dp"
+            android:layout_height="60dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:clickable="true"
+            android:padding="18dp"
+            android:src="@drawable/selector_refresh" />
 
         <ImageView
-            android:padding="18dp"
-            android:clickable="true"
             android:id="@+id/setting"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
+            android:clickable="true"
+            android:padding="18dp"
             android:src="@drawable/selector_setting" />
 
         <LinearLayout
-            android:layout_marginRight="20dp"
-            android:layout_centerInParent="true"
             android:id="@+id/rg_cover"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
+            android:layout_centerInParent="true"
+            android:layout_marginRight="20dp"
             android:orientation="horizontal" >
 
             <CheckBox
-                android:checked="true"
-                android:padding="5dp"
-                android:paddingRight="20dp"
-                android:layout_gravity="center"
                 android:id="@+id/cb_water"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:button="@null"
-                android:drawableRight="@drawable/selector_water" />
+                android:checked="true"
+                android:drawableRight="@drawable/selector_water"
+                android:padding="5dp"
+                android:paddingRight="20dp" />
 
             <CheckBox
-                android:checked="true"
-                android:layout_marginLeft="20dp"
-                android:padding="5dp"
-                android:layout_gravity="center"
                 android:id="@+id/cb_cover"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="20dp"
                 android:button="@null"
-                android:drawableLeft="@drawable/selector_cover" />
+                android:checked="true"
+                android:drawableLeft="@drawable/selector_cover"
+                android:padding="5dp" />
         </LinearLayout>
-
     </RelativeLayout>
 
-    <FrameLayout 
+    <FrameLayout
         android:id="@+id/contain"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="100"
         android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        >
-        
+        android:paddingRight="5dp" >
     </FrameLayout>
-<!--     <ListView -->
-<!--         android:id="@+id/lv_coverlist_cover" -->
-<!--         android:layout_width="match_parent" -->
-<!--         android:layout_height="0dp" -->
-<!--         android:layout_weight="100" -->
-<!--         android:paddingLeft="5dp" -->
-<!--         android:paddingRight="5dp" -->
-<!--         android:scrollbars="@null" /> -->
-<!--         android:divider="#ccc" -->
-<!--         android:dividerHeight="dp" -->
-
-
+    <!-- <ListView -->
+    <!-- android:id="@+id/lv_coverlist_cover" -->
+    <!-- android:layout_width="match_parent" -->
+    <!-- android:layout_height="0dp" -->
+    <!-- android:layout_weight="100" -->
+    <!-- android:paddingLeft="5dp" -->
+    <!-- android:paddingRight="5dp" -->
+    <!-- android:scrollbars="@null" /> -->
+    <!-- android:divider="#ccc" -->
+    <!-- android:dividerHeight="dp" -->
 
     <RadioGroup
-        android:background="@drawable/bg_coverbottom"
         android:id="@+id/rg_bottom_cover"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:layout_marginBottom="3dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="1dp"
+        android:background="@drawable/bg_coverbottom"
         android:gravity="center"
         android:orientation="horizontal" >
 
         <RadioButton
             android:id="@+id/rb_list"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:button="@null"
-            android:layout_marginRight="30dp"
+            android:layout_marginRight="10dp"
             android:layout_weight="1"
+            android:button="@null"
             android:drawableRight="@drawable/selector_list" />
 
         <RadioButton
-            android:layout_weight="1"
-            android:layout_marginLeft="30dp"
             android:id="@+id/rb_map"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="1"
             android:button="@null"
             android:drawableLeft="@drawable/selector_map" />
     </RadioGroup>

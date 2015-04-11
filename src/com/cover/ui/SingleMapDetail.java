@@ -41,6 +41,7 @@ public class SingleMapDetail extends Activity {
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.map_detail);
+		AppManager.getAppManager().addActivity(this);
 
 		back = (ImageView) findViewById(R.id.back);
 		entity = (Entity) getIntent().getExtras().getSerializable("entity");
@@ -55,18 +56,7 @@ public class SingleMapDetail extends Activity {
 			entity.setStatus(Status.NORMAL);
 			flag_status = 1;
 		}
-		switch (entity.getStatus()) {
-		case REPAIR:
-			bitmap = BitmapDescriptorFactory
-					.fromResource(R.drawable.map_yellow_small);
-			break;
-		case NORMAL:
-			bitmap = BitmapDescriptorFactory
-					.fromResource(R.drawable.map_green_small);
-			break;
-		default:
-			bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
-		}
+		bitmap = getBitmap(entity);
 		// 构建MarkerOption，用于在地图上添加Marker
 		OverlayOptions option = new MarkerOptions().position(cenpt)
 				.icon(bitmap);
@@ -108,7 +98,7 @@ public class SingleMapDetail extends Activity {
 		mBaiduMap.showInfoWindow(info);
 
 		// 定义地图状态
-		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(12)
+		MapStatus mMapStatus = new MapStatus.Builder().target(cenpt).zoom(24)
 				.build();
 		// 定义MapStatusUpdate对象，以便描述地图状态将要发生的变化
 		MapStatusUpdate mMapStatusUpdate = MapStatusUpdateFactory
@@ -141,9 +131,42 @@ public class SingleMapDetail extends Activity {
 			}
 		});
 
-		AppManager.getAppManager().addActivity(this);
 	}
 
+	private BitmapDescriptor getBitmap(Entity tempEntity) {
+		BitmapDescriptor bitmap;
+		switch (tempEntity.getStatus()) {
+		case REPAIR:
+			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover")) {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_yellow_small);
+			} else {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_repair);
+			}
+			break;
+		case NORMAL:
+			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover")) {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_green_small);
+			}else if(tempEntity.getId() > 15 && tempEntity.getTag().equals("cover")){
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.cover2_normal);
+			}else{
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.water2_normal);
+			}
+			break;
+		default:
+			if(tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover"))
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
+			else{
+				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.map_warn);
+			}
+			break;
+		}
+		return bitmap;
+	}
+
+	
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();

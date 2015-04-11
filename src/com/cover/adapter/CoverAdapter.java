@@ -2,21 +2,15 @@ package com.cover.adapter;
 
 import java.util.List;
 
-import com.cover.bean.Entity;
-import com.cover.bean.Entity.Status;
-import com.wxq.covers.R;
-
 import android.content.Context;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.AbsoluteSizeSpan;
-import android.text.style.UpdateAppearance;
-import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.cover.bean.Entity;
+import com.wxq.covers.R;
 
 public class CoverAdapter extends BaseAdapter {
 
@@ -50,7 +44,6 @@ public class CoverAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-
 		View view = View.inflate(context, R.layout.item_listview, null);
 		ImageView ivType = (ImageView) view.findViewById(R.id.iv_type);
 		TextView ivName = (TextView) view.findViewById(R.id.tv_name);
@@ -61,23 +54,24 @@ public class CoverAdapter extends BaseAdapter {
 		} else {
 			ivType.setImageResource(R.drawable.cover);
 		}
-		ivName.setText((entity.getTag().equals("level")?"水位":"井盖") + "-" + entity.getId());
-//		if (Status.SETTING_FINISH == entity.getStatus()) {
-//			String string = entity.getTag() + "-" + entity.getId();
-//			SpannableString builder = new SpannableString(string);
-//			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
-//					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//			ivName.setText(builder);
-//			ivName.setText(string);
-//		} else if (Status.SETTING_PARAM == entity.getStatus()) {
-//			String string = entity.getTag() + "-" + entity.getId();
-//			SpannableString builder = new SpannableString(string);
-//			builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
-//					string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//			ivName.setText(builder);
-//			ivName.setText(string);
-//		}
-//if(entity)
+		ivName.setText((entity.getTag().equals("level") ? "水位" : "井盖") + "-"
+				+ entity.getId());
+		// if (Status.SETTING_FINISH == entity.getStatus()) {
+		// String string = entity.getTag() + "-" + entity.getId();
+		// SpannableString builder = new SpannableString(string);
+		// builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
+		// string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		// ivName.setText(builder);
+		// ivName.setText(string);
+		// } else if (Status.SETTING_PARAM == entity.getStatus()) {
+		// String string = entity.getTag() + "-" + entity.getId();
+		// SpannableString builder = new SpannableString(string);
+		// builder.setSpan(new AbsoluteSizeSpan(14), string.length() - 4,
+		// string.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		// ivName.setText(builder);
+		// ivName.setText(string);
+		// }
+		// if(entity)
 		switch (entity.getStatus()) {
 		case NORMAL:
 			ivState.setImageResource(R.drawable.state_normal);
@@ -86,7 +80,11 @@ public class CoverAdapter extends BaseAdapter {
 			ivState.setImageResource(R.drawable.state_reparing);
 			break;
 		case EXCEPTION_1:
-			ivState.setImageResource(R.drawable.state_alarm);
+			if (entity.getTag().equals("cover")) {
+				ivState.setImageResource(R.drawable.cover_exception_move);
+			} else {
+				ivState.setImageResource(R.drawable.water_exception_move);
+			}
 			break;
 		case EXCEPTION_2:
 			ivState.setImageResource(R.drawable.state_less_pressure);
