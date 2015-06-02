@@ -230,13 +230,9 @@ public class InternetService extends Service implements Runnable {
 			Log.i(TAG, "socket is connectted");
 		} catch (SocketException e) {
 			flagConnectionOutOnce++;
-			// if (flagConnectionOutOnce == 5)
-			// handler.sendEmptyMessage(0x07);
-			// flagConnectionOutOnce = false;
 			Log.v(TAG, "time out");
 			e.printStackTrace();
 			workStatus = e.toString();
-			// return;
 		} catch (IOException e) {
 			Log.v(TAG, "time out");
 			e.printStackTrace();
@@ -256,66 +252,41 @@ public class InternetService extends Service implements Runnable {
 		}
 	}
 
+	int countOfUrgent = 0;
+
 	@Override
 	public void run() {
 		connectService();
 		int interval = 0;
 		while (true) {
 			if (flagKillThread == true) {
-				// flagKill
 				break;
 			}
-
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			countOfUrgent++;
+			if (countOfUrgent == 2) {
+				try {
+					socket.sendUrgentData(0x01);
+				} catch (IOException e) {
+					connectService();
+					Log.i(TAG, "连接服务器---服务中断");
+				}
+				countOfUrgent = 0;
 			}
 			// 检测网络是否异常
 			if (!CoverUtils.isNetworkAvailable(getApplication())) {
-				Log.i("test", "测试网络异常");
-				// handler.sendEmptyMessage(0x20);
 				countNetUnavail++;
-				if (countNetUnavail == 8) {
-					flagSocketSuccess = false;
-					// 判断当前页面是否登录页面，
-					// handler.sendEmptyMessage(0x20);
-					// setNotify("服务器连接中断", "网络异常");
-					try {
-						socket.getInputStream().close();
-						// socket.getOutputStream().close();
-						// socket.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						// socket.getInputStream().close();
-						socket.getOutputStream().close();
-						// socket.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						// socket.getInputStream().close();
-						// socket.getOutputStream().close();
-						socket.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					stopSelf();
-					flagKillThread = true;
-					// handler.sendEmptyMessage(0x20);
-				}
-			} else {// 有异常超过三次连接不上
-				Log.i("test", "测试网络");
+				flagSocketSuccess = false;
+			} else {// 有网络异常
 				if (countNetUnavail != 0) {
-					connectService();
+					// connectService();
+					Log.i(TAG, "连接服务器---网络恢复");
 					if (flagSocketSuccess = true) {
 						// 发送请求全部数据
 						sendAskList();
+						countNetUnavail = 0;
 					}
 				}
-				countNetUnavail = 0;
+
 			}
 
 			if (socket.isConnected()) {
@@ -324,36 +295,10 @@ public class InternetService extends Service implements Runnable {
 					msg = "appheartbeat!".getBytes();
 					sendMessage(msg);
 					Log.i("chaoshi", "心跳包");
-					try {
-						socket.sendUrgentData(0x01);
-					} catch (IOException e) {
-						connectService();
-						count2++;
-						if (count2 == 3) {
-							// setNotify("服务器连接中断", "网络异常");
-							try {
-								socket.getInputStream().close();
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-							try {
-								socket.getOutputStream().close();
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-							try {
-								socket.close();
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-							stopSelf();
-							flagKillThread = true;
-						}
-					}
 					interval = 0;
 				}
-				if (!socket.isInputShutdown() && socket.isConnected()
-						&& !socket.isOutputShutdown()) {
+
+				if (!socket.isInputShutdown()) {
 					if (!flagReaderThread) {
 						new Thread(new Reader()).start();
 						flagReaderThread = true;
@@ -362,7 +307,6 @@ public class InternetService extends Service implements Runnable {
 				if (msg != null && flag_send) {
 					sendMessage(msg);
 					flag_send = false;
-					// Log.i(TAG, "message send to server .");
 				}
 				count = 0;
 				count2 = 0;
@@ -370,40 +314,27 @@ public class InternetService extends Service implements Runnable {
 				count++;
 				if (msg != null) {
 					if (msg[4] == (byte) 0x12) {
-						flagKillThread = true;
-						AppManager.getAppManager().AppExit(
-								getApplicationContext());
-						this.stopSelf();
+						// flagKillThread = true;
+						// msg = null;
+						// AppManager.getAppManager().AppExit(
+						// getApplicationContext());
+						// this.stopSelf();
 					}
 				}
-				try {
-					socket.getInputStream().close();
-				} catch (IOException e) {
-					e.printStackTrace();
+				if (flagSocketSuccess == false) {
+					connectService();
+					Log.i(TAG, "连接服务器---connection failed");
 				}
-				try {
-					socket.getOutputStream().close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				try {
-					socket.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				connectService();
 				handler.sendEmptyMessage(0x08);
 				if (count == 10) {
-					// handler.sendEmptyMessage(0x01);
-					// Intent i = new Intent();
-					// i.setClass(this, MainActivity.class);
-					// i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					// startActivity(i);
 					handler.sendEmptyMessage(0x07);
-					// setNotify("网络连接异常", "网络连接中断");
-					// stopSelf();
-					// break;
+
 				}
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -412,57 +343,46 @@ public class InternetService extends Service implements Runnable {
 
 		@Override
 		public void run() {
-			// flagReaderThread = true;
 			DataInputStream bufferedReader = null;
 			try {
 				bufferedReader = new DataInputStream(socket.getInputStream());
-				Message msg = new Message();
 				int size = 0;
-				byte[] headerBuff = new byte[2];
-				size = bufferedReader.read(headerBuff);
-
-				if (!((headerBuff[0] == (byte) 0xFA) && (headerBuff[1] == (byte) 0xF5))) {
+				byte[] total = new byte[1000];
+				size = bufferedReader.read(total);
+				if (size < 7) {
 					flagReaderThread = false;
 					return;
 				}
-				if (!flagReaderThread) {
-
-				}
-				byte[] length = new byte[2];
-				size = bufferedReader.read(length);
-				byte[] length_temp = new byte[2];
-				for (int i = 0; i < length.length; i++) {
-					length_temp[i] = length[i];
-				}
+				if (!((total[0] == (byte) 0xFA) && (total[1] == (byte) 0xF5))) {
+					flagReaderThread = false;
+					return;
+				}// 头
+				
+				Log.i(TAG, "收到信息");
+				Message msg = new Message();
+				byte[] length = new byte[2];// 总长度
+				length[0] = total[2];
+				length[1] = total[3];
+				msg.length[0] = total[2];
+				msg.length[1] = total[3];
 				int msgLength = CoverUtils.getShort(length, true);
-				System.out.println(msgLength - 6);
-				byte[] msgBuff = new byte[msgLength - 6];
-				size = bufferedReader.read(msgBuff);
-
-				byte[] checkBuf = new byte[2];
-				size = bufferedReader.read(checkBuf);
-
+				int num = 4;
+				byte[] msgBuff = new byte[msgLength - 6];// 消息和功能码
+				msg.data = new byte[msgBuff.length - 1];
+				for (int i = 0; i < msgLength - 6; i++) {
+					if (i == 0) {
+						msg.function = total[num];
+					} else {
+						msg.data[i - 1] = total[num];
+					}
+					msgBuff[i] = total[num++];
+				}
+				byte[] checkBuf = new byte[2];// 校验位
+				checkBuf[0] = total[num++];
+				checkBuf[1] = total[num];
 				msg.check[0] = checkBuf[0];
 				msg.check[1] = checkBuf[1];
-				byte[] totalMsg = new byte[msgLength];
-				int j = 0;
-				totalMsg[j++] = (byte) 0xFA;
-				totalMsg[j++] = (byte) 0xF5;
-				for (int i = 0; i < length.length; i++) {
-					totalMsg[j++] = length_temp[i];
-					msg.length[i] = length_temp[i];
-				}
-				msg.data = new byte[msgBuff.length - 1];
-				for (int i = 0, k = 0; i < msgBuff.length; i++) {
-					totalMsg[j++] = msgBuff[i];
-					if (i == 0)
-						msg.function = msgBuff[i];
-					else {
-						msg.data[k++] = msgBuff[i];
-					}
-				}
-				totalMsg[j++] = checkBuf[0];
-				totalMsg[j++] = checkBuf[1];
+
 				byte[] checkMsg = CoverUtils.msg2ByteArrayExcepteCheck(msg);
 				byte[] str_ = CRC16M.getSendBuf(CoverUtils
 						.bytes2HexString(checkMsg));
@@ -472,179 +392,183 @@ public class InternetService extends Service implements Runnable {
 				if ((check_temp[0] == msg.check[0])
 						&& (check_temp[1] == msg.check[1])) {
 					Log.i(TAG, "check right");
-					// if
-					// (CRC16M.checkBuf(CoverUtils.msg2ByteArrayExceptHeader(msg)))
-					// {
-					switch (msgBuff[0]) {
-					case 0x01: {// 需要处理报警信息ack
-						// sendAskList();
-						flag_notify++;
-						byte[] idByte = new byte[2];
-						Entity entity = new Entity();
-						int i = 0;
-						idByte[1] = msgBuff[i++ + 1];
-						idByte[0] = msgBuff[i++ + 1];
-						entity.setId(CoverUtils.getShort(idByte));
-						entity.setTag(msgBuff[i++ + 1] == (byte) 0x10 ? "cover"
-								: "level");
-						byte[] longTi = new byte[8];
-						for (int k = 0, t = i; i < t + 8; i++) {
-							longTi[k++] = msgBuff[i + 1];
-						}
-						byte[] laTi = new byte[8];
-						for (int k = 0, t = i; i < t + 8; i++) {
-							laTi[k++] = msgBuff[i + 1];
-						}
-						entity.setLongtitude(CoverUtils.byte2Double(longTi));
-						entity.setLatitude(CoverUtils.byte2Double(laTi));
-						switch (msgBuff[i++ + 1]) {
-						case 0x01:
-							entity.setStatus(Status.NORMAL);
-							break;
-						case 0x02:
-							entity.setStatus(Status.EXCEPTION_1);
-							break;
-						case 0x03:
-							entity.setStatus(Status.REPAIR);
-							break;
-						case 0x04:
-							entity.setStatus(Status.EXCEPTION_2);
-							break;
-						case 0x05:
-							entity.setStatus(Status.EXCEPTION_3);
-							break;
-						case 0x06:// 处理接收到撤防或者0x07的设置中时，删除数据路相应条目
-							entity.setStatus(Status.SETTING_FINISH);
-							break;
-						case 0x07:
-							entity.setStatus(Status.SETTING_PARAM);
-							break;
-						}
-						// 处理若有从撤防中状态改变成正常状态
-						if (douyadb.isExist("leave", entity.getTag() + "_"
-								+ entity.getId())) {
-							Detail.flagIsSetSuccess = true;
-							if (douyadb.isExist("leave", entity.getTag() + "_"
-									+ entity.getId()))
-								douyadb.delete("leave", entity.getTag() + "_"
-										+ entity.getId());
-						}
-						if (douyadb.isExist("setting", entity.getTag() + "_"
-								+ entity.getId())) {
-							ParamSettingActivity.flagIsSetSuccess = true;
-							if (douyadb.isExist("setting", entity.getTag()
-									+ "_" + entity.getId()))
-								douyadb.delete("setting", entity.getTag() + "_"
-										+ entity.getId());
-						}
-						setNotify(entity, "报警信息");
-						// byte[] ackAlert = new byte[] { (byte) 0xFA,
-						// (byte) 0xF5, (byte) 0x00, (byte) 0x07,
-						// (byte) 0x0A };
-						// byte[] checkAck = CRC16M.getSendBuf(CoverUtils
-						// .bytes2HexString(ackAlert));
-						// sendMessage(checkAck);
-						if (douyadb.exist(entity.getTag(), entity.getId() + "")) {
-							douyadb.updateStatus(entity.getId(),
-									entity.getTag(), entity.getStatus());
-						}
-						break;
-					}
-					case 0x02: {
-						// sendAskList();
-						flag_notify++;
-						Entity entity = new Entity();
-						byte[] b = new byte[2];
-						b[1] = msgBuff[1];
-						b[0] = msgBuff[2];
-						String title = (msgBuff[3] == (byte) 0x1C ? "水位" : "井盖");
-						entity.setId(CoverUtils.getShort(b));
-						entity.setTag(title);
-						byte[] lati = new byte[8];
-						byte[] lonti = new byte[8];
-						int j1 = 4;
-						for (int i = 0; i < 8; i++) {
-							lonti[i] = msgBuff[j1++];
-						}
-						for (int i = 0; i < 8; i++) {
-							lati[i] = msgBuff[j1++];
-						}
-						entity.setLatitude(CoverUtils.byte2Double(lati));
-						entity.setLongtitude(CoverUtils.byte2Double(lonti));
-						setNotify(entity, "终端信息改变");
-						if (douyadb.exist(entity.getTag(), entity.getId() + "")) {
-							douyadb.updateLatLon(entity.getTag(),
-									entity.getId(), entity.getLongtitude(),
-									entity.getLatitude());
-						}
-						break;
-					}
-					case 0x03: {
+					if (msgBuff[0] == 0x03) {
 						getMessage(msgBuff, ACTION_MainActivity);
 						getMessage(msgBuff, ACTION_CoverList);
-						break;
-					}
-					case 0x04: {
-						getMessage(msgBuff, ACTION_CoverList);
-						break;
-					}
-					case 0x05: {
-						// 终端参数设置回复，应该显示到通知栏
-						// getMessage(msgBuff, ACTION_Paramsetting);
-						// sendAskList();
-						ParamSettingActivity.flagIsSetSuccess = true;
-						Entity entity = new Entity();
-						byte[] b = new byte[2];
-						b[0] = msgBuff[1];
-						b[1] = msgBuff[2];
-						String title = (msgBuff[3] == (byte) 0x10 ? "井盖 "
-								: "水位 ");
-						entity.setId(CoverUtils.getShort(b));
-						entity.setTag(title);
-						if (msgBuff[3] == (byte) 0x02) {
-							setNotify(entity.getTag() + "_" + entity.getId(),
-									"设置失败");
-						} else {
-							setNotify(entity.getTag() + "_" + entity.getId(),
-									"设置成功");
-						}
-						if (douyadb.isExist("setting", entity.getTag() + "_"
-								+ entity.getId())
-								&& (entity.getStatus() == Status.NORMAL)) {
-							ParamSettingActivity.flagIsSetSuccess = true;
+					} else if (sp.getString("username", "") != "") {
+						switch (msgBuff[0]) {
+						case 0x01: {// 需要处理报警信息ack
+//							sendAskList();
+							flag_notify++;
+							byte[] idByte = new byte[2];
+							Entity entity = new Entity();
+							int i = 0;
+							idByte[1] = msgBuff[i++ + 1];
+							idByte[0] = msgBuff[i++ + 1];
+							entity.setId(CoverUtils.getShort(idByte));
+							entity.setTag(msgBuff[i++ + 1] == (byte) 0x10 ? "cover"
+									: "level");
+							byte[] longTi = new byte[8];
+							for (int k = 0, t = i; i < t + 8; i++) {
+								longTi[k++] = msgBuff[i + 1];
+							}
+							byte[] laTi = new byte[8];
+							for (int k = 0, t = i; i < t + 8; i++) {
+								laTi[k++] = msgBuff[i + 1];
+							}
+							entity.setLongtitude(CoverUtils.byte2Double(longTi));
+							entity.setLatitude(CoverUtils.byte2Double(laTi));
+							switch (msgBuff[i++ + 1]) {
+							case 0x01:
+								entity.setStatus(Status.NORMAL);
+								break;
+							case 0x02:
+								entity.setStatus(Status.EXCEPTION_1);
+								break;
+							case 0x03:
+								entity.setStatus(Status.REPAIR);
+								break;
+							case 0x04:
+								entity.setStatus(Status.EXCEPTION_2);
+								break;
+							case 0x05:
+								entity.setStatus(Status.EXCEPTION_3);
+								break;
+							case 0x06:// 处理接收到撤防或者0x07的设置中时，删除数据路相应条目
+								entity.setStatus(Status.SETTING_FINISH);
+								break;
+							case 0x07:
+								entity.setStatus(Status.SETTING_PARAM);
+								break;
+							}
+							// 处理若有从撤防中状态改变成正常状态
+							if (douyadb.isExist("leave", entity.getTag() + "_"
+									+ entity.getId())) {
+								Detail.flagIsSetSuccess = true;
+								if (douyadb.isExist("leave", entity.getTag()
+										+ "_" + entity.getId()))
+									douyadb.delete("leave", entity.getTag()
+											+ "_" + entity.getId());
+							}
 							if (douyadb.isExist("setting", entity.getTag()
-									+ "_" + entity.getId()))
-								douyadb.delete("setting", entity.getTag() + "_"
-										+ entity.getId());
+									+ "_" + entity.getId())) {
+								ParamSettingActivity.flagIsSetSuccess = true;
+								if (douyadb.isExist("setting", entity.getTag()
+										+ "_" + entity.getId()))
+									douyadb.delete("setting", entity.getTag()
+											+ "_" + entity.getId());
+							}
+							setNotify(entity, "信息");
+							if (douyadb.exist(entity.getTag(), entity.getId()
+									+ "")) {
+								douyadb.updateStatus(entity.getId(),
+										entity.getTag(), entity.getStatus());
+							}
+							break;
 						}
-						break;
-					}
-					case 0x06:
-					case 0x07:
-						getMessage(msgBuff, ACTION_Detail);
-						break;
-					case 0x09:
-						getMessage(msgBuff, ACTION_Settings);
-						break;
-					case 0x0A:// 报警解除失败命令接收成功的ACK信息
-						handler.sendEmptyMessage(0x11);
-						break;
-					case 0x0B:// 终端参数设置失败命令接收成功的ACK信息
-						handler.sendEmptyMessage(0x12);
-						break;
-					case 0x16:
-						getMessage(msgBuff, ACTION_Settings);
-						break;
-					case 0x18:
-						getMessage(msgBuff, ACTION_Detail);
-						break;
-					default:
-						handler.sendEmptyMessage(0x10);
-						break;
+						case 0x02: {
+							// sendAskList();
+							flag_notify++;
+							Entity entity = new Entity();
+							byte[] b = new byte[2];
+							b[1] = msgBuff[1];
+							b[0] = msgBuff[2];
+							String title = (msgBuff[3] == (byte) 0x1C ? "水位"
+									: "井盖");
+							entity.setId(CoverUtils.getShort(b));
+							entity.setTag(title);
+							byte[] lati = new byte[8];
+							byte[] lonti = new byte[8];
+							int j1 = 4;
+							for (int i = 0; i < 8; i++) {
+								lonti[i] = msgBuff[j1++];
+							}
+							for (int i = 0; i < 8; i++) {
+								lati[i] = msgBuff[j1++];
+							}
+							entity.setLatitude(CoverUtils.byte2Double(lati));
+							entity.setLongtitude(CoverUtils.byte2Double(lonti));
+							setNotify(entity, "终端信息改变");
+							if (douyadb.exist(entity.getTag(), entity.getId()
+									+ "")) {
+								douyadb.updateLatLon(entity.getTag(),
+										entity.getId(), entity.getLongtitude(),
+										entity.getLatitude());
+							}
+							break;
+						}
+						case 0x03: {
+							getMessage(msgBuff, ACTION_MainActivity);
+							getMessage(msgBuff, ACTION_CoverList);
+							break;
+						}
+						case 0x04: {
+							getMessage(msgBuff, ACTION_CoverList);
+							break;
+						}
+						case 0x05: {
+							// 终端参数设置回复，应该显示到通知栏
+							// getMessage(msgBuff, ACTION_Paramsetting);
+							// sendAskList();
+							ParamSettingActivity.flagIsSetSuccess = true;
+							Entity entity = new Entity();
+							byte[] b = new byte[2];
+							b[0] = msgBuff[1];
+							b[1] = msgBuff[2];
+							String title = (msgBuff[3] == (byte) 0x10 ? "井盖 "
+									: "水位 ");
+							entity.setId(CoverUtils.getShort(b));
+							entity.setTag(title);
+							if (msgBuff[3] == (byte) 0x02) {
+								setNotify(
+										entity.getTag() + "_" + entity.getId(),
+										"设置失败");
+							} else {
+								setNotify(
+										entity.getTag() + "_" + entity.getId(),
+										"设置成功");
+							}
+							if (douyadb.isExist("setting", entity.getTag()
+									+ "_" + entity.getId())
+									&& (entity.getStatus() == Status.NORMAL)) {
+								ParamSettingActivity.flagIsSetSuccess = true;
+								if (douyadb.isExist("setting", entity.getTag()
+										+ "_" + entity.getId()))
+									douyadb.delete("setting", entity.getTag()
+											+ "_" + entity.getId());
+							}
+							break;
+						}
+						case 0x06:
+							getMessage(msgBuff,ACTION_Detail);
+							break;
+						case 0x07:
+							getMessage(msgBuff, ACTION_Detail);
+							break;
+						case 0x09:
+							getMessage(msgBuff, ACTION_Settings);
+							break;
+						case 0x0A:// 报警解除失败命令接收成功的ACK信息
+							handler.sendEmptyMessage(0x11);
+							break;
+						case 0x0B:// 终端参数设置失败命令接收成功的ACK信息
+							handler.sendEmptyMessage(0x12);
+							break;
+						case 0x16:
+							getMessage(msgBuff, ACTION_Settings);
+							break;
+						case 0x18:
+							getMessage(msgBuff, ACTION_Detail);
+							break;
+						default:
+							handler.sendEmptyMessage(0x10);
+							break;
+						}
 					}
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
+				flagReaderThread = false;
 			}
 			flagReaderThread = false;
 		}
@@ -756,6 +680,7 @@ public class InternetService extends Service implements Runnable {
 		}
 		thread = new Thread(InternetService.this);
 		thread.start();
+
 		super.onCreate();
 	}
 
@@ -763,6 +688,7 @@ public class InternetService extends Service implements Runnable {
 	public void onDestroy() {
 		try {
 			socket.close();
+			socket = null;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -780,6 +706,16 @@ public class InternetService extends Service implements Runnable {
 			thread = new Thread(InternetService.this);
 			thread.start();
 		}
+		// setNotify(new
+		// Entity((short)(1),Status.EXCEPTION_1,"cover",34.2343,113.0982),
+		// "消息");
+		// test
+		// {
+		// Entity e = new Entity((short)
+		// 1,Status.EXCEPTION_1,"cover",34.199800,108.895728);
+		// setNotify(e, "test");
+		// }
+
 		super.onStart(intent, startId);
 	}
 

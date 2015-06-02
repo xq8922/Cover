@@ -125,6 +125,7 @@ public class CoverList extends Activity implements OnClickListener {
 
 	// 每个两分钟刷新一次
 	public static Context myContext;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -164,31 +165,50 @@ public class CoverList extends Activity implements OnClickListener {
 		cbWater.setOnCheckedChangeListener(cbChangeListener);
 		cbCover.setOnCheckedChangeListener(cbChangeListener);
 		rgBottom.setOnCheckedChangeListener(rgChangeListener);
-		//
-		// mListView = (PullToRefreshListView) findViewById(R.id.list_view);
-		// mListView.setMode(Mode.PULL_FROM_START);
-		// mListView.setOnRefreshListener(new OnRefreshListener<ListView>() {
-		//
-		// @Override
-		// public void onRefresh(PullToRefreshBase<ListView> refreshView) {
-		// // 下拉的时候数据重置
-		//
-		// // mAdapter.notifyDataSetChanged();
-		// //
-		// // new FinishRefresh().execute();
-		// }
-		//
-		// });
-		// new Thread(new ThreeSecond()).start();
 		sendAsk();
-		// if (CoverUtils.getBooleanSharedP(getApplicationContext(), "isremem"))
 		rgBottom.check(R.id.rb_list);
 	}
 
 	@Override
 	protected void onStart() {
 		super.onStart();
-		getDataFromDB();
+		new MapRefresh().execute();
+		// getDataFromDB();
+	}
+
+	private class MapRefresh extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected Void doInBackground(Void... params) {
+			// getDataFromDB();
+			ArrayList<Entity> alTemp = new ArrayList<Entity>();
+			alTemp = (ArrayList<Entity>) douyadb.queryAll();
+			if (alTemp != null) {
+				items.clear();
+				waterItems.clear();
+				coverItems.clear();
+				for (Entity entity : alTemp) {
+					if (entity.getTag().equals("cover")) {
+						coverItems.add(entity);
+						items.add(entity);
+					} else {
+						waterItems.add(entity);
+						items.add(entity);
+					}
+				}
+			}
+			// sort items
+			items = (ArrayList<Entity>) sortList(items);
+			waterItems = (ArrayList<Entity>) sortList(waterItems);
+			coverItems = (ArrayList<Entity>) sortList(coverItems);
+			// getDatas();
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			listFragment.firstData();
+			mapFragment.firstData();
+		}
 	}
 
 	private static void getDataFromDB() {
@@ -215,7 +235,6 @@ public class CoverList extends Activity implements OnClickListener {
 		// getDatas();
 		listFragment.firstData();
 		mapFragment.firstData();
-		// setAllChecked();
 	}
 
 	static List<Entity> sortList(List<Entity> items) {
@@ -358,6 +377,15 @@ public class CoverList extends Activity implements OnClickListener {
 				flagWhitchIsCurrent = 1;
 				getFragmentManager().beginTransaction()
 						.replace(R.id.contain, listFragment).commit();
+				/*
+				 * if (!listFragment.isAdded()) {
+				 * getFragmentManager().beginTransaction()
+				 * .replace(R.id.contain, listFragment).commit();
+				 * 
+				 * } else { synchronized (this) {
+				 * getFragmentManager().beginTransaction()
+				 * .hide(mapFragment).add(listFragment, null) .commit(); } }
+				 */
 				break;
 			case R.id.rb_map:
 				// 显示地图
@@ -365,6 +393,13 @@ public class CoverList extends Activity implements OnClickListener {
 				flagWhitchIsCurrent = 2;
 				getFragmentManager().beginTransaction()
 						.replace(R.id.contain, mapFragment).commit();
+				/*
+				 * if (!mapFragment.isAdded()) {
+				 * getFragmentManager().beginTransaction()
+				 * .replace(R.id.contain, mapFragment).commit(); } else {
+				 * synchronized (this) { getFragmentManager().beginTransaction()
+				 * .hide(listFragment).add(mapFragment, null) .commit(); } }
+				 */
 				break;
 			}
 
@@ -568,14 +603,19 @@ public class CoverList extends Activity implements OnClickListener {
 	private class Refresh extends AsyncTask<Void, Void, Void> {
 		@Override
 		protected Void doInBackground(Void... params) {
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
+			int i = 0;
+			while (i++ < 150) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if (flagReceived == true) {
+					handler.sendEmptyMessage(0x10);
+					return null;
+				}
 			}
-			if (flagReceived == false) {
-				handler.sendEmptyMessage(0x20);
-			} else
-				handler.sendEmptyMessage(0x10);
+			handler.sendEmptyMessage(0x20);
 			return null;
 		}
 	}

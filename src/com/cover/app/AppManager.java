@@ -30,6 +30,13 @@ public class AppManager {
 		}
 		return instance;
 	}
+	/**
+	 * 
+	 * @return
+	 */
+	public static int getSizeOfStack(){
+		return activityStack.size();
+	}
 
 	/**
 	 * 添加Activity到堆栈
@@ -62,7 +69,7 @@ public class AppManager {
 	 */
 	public void finishActivity(Activity activity) {
 		if (activity != null) {
-//			activityStack.remove(activity);
+			activityStack.remove(activity);
 			activity.finish();
 			activity = null;
 		}
@@ -85,8 +92,7 @@ public class AppManager {
 	public void finishAllActivity() {
 		for (int i = 0, size = activityStack.size(); i < size; i++) {
 			if (null != activityStack.get(i)) {
-//				activityStack.get(i).finish();
-				finishActivity(activityStack.get(i));
+				activityStack.get(i).finish();
 			}
 		}
 		activityStack.clear();

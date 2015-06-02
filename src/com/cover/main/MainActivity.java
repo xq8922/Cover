@@ -311,12 +311,13 @@ public class MainActivity extends Activity {
 					// Toast.makeText(context, "用户已登录",
 					// Toast.LENGTH_LONG).show();
 					editor.putString("username", userName);
+					editor.putString("password", password);
 					editor.commit();
 					Intent i1 = new Intent();
 					i1.setClass(context, CoverList.class);
 					i1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 					finish();
-					startActivity(i1);
+					context.startActivity(i1);
 					break;
 				default:
 					Log.w(TAG, "wrong code");

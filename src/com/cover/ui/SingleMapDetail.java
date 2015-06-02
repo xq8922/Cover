@@ -1,8 +1,10 @@
 package com.cover.ui;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
@@ -71,7 +73,10 @@ public class SingleMapDetail extends Activity {
 				status = "正常状态";
 				break;
 			case EXCEPTION_1:
-				status = "报警状态";
+				if (entity.getTag().equals("cover"))
+					status = "井盖异动";
+				else
+					status = "水位超限";
 				break;
 			case REPAIR:
 				status = "维修状态";
@@ -105,32 +110,48 @@ public class SingleMapDetail extends Activity {
 				.newMapStatus(mMapStatus);
 		// 改变地图状态
 		mBaiduMap.setMapStatus(mMapStatusUpdate);
-		mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-			@Override
-			public boolean onMarkerClick(Marker arg0) {
-				TextView location = new TextView(getApplicationContext());
-				// location.setBackgroundResource(R.drawable.cover);
-				// location.setPadding(30, 20, 30, 50);
-				location.setText((entity.getTag().equals("level") ? "水位-"
-						: "井盖-") + entity.getId());
-				location.setTextColor(Color.BLACK);
-				// location.setBackgroundColor(255);
-				// location.setBackgroundDrawable(R.drawable.bg_password_normal);
-				InfoWindow info = new InfoWindow(location, arg0.getPosition(),
-						-16);
-				mBaiduMap.showInfoWindow(info);
-				return false;
-			}
-		});
+		// mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+		// @Override
+		// public boolean onMarkerClick(Marker arg0) {
+		// TextView location = new TextView(getApplicationContext());
+		// // location.setBackgroundResource(R.drawable.cover);
+		// // location.setPadding(30, 20, 30, 50);
+		// location.setText((entity.getTag().equals("level") ? "水位-"
+		// : "井盖-") + entity.getId());
+		// location.setTextColor(Color.BLACK);
+		// // location.setBackgroundColor(255);
+		// // location.setBackgroundDrawable(R.drawable.bg_password_normal);
+		// InfoWindow info = new InfoWindow(location, arg0.getPosition(),
+		// -16);
+		// mBaiduMap.showInfoWindow(info);
+		// return false;
+		// }
+		// });
 
 		back.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				onBackPressed();
+				if (AppManager.getSizeOfStack() != 1) {
+					onBackPressed();
+				} else {
+					startActivity(new Intent(SingleMapDetail.this,CoverList.class));
+				}
 			}
 		});
 
+	}
+	
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+			if (AppManager.getSizeOfStack() != 1) {
+				onBackPressed();
+			} else {
+				startActivity(new Intent(SingleMapDetail.this,CoverList.class));
+			}
+		}
+		return false;
 	}
 
 	private BitmapDescriptor getBitmap(Entity tempEntity) {
@@ -149,24 +170,28 @@ public class SingleMapDetail extends Activity {
 			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover")) {
 				bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.map_green_small);
-			}else if(tempEntity.getId() > 15 && tempEntity.getTag().equals("cover")){
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.cover2_normal);
-			}else{
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.water2_normal);
+			} else if (tempEntity.getId() > 15
+					&& tempEntity.getTag().equals("cover")) {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.cover2_normal);
+			} else {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.water2_normal);
 			}
 			break;
 		default:
-			if(tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover"))
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
-			else{
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.map_warn);
+			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover"))
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.red_small);
+			else {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_warn);
 			}
 			break;
 		}
 		return bitmap;
 	}
 
-	
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();

@@ -157,8 +157,7 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 										int which) {
 									// 保存设置
 									// 修改显示
-									tvIP.setText(et_Ip.getText().toString()
-											.trim());
+									
 									String ip_port = et_Ip.getText().toString()
 											.trim();
 									if (et_Ip.getText().toString().trim()
@@ -194,7 +193,9 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 													Toast.LENGTH_SHORT).show();
 											return;
 										}
-
+										tvIP.setText(et_Ip.getText().toString()
+												.trim());
+										
 										Intent serviceIntent = new Intent();
 										serviceIntent.setClass(
 												SoftwareSettings.this,
@@ -226,10 +227,11 @@ public class SoftwareSettings extends Activity implements OnClickListener {
 					"");
 			CoverUtils.putString2SharedP(getApplicationContext(), "password",
 					"");
+//			finish();
+			AppManager.getAppManager().finishAllActivity();
 			Intent intent = new Intent();
 			intent.setClass(SoftwareSettings.this, MainActivity.class);
 			startActivity(intent);
-			finish();
 			break;
 		case R.id.iv_exit:
 			// Toast.makeText(this, "退出", 0).show();

@@ -48,11 +48,11 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 	private static TextView tvAlarmTime;
 	private static TextView tvAlarmFreq;
 	private ImageView update;
-	private short angle = 10;
-	private short time = 20;
-	private short alarmFrequency = 10;
-	private short seconfAlarm = 100;
-	final static int MINITE = 1000 * 60 * 100;
+	private short angle = 5;
+	private short time = 24;
+	private short alarmFrequency = 30;
+	private short seconfAlarm = 10;
+	final static int MINITE = 1000 * 60 * 60;
 	public static boolean flagIsSetSuccess = false;
 	private boolean flagThreadIsStart = false;
 	Douyatech douyadb = null;
@@ -62,6 +62,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			setNotify(entity);
 		};
 	};
+	private static boolean flagReceiveAck = false;
 	public static Entity staticEntity = null;
 	public static Context myContext;
 
@@ -97,6 +98,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 		rlAlarmTime = (RelativeLayout) findViewById(R.id.rl_alarm_time);
 		rlAlarmFreq = (RelativeLayout) findViewById(R.id.rl_alarm_freq);
 		update = (ImageView) findViewById(R.id.update);
+		update.setVisibility(View.GONE);
 		update.setOnClickListener(this);
 		rlAlarmTime.setOnClickListener(this);
 		rlAlarmAngle.setOnClickListener(this);
@@ -116,8 +118,9 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 
 		back.setOnClickListener(this);
 
+		rlAlarmAngle.setVisibility(View.GONE);
 		if (entity.getTag().equals("level")) {
-			rlAlarmAngle.setVisibility(View.GONE);
+			// rlAlarmAngle.setVisibility(View.GONE);
 			tvFrequencyAlarm.setText("二次报警");
 		}
 		// ask for result of settings
@@ -202,93 +205,141 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			onBackPressed();
 			finish();
 			break;
-		case R.id.rl_alarm_angle:
-			final EditText et_Ip1 = new EditText(this);
-			new AlertDialog.Builder(this)
-					.setTitle("报警角度")
-					.setIcon(android.R.drawable.ic_dialog_info)
-					.setView(et_Ip1)
-					.setPositiveButton(
-							"确定",
-							new android.content.DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									// 保存设置
-									// 修改显示
-									tvAlarmAngle.setText(et_Ip1.getText()
-											.toString().trim()
-											+ "度");
-									angle = Short.valueOf(et_Ip1.getText()
-											.toString().trim());
-								}
-
-							}).setNegativeButton("取消", null).show();
-			break;
-		case R.id.rl_alarm_time:
-			final EditText et_Ip2 = new EditText(this);
-			new AlertDialog.Builder(this)
-					.setTitle("定时上报")
-					.setIcon(android.R.drawable.ic_dialog_info)
-					.setView(et_Ip2)
-					.setPositiveButton(
-							"确定",
-							new android.content.DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									// 保存设置
-									// 修改显示
-									tvAlarmTime.setText(et_Ip2.getText()
-											.toString().trim()
-											+ "分钟");
-									time = Short.valueOf(et_Ip2.getText()
-											.toString().trim());
-								}
-
-							}).setNegativeButton("取消", null).show();
-			break;
-		case R.id.rl_alarm_freq:
-			final EditText et_Ip3 = new EditText(this);
-			new AlertDialog.Builder(this)
-					.setTitle("报警频率")
-					.setIcon(android.R.drawable.ic_dialog_info)
-					.setView(et_Ip3)
-					.setPositiveButton(
-							"确定",
-							new android.content.DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									// 保存设置
-									// 修改显示
-									tvAlarmFreq.setText(et_Ip3.getText()
-											.toString().trim()
-											+ "分钟");
-									alarmFrequency = Short.valueOf(et_Ip3
-											.getText().toString().trim());
-								}
-							}).setNegativeButton("取消", null).show();
-			break;
-		case R.id.update:
-			if (entity.getStatus() == Status.NORMAL) {
-				String nameID = entity.getTag() + "_" + entity.getId();
-				if (!douyadb.isExist("setting", nameID)) {
-					sendArgSettings(entity);
-					new Thread(new Timer()).start();
-					douyadb.add("setting", nameID);
-				} else {
-					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
-							Toast.LENGTH_SHORT).show();
-				}
-			} else {
-				Toast.makeText(getApplicationContext(), "当前状态下不可点击设置",
-						Toast.LENGTH_SHORT).show();
-			}
-			break;
+		// case R.id.rl_alarm_angle:
+		// final EditText et_Ip1 = new EditText(this);
+		// new AlertDialog.Builder(this)
+		// .setTitle("报警角度")
+		// .setIcon(android.R.drawable.ic_dialog_info)
+		// .setView(et_Ip1)
+		// .setPositiveButton(
+		// "确定",
+		// new android.content.DialogInterface.OnClickListener() {
+		//
+		// @Override
+		// public void onClick(DialogInterface dialog,
+		// int which) {
+		// // 保存设置
+		// // 修改显示
+		// try {
+		// angle = Short.valueOf(et_Ip1.getText()
+		// .toString().trim());
+		// tvAlarmAngle.setText(et_Ip1.getText()
+		// .toString().trim()
+		// + "度");
+		// } catch (Exception e) {
+		// Toast.makeText(getApplicationContext(),
+		// "输入有误，请重新输入报警角度。",
+		// Toast.LENGTH_SHORT).show();
+		// return;
+		// }
+		// }
+		//
+		// }).setNegativeButton("取消", null).show();
+		// break;
+		// case R.id.rl_alarm_time:
+		// final EditText et_Ip2 = new EditText(this);
+		// new AlertDialog.Builder(this)
+		// .setTitle("定时上报")
+		// .setIcon(android.R.drawable.ic_dialog_info)
+		// .setView(et_Ip2)
+		// .setPositiveButton(
+		// "确定",
+		// new android.content.DialogInterface.OnClickListener() {
+		//
+		// @Override
+		// public void onClick(DialogInterface dialog,
+		// int which) {
+		// // 保存设置
+		// // 修改显示
+		// try {
+		// time = Short.valueOf(et_Ip2.getText()
+		// .toString().trim());
+		// tvAlarmTime.setText(et_Ip2.getText()
+		// .toString().trim()
+		// + "分钟");
+		// } catch (Exception e) {
+		// Toast.makeText(getApplicationContext(),
+		// "输入有误，请重新输入定时上报时间。",
+		// Toast.LENGTH_SHORT).show();
+		// return;
+		// }
+		// }
+		//
+		// }).setNegativeButton("取消", null).show();
+		// break;
+		// case R.id.rl_alarm_freq:
+		// final EditText et_Ip3 = new EditText(this);
+		// new AlertDialog.Builder(this)
+		// .setTitle("报警频率")
+		// .setIcon(android.R.drawable.ic_dialog_info)
+		// .setView(et_Ip3)
+		// .setPositiveButton(
+		// "确定",
+		// new android.content.DialogInterface.OnClickListener() {
+		//
+		// @Override
+		// public void onClick(DialogInterface dialog,
+		// int which) {
+		// // 保存设置
+		// // 修改显示
+		//
+		// try {
+		// alarmFrequency = Short.valueOf(et_Ip3
+		// .getText().toString().trim());
+		// tvAlarmFreq.setText(et_Ip3.getText()
+		// .toString().trim()
+		// + "分钟");
+		// } catch (Exception e) {
+		// Toast.makeText(getApplicationContext(),
+		// "输入有误，请重新输入报警频率。",
+		// Toast.LENGTH_SHORT).show();
+		// return;
+		// }
+		// }
+		// }).setNegativeButton("取消", null).show();
+		// break;
+		// case R.id.update:
+		// if (entity.getStatus() == Status.NORMAL) {
+		// String nameID = entity.getTag() + "_" + entity.getId();
+		// if (!douyadb.isExist("setting", nameID)) {
+		// if (CoverUtils.isNumeric("" + alarmFrequency)
+		// && CoverUtils.isNumeric("" + angle)
+		// && CoverUtils.isNumeric("" + time))
+		// sendArgSettings(entity);
+		// else {
+		// Toast.makeText(getApplicationContext(), "输入有误，请重新输入！",
+		// Toast.LENGTH_SHORT).show();
+		// return;
+		// }
+		// // if 超时之后标志修改，则添加到数据库，否则提示
+		// synchronized (this) {
+		// flagReceiveAck = false;
+		// // 启动定时器1s
+		// try {
+		// Thread.sleep(1000);
+		// } catch (InterruptedException e) {
+		// e.printStackTrace();
+		// }
+		// if (flagReceiveAck == true) {
+		// douyadb.add("setting", nameID);
+		// new Thread(new Timer()).start();
+		// } else {
+		// Toast.makeText(getApplicationContext(), "设置失败。",
+		// Toast.LENGTH_SHORT).show();
+		// return;
+		// }
+		// }
+		// } else {
+		// Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
+		// Toast.LENGTH_SHORT).show();
+		// return ;
+		// }
+		// } else {
+		// Toast.makeText(getApplicationContext(), "当前状态下不可点击设置",
+		// Toast.LENGTH_SHORT).show();
+		// return ;
+		// }
+		// break;
 		}
 	}
 
@@ -363,6 +414,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 			case 0x05:
 				int length = 4;
 				if (recv[3] == 0x01) {
+					flagReceiveAck = true;
 					Toast.makeText(context, "命令设置成功", Toast.LENGTH_LONG).show();
 					Message msg = null;
 					msg.data = null;
@@ -404,6 +456,7 @@ public class ParamSettingActivity extends Activity implements OnClickListener {
 					tvAlarmTime.setText(timing + "小时");
 					tvAlarmFreq.setText(frequency + "分钟");
 				}
+				break;
 			}
 		}
 	}

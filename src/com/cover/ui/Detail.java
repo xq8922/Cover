@@ -1,18 +1,19 @@
 package com.cover.ui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
@@ -52,12 +53,25 @@ public class Detail extends Activity implements OnClickListener {
 	Message msg = new Message();
 	private boolean flagThreadIsStart = false;
 	public static boolean flagIsSetSuccess = false;
+	private static boolean flagRepairAck = false;
+	private static boolean flagFinishAck = false;
 	Douyatech douyadb = null;
 	int flag_notify = 0;
+	static Context detailContext = null;
 	private Handler hander = new Handler() {
 		public void handleMessage(android.os.Message msg) {
 			setNotify(entity);
 		};
+	};
+	private static Handler handlerToast = new Handler() {
+		public void handleMessage(android.os.Message msg) {
+			switch (msg.what) {
+			case 0x01:
+				Toast.makeText(detailContext, "撤防失败", Toast.LENGTH_SHORT)
+						.show();
+				break;
+			}
+		}
 	};
 
 	@Override
@@ -66,6 +80,7 @@ public class Detail extends Activity implements OnClickListener {
 		setContentView(R.layout.detail);
 		AppManager.getAppManager().addActivity(this);
 
+		detailContext = getApplicationContext();
 		douyadb = new Douyatech(this);
 		entity = (Entity) getIntent().getExtras().getSerializable("entity");
 		back = (ImageView) findViewById(R.id.back);
@@ -137,6 +152,7 @@ public class Detail extends Activity implements OnClickListener {
 		if (entity.getStatus() == Status.NORMAL
 				|| entity.getStatus() == Status.SETTING_FINISH
 				|| entity.getStatus() == Status.SETTING_PARAM
+				|| entity.getStatus() == Status.EXCEPTION_2
 				|| entity.getTag().equals("level")) {
 			ivFinish.setImageResource(R.drawable.iv_leave_normal_2);
 		}
@@ -181,6 +197,28 @@ public class Detail extends Activity implements OnClickListener {
 		}
 	}
 
+	class Timer3 implements Runnable {
+
+		@Override
+		public void run() {
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (flagFinishAck == true) {
+				String nameID = entity.getTag() + "_" + entity.getId();
+				try {
+					douyadb.add("leave", nameID);
+				} catch (Exception e) {
+				}
+				// new Thread(new Timer()).start();
+			} else {
+				handlerToast.sendEmptyMessage(0x01);
+			}
+		}
+	}
+
 	public static class DetailReceiver extends BroadcastReceiver {
 
 		@Override
@@ -189,10 +227,12 @@ public class Detail extends Activity implements OnClickListener {
 			// final int length = 1;
 			switch (recv[0]) {
 			case 0x06:// 报警解除
+				flagFinishAck = true;
 				Toast.makeText(context, "报警解除设置命令发送成功", Toast.LENGTH_LONG)
 						.show();
 				break;
 			case 0x07:// begin repair
+				flagRepairAck = true;
 				Toast.makeText(context, "开始维修命令发送成功", Toast.LENGTH_LONG).show();
 				break;
 			case 0x18:
@@ -231,29 +271,61 @@ public class Detail extends Activity implements OnClickListener {
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.id.iv_reparing:
+			// 弹出对话框
 			if (entity.getStatus() != Status.NORMAL
 					&& entity.getStatus() != Status.REPAIR
 					&& entity.getStatus() != Status.SETTING_FINISH
 					&& entity.getStatus() != Status.SETTING_PARAM
-					&& entity.getTag() != "level")
-				setRepairBegin(entity);
-			else
+					&& entity.getTag() != "level") {
+				new AlertDialog.Builder(this)
+						.setTitle("请确认维修")
+						.setIcon(android.R.drawable.ic_dialog_info)
+						.setView(null)
+						.setPositiveButton(
+								"确定",
+								new android.content.DialogInterface.OnClickListener() {
+
+									@Override
+									public void onClick(DialogInterface arg0,
+											int arg1) {
+										setRepairBegin(entity);
+									}
+
+								}).setNegativeButton("取消", null).show();
+			} else
 				Toast.makeText(getApplicationContext(), "当前状态下不可点击维修",
 						Toast.LENGTH_LONG).show();
+
 			break;
 		case R.id.iv_finish:
-			if (entity.getStatus() == Status.NORMAL
+			if ((entity.getStatus() == Status.NORMAL
 					|| entity.getStatus() == Status.SETTING_FINISH
 					|| entity.getStatus() == Status.SETTING_PARAM
-					|| entity.getTag().equals("level"))
+					|| entity.getStatus() == Status.EXCEPTION_2 || entity
+					.getTag().equals("level")))
 				Toast.makeText(getApplicationContext(), "当前状态下不可点击撤防",
 						Toast.LENGTH_LONG).show();
 			else {
 				String nameID = entity.getTag() + "_" + entity.getId();
 				if (!douyadb.isExist("leave", nameID)) {
+					flagFinishAck = false;
 					setUnAlarm(entity);
-					new Thread(new Timer()).start();
-					douyadb.add("leave", nameID);
+					new Thread(new Timer3()).start();
+					// 启动定时器1s
+					// try {
+					// Thread.sleep(1000);
+					// } catch (InterruptedException e) {
+					// e.printStackTrace();
+					// }
+					// if (flagFinishAck == true) {
+					// douyadb.add("leave", nameID);
+					// new Thread(new Timer()).start();
+					// } else {
+					// Toast.makeText(getApplicationContext(), "撤防失败。",
+					// Toast.LENGTH_SHORT).show();
+					// return;
+					// }
+					// new TaskSuccess().execute();
 				} else {
 					Toast.makeText(getApplicationContext(), "已上传，请勿重复点击",
 							Toast.LENGTH_SHORT).show();
@@ -272,6 +344,27 @@ public class Detail extends Activity implements OnClickListener {
 			startActivity(i);
 			break;
 		}
+	}
+
+	private class TaskSuccess extends AsyncTask<Void, Void, Void> {
+
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (flagFinishAck == true) {
+				String nameID = entity.getTag() + "_" + entity.getId();
+				douyadb.add("leave", nameID);
+				new Thread(new Timer()).start();
+			} else {
+				handlerToast.sendEmptyMessage(0x01);
+			}
+			return null;
+		}
+
 	}
 
 	public void setRepairBegin(Entity entity) {

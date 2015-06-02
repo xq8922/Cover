@@ -39,7 +39,9 @@ public class CoverAdapter extends BaseAdapter {
 
 	public void update(List<Entity> items) {
 		this.items = items;
+//		R.layout.list_view.setVisibility(View.GONE);		
 		notifyDataSetChanged();
+//		R.layout.list_view.setVisibility(View.VISIBLE);
 	}
 
 	@Override

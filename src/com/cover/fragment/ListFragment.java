@@ -18,7 +18,6 @@ import android.widget.Toast;
 import com.cover.adapter.CoverAdapter;
 import com.cover.bean.Entity;
 import com.cover.bean.Message;
-import com.cover.main.MainActivity;
 import com.cover.service.InternetService;
 import com.cover.ui.CoverList;
 import com.cover.ui.Detail;
@@ -89,11 +88,6 @@ public class ListFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		// this.items = CoverList.items;
-		// this.waterItems = CoverList.waterItems;
-		// this.coverItems = CoverList.coverItems;
-		// this.coverItems = ((CoverList) getActivity()).coverItems;
-
 		View view = inflater.inflate(R.layout.list_fragment, null);
 		// lv = (ListView) view.findViewById(R.id.lv_coverlist_cover);
 		lv = (PullToRefreshListView) view.findViewById(R.id.list_view);
@@ -114,11 +108,9 @@ public class ListFragment extends Fragment {
 				flagReceived = false;
 				sendAsk();
 				new FinishRefresh().execute();
-				// 发送请求数据
-				// new Thread(new Timer()).start();
-				// 设置超时显示刷新失败
 			}
 		});
+		// new listFresh().execute();
 
 		return view;
 	}
@@ -126,14 +118,19 @@ public class ListFragment extends Fragment {
 	private class FinishRefresh extends AsyncTask<Void, Void, Void> {
 		@Override
 		protected Void doInBackground(Void... params) {
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
+			int i = 0;
+			while (i++ < 150) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if (flagReceived == true) {
+					handler.sendEmptyMessage(0x10);
+					return null;
+				}
 			}
-			if (flagReceived == false) {
-				handler.sendEmptyMessage(0x20);
-			} else
-				handler.sendEmptyMessage(0x10);
+			handler.sendEmptyMessage(0x20);
 			return null;
 		}
 
@@ -141,7 +138,25 @@ public class ListFragment extends Fragment {
 		protected void onPostExecute(Void result) {
 			// adapter.notifyDataSetChanged();
 			lv.onRefreshComplete();
+			super.onPostExecute(result);
 		}
+	}
+
+	private class listFresh extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected void onPreExecute() {
+			adapter = new CoverAdapter(getActivity(), items);
+			lv.setAdapter(adapter);
+			lv.setOnItemClickListener(itemClickListener);
+			update(CoverList.flagChecked);
+			CoverList.setChecked(CoverList.flagChecked);
+		}
+
+		@Override
+		protected Void doInBackground(Void... arg0) {
+			return null;
+		}
+
 	}
 
 	public void sendAsk() {
@@ -182,14 +197,13 @@ public class ListFragment extends Fragment {
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		// 获取到activity里面的数据并进行显示
-		// this.items = CoverList.items;
-		// this.waterItems = CoverList.waterItems;
-		// this.coverItems = CoverList.coverItems;
-
+//		new listFresh().execute();
+		// update(CoverList.flagChecked);
+		// CoverList.setChecked(CoverList.flagChecked);
 		adapter = new CoverAdapter(getActivity(), items);
 		lv.setAdapter(adapter);
 		lv.setOnItemClickListener(itemClickListener);
-		this.update(CoverList.flagChecked);
+		update(CoverList.flagChecked);
 		CoverList.setChecked(CoverList.flagChecked);
 	}
 

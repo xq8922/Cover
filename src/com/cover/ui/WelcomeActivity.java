@@ -72,12 +72,12 @@ public class WelcomeActivity extends Activity implements AnimationListener {
 		if ((cbIsRemeber == true) && (userName != "") && (password != "")) {
 			Intent intent = new Intent();
 			intent.setClass(WelcomeActivity.this, CoverList.class);
-			finish();
 			startActivity(intent);
+			finish();
 		} else {
 			Intent intent = new Intent(this, MainActivity.class);
-			finish();
 			startActivity(intent);
+			finish();
 		}
 	}
 

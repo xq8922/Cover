@@ -9,6 +9,7 @@ import java.util.Random;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -169,17 +170,22 @@ public class MapFragment extends Fragment {
 			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover")) {
 				bitmap = BitmapDescriptorFactory
 						.fromResource(R.drawable.map_green_small);
-			}else if(tempEntity.getId() > 15 && tempEntity.getTag().equals("cover")){
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.cover2_normal);
-			}else{
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.water2_normal);
+			} else if (tempEntity.getId() > 15
+					&& tempEntity.getTag().equals("cover")) {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.cover2_normal);
+			} else {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.water2_normal);
 			}
 			break;
 		default:
-			if(tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover"))
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.red_small);
-			else{
-				bitmap = BitmapDescriptorFactory.fromResource(R.drawable.map_warn);
+			if (tempEntity.getId() <= 15 && tempEntity.getTag().equals("cover"))
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.red_small);
+			else {
+				bitmap = BitmapDescriptorFactory
+						.fromResource(R.drawable.map_warn);
 			}
 			break;
 		}
@@ -242,7 +248,7 @@ public class MapFragment extends Fragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		// ((CoverList) getActivity()).setChecked(CoverList.flagChecked);
+		//
 		CoverList.setChecked(CoverList.flagChecked);
 		this.update(CoverList.flagChecked);
 		List<Entity> tempItems = new ArrayList<Entity>();
@@ -320,6 +326,102 @@ public class MapFragment extends Fragment {
 				return false;
 			}
 		});
+		CoverList.setChecked(CoverList.flagChecked);
+		update(CoverList.flagChecked);
+		// new MapRefresh().execute();
+	}
+
+	private class MapRefresh extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected Void doInBackground(Void... params) {
+
+			List<Entity> tempItems = new ArrayList<Entity>();
+			switch (CoverList.flagChecked) {
+			case 0:
+				tempItems = items;
+				break;
+			case 1:
+				tempItems = waterItems;
+				break;
+			case 2:
+				tempItems = coverItems;
+				break;
+			case 3:
+				tempItems = nullItems;
+				break;
+			}
+			Iterator<Entity> it = tempItems.iterator();
+			while (it.hasNext()) {
+				Entity tempEntity = it.next();
+				LatLng point = new LatLng(tempEntity.getLatitude(),
+						tempEntity.getLongtitude());
+				// 构建Marker图标
+				BitmapDescriptor bitmap = null;
+				try {
+					bitmap = getBitmap(tempEntity);
+				} catch (NullPointerException e1) {
+					e1.printStackTrace();
+				}
+				// 构建MarkerOption，用于在地图上添加Marker
+				OverlayOptions option = new MarkerOptions().position(point)
+						.icon(bitmap);
+				// 在地图上添加Marker，并显示
+				mBaiduMap.addOverlay(option);
+
+				// TextView location = new TextView(getActivity());
+				// location.setText(tempEntity.getTag() + "，" +
+				// tempEntity.getId());
+				// location.setTextColor(Color.BLACK);
+				// InfoWindow info = new InfoWindow(location, new LatLng(
+				// tempEntity.getLatitude(), tempEntity.getLongtitude()), -40);
+				// mBaiduMap.showInfoWindow(info);
+				// Marker m = Marker.
+				markerEntity1.put(point, tempEntity);
+				mBaiduMap.setMyLocationEnabled(true);
+				// for (Entity element : items) {
+				// TextView location = new TextView(getActivity());
+				// location.setText(element.getTag() + "，" + element.getId());
+				// location.setTextColor(Color.BLACK);
+				// InfoWindow info = new InfoWindow(location, new LatLng(
+				// element.getLatitude(), element.getLongtitude()), -40);
+				// mBaiduMap.showInfoWindow(info);
+				// }
+			}
+			mBaiduMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+
+				@Override
+				public boolean onMarkerClick(Marker arg0) {
+					// 进入详情界面 传进对象
+					Entity entity = null;
+					switch (flag) {
+					case 0:
+						entity = markerEntity1.get(arg0.getPosition());
+						break;
+					case 1:
+						entity = markerEntity2.get(arg0.getPosition());
+						break;
+					case 2:
+						entity = markerEntity3.get(arg0.getPosition());
+						break;
+					}
+					Intent intent = new Intent(getActivity(), Detail.class);
+					intent.putExtra("entity", entity);
+					startActivity(intent);
+					return false;
+				}
+			});
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+
+		}
+	}
+
+	{
+
 	}
 
 	@Override
