@@ -418,27 +418,35 @@ public class InternetService extends Service implements Runnable {
 							}
 							entity.setLongtitude(CoverUtils.byte2Double(longTi));
 							entity.setLatitude(CoverUtils.byte2Double(laTi));
+							String title = "信息";
 							switch (msgBuff[i++ + 1]) {
 							case 0x01:
 								entity.setStatus(Status.NORMAL);
+								title = "正常监测信息";
 								break;
 							case 0x02:
 								entity.setStatus(Status.EXCEPTION_1);
+								title = "报警信息";
 								break;
 							case 0x03:
 								entity.setStatus(Status.REPAIR);
+								title = "维修中";
 								break;
 							case 0x04:
 								entity.setStatus(Status.EXCEPTION_2);
+								title = "欠压信息";
 								break;
 							case 0x05:
 								entity.setStatus(Status.EXCEPTION_3);
+								title = "报警欠压信息";
 								break;
 							case 0x06:// 处理接收到撤防或者0x07的设置中时，删除数据路相应条目
 								entity.setStatus(Status.SETTING_FINISH);
+								title = "报警解除";
 								break;
 							case 0x07:
 								entity.setStatus(Status.SETTING_PARAM);
+								title = "设置中";
 								break;
 							}
 							// 处理若有从撤防中状态改变成正常状态
@@ -458,7 +466,7 @@ public class InternetService extends Service implements Runnable {
 									douyadb.delete("setting", entity.getTag()
 											+ "_" + entity.getId());
 							}
-							setNotify(entity, "信息");
+							setNotify(entity, title);
 							if (douyadb.exist(entity.getTag(), entity.getId()
 									+ "")) {
 								douyadb.updateStatus(entity.getId(),
@@ -706,16 +714,6 @@ public class InternetService extends Service implements Runnable {
 			thread = new Thread(InternetService.this);
 			thread.start();
 		}
-		// setNotify(new
-		// Entity((short)(1),Status.EXCEPTION_1,"cover",34.2343,113.0982),
-		// "消息");
-		// test
-		// {
-		// Entity e = new Entity((short)
-		// 1,Status.EXCEPTION_1,"cover",34.199800,108.895728);
-		// setNotify(e, "test");
-		// }
-
 		super.onStart(intent, startId);
 	}
 
